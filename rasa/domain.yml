@@ -1,0 +1,465 @@
+version: "3.1"
+
+intents:
+  - saluer
+  - au_revoir
+  - confirmer
+  - refuser
+  - humeur_bonne
+  - humeur_triste
+  - defier_bot
+  - demander_heure
+  - demander_createur_bot
+  - demander_jour
+  - salutation
+  - remerciement
+  - compliment
+  - ca_va
+  - bonne_reponse
+  - mauvaise_reponse
+  - demander_date
+  - demander_saison
+  - demander_meteo
+  - demander_nom
+  - demander_bonjour
+  - demander_aurevoir
+  - demander_nom_bot
+  - demander_aide
+  - demander_raison_existence
+  - demander_age
+  - demander_etat_civil
+  - demander_aime_utilisateur
+  - demander_interets
+  - demander_voyage
+  - demander_travail
+  - demander_hobbies
+  - demander_lieu_residence
+  - contraception
+  - pourquoi_douleurs_regles
+  - regles_irregulieres
+  - soulager_douleurs_regles
+  - duree_regles
+  - arret_reprise_regles
+  - infection_sexuellement_transmissible
+  - grossesse
+  - déséquilibre_hormonal
+  - ménopause
+  - préconception
+  - douleurs_pelviennes
+  - avortement
+  - infections_vaginales
+  - debut_regles
+  - regle_n_arrive_pas
+  - fournir_symptomes_dernieres_regles
+
+slots:
+  time:
+    type: text
+    mappings:
+      - type: from_text
+  date:
+    type: text
+    mappings:
+      - type: from_text
+  bot_name:
+    type: text
+    mappings:
+      - type: from_text
+  creator_name:
+    type: text
+    mappings:
+      - type: from_text
+  jour:
+    type: text
+    mappings:
+      - type: from_text
+  saison:
+    type: text
+    mappings:
+      - type: from_text
+  meteo:
+    type: text
+    mappings:
+      - type: from_text
+
+actions:
+- action_show_time
+- action_show_date
+- action_show_bot_name
+- action_show_jour
+- action_show_saison
+- action_show_creator_name
+- action_show_meteo
+
+responses:
+  utter_saluer:
+  - text: "Salut ! Comment tu te sens aujourd'hui ?"
+  - text: "Bonjour ! Ça va bien ?"
+  - text: "Hey ! Comment ça se passe ?"
+  - text: "Salut, comment ça va chez toi ?"
+  - text: "Coucou ! Tout va bien ?"
+  - text: "Salut ! Comment tu vas ?"
+  - text: "Hé, comment ça roule ?"
+
+  utter_conseil_consulter_medecin:
+  - text: "Si vos règles sont en retard de manière inhabituelle, il peut être prudent de consulter un médecin pour en comprendre la cause."
+  - text: "Un retard de règles peut parfois être lié à des changements hormonaux ou au stress. Consultez un professionnel de santé si cela persiste."
+  - text: "En cas de retard de règles, il est recommandé de consulter un médecin, surtout si c'est inhabituel pour vous."
+  - text: "Parfois, des facteurs comme le stress ou des changements de mode de vie peuvent influencer le cycle. Si le retard persiste, envisagez une consultation."
+  - text: "Si votre cycle est souvent irrégulier, vous pourriez en parler à un médecin pour explorer les causes et solutions possibles."
+  - text: "Un retard inhabituel peut signaler des changements dans votre organisme. N'hésitez pas à consulter un professionnel pour obtenir des conseils personnalisés."
+  - text: "Un retard de règles peut être causé par divers facteurs. Consultez un médecin si vous êtes préoccupée ou si cela dure plusieurs semaines."
+
+  utter_debut_regles:
+  - text: "Les règles commencent généralement entre 12 et 16 ans, mais cela varie d'une personne à l'autre. Si vos règles tardent à venir, vous pouvez consulter un médecin pour vérifier que tout est en ordre."
+
+  utter_demander_aide:
+  - text: "Bien sûr, je suis là pour t'aider. Que puis-je faire pour toi ?"
+  - text: "Je peux t'aider, dis-moi en quoi je peux être utile."
+  - text: "D'accord, dis-moi ce dont tu as besoin."
+  - text: "Je suis là pour t'assister. Comment puis-je t'aider ?"
+  - text: "Pas de souci, je vais essayer de t'aider. Quelle est ta question ?"
+  - text: "Tu peux compter sur moi. Explique-moi ce que tu cherches."
+  - text: "D'accord, je vais faire de mon mieux. Parle-moi de ton problème."
+  - text: "Je suis prêt à t'aider. De quoi as-tu besoin ?"
+  - text: "Bien sûr, je vais t'aider. Quelle est ta difficulté ?"
+  - text: "Je suis à ton service. Dis-moi ce que tu veux savoir."
+  - text: "Pas de problème, dis-moi ce que tu veux faire."
+  - text: "Avec plaisir ! Que puis-je faire pour toi ?"
+  - text: "Je suis là pour t'aider ! Que puis-je faire pour toi ?"
+  - text: "Besoin d'assistance ? Je suis là !"
+  - text: "Dis-moi en quoi je peux t'aider !"
+  - text: "Je suis à ton service, que puis-je faire ?"
+
+  utter_remonte_moral:
+  - text: "Je t'ai trouvé quelque chose pour te remonter le moral :"
+  - text: "Voici quelque chose qui pourrait égayer ta journée :"
+  - text: "J'ai quelque chose pour te donner un peu de sourire :"
+  - text: "Regarde ça, ça devrait t'aider à te sentir mieux :"
+  - text: "Voici un petit quelque chose pour te remonter le moral :"
+  - text: "Je t'envoie quelque chose qui va sûrement te redonner la pêche :"
+  - text: "Voici un petit boost pour ta journée :"
+    image: "https://i.imgur.com/nGF1K8f.jpg"
+
+  utter_ca_aide:
+  - text: "Est-ce que cela t'aide ?"
+  - text: "Est-ce que tu te sens mieux maintenant ?"
+  - text: "Ça t'aide un peu ?"
+  - text: "Est-ce que ça te fait du bien ?"
+  - text: "Ça va mieux maintenant ?"
+  - text: "Cela t'aide-t-il à te sentir mieux ?"
+  - text: "Tu te sens mieux avec ça ?"
+
+  utter_content:
+  - text: "Génial, continue ainsi !"
+  - text: "Bravo, continue sur cette lancée !"
+  - text: "Top, garde cette énergie !"
+  - text: "C'est parfait, continue comme ça !"
+  - text: "Excellent, persévère !"
+  - text: "Formidable, reste comme ça !"
+  - text: "Impressionnant, continue à avancer !"
+
+
+  utter_au_revoir:
+  - text: "À bientôt"
+  - text: "À plus tard"
+  - text: "À la prochaine"
+  - text: "Prends soin de toi"
+  - text: "Salut, à bientôt"
+  - text: "À tout à l'heure"
+  - text: "Bonne journée et à bientôt"
+
+
+  utter_je_suis_un_bot:
+  - text: "Je suis un assistant virtuel, créé avec Rasa."
+  - text: "Je suis un bot développé grâce à Rasa."
+  - text: "Je suis un robot, propulsé par la technologie Rasa."
+  - text: "Je suis un programme intelligent, alimenté par Rasa."
+  - text: "Je suis une IA, construite avec Rasa."
+  - text: "Je suis un agent virtuel, créé avec la plateforme Rasa."
+  - text: "Je suis un bot, conçu avec l'aide de Rasa."
+
+  utter_demander_heure:
+    - text: "Il est actuellement {time}."
+    - text: "L'heure est maintenant {time}."
+    - text: "L'heure actuelle est {time}."
+    - text: "Nous sommes à {time}."
+
+  utter_demander_createur_bot:
+    - text: "Mon créateur est Raph et l'équipe IKOM."
+    - text: "Je suis un projet de l'équipe IKOM, avec Raph en tête de développement."
+    - text: "Je suis né grâce au travail de Raph et l'équipe IKOM."
+    - text: "Je dois mon existence à Raph et à l'équipe IKOM."
+
+  utter_demander_jour:
+    - text: "Aujourd'hui, nous sommes {jour}."
+    - text: "C'est {jour} aujourd'hui."
+    - text: "Le jour d'aujourd'hui est {jour}."
+    - text: "Nous sommes aujourd'hui {jour}."
+
+  utter_salutation:
+    - text: "Bonjour! Comment puis-je t'aider ?"
+    - text: "Salut ! Que puis-je faire pour toi aujourd'hui ?"
+    - text: "Coucou! Besoin d'aide?"
+    - text: "Hey! Comment ça va?"
+
+  utter_remerciement:
+    - text: "Je t'en prie !"
+    - text: "Avec plaisir !"
+    - text: "Pas de souci !"
+    - text: "De rien, je suis là pour toi !"
+
+  utter_compliment:
+    - text: "Merci beaucoup, c'est gentil de ta part !"
+    - text: "Ça me fait plaisir d'entendre ça !"
+    - text: "Merci pour le compliment !"
+    - text: "Je suis flatté, merci !"
+
+  utter_ca_va:
+    - text: "Ça va très bien, merci ! Et toi ?"
+    - text: "Tout va pour le mieux, et toi ?"
+    - text: "Je vais très bien, merci !"
+    - text: "Je suis en pleine forme, merci de demander !"
+
+  utter_bonne_reponse:
+    - text: "Super !"
+    - text: "Génial !"
+    - text: "Contente de savoir ça !"
+    - text: "Excellent !"
+
+  utter_mauvaise_reponse:
+    - text: "Oh, je suis désolé d'entendre ça."
+    - text: "Ça ira mieux, courage !"
+    - text: "Je suis là pour toi !"
+    - text: "N'hésite pas si tu veux parler !"
+
+  utter_demander_date:
+    - text: "Nous sommes le {date}."
+    - text: "La date d'aujourd'hui est {date}."
+    - text: "Aujourd'hui, c'est le {date}."
+    - text: "Nous sommes le {date}, c'est bien ça !"
+
+  utter_demander_saison:
+    - text: "Nous sommes en {saison}."
+    - text: "C'est la saison {saison} actuellement."
+    - text: "On est en pleine saison de {saison}."
+    - text: "Actuellement, la saison est {saison}."
+
+  utter_demander_meteo:
+    - text: "La météo est {meteo} aujourd'hui."
+    - text: "Aujourd'hui, il fait {meteo}."
+    - text: "Le temps actuel est {meteo}."
+    - text: "La météo du jour est {meteo}."
+
+  utter_demander_nom:
+    - text: "Mon nom est {bot_name}."
+    - text: "On m'appelle {bot_name}."
+    - text: "Je m'appelle {bot_name}, enchanté!"
+    - text: "Tu peux m'appeler {bot_name}."
+
+  utter_demander_bonjour:
+    - text: "Bonjour ! Comment puis-je t'aider aujourd'hui ?"
+    - text: "Salut ! Que puis-je faire pour toi ?"
+    - text: "Hello ! Besoin d'aide ?"
+    - text: "Bonjour ! Je suis là pour toi."
+
+  utter_demander_aurevoir:
+    - text: "Au revoir !"
+    - text: "À bientôt !"
+    - text: "À la prochaine !"
+    - text: "Passe une bonne journée !"
+
+  utter_demander_nom_bot:
+    - text: "Mon nom est {bot_name}."
+    - text: "Je suis connu sous le nom de {bot_name}."
+    - text: "On m'appelle {bot_name}."
+    - text: "Tu peux m'appeler {bot_name}."
+
+  utter_demander_raison_existence:
+    - text: "J'ai été créé pour t'aider dans tes tâches quotidiennes."
+    - text: "Je suis ici pour faciliter ton quotidien."
+    - text: "Mon rôle est de t'assister et répondre à tes questions."
+    - text: "Je suis conçu pour t'offrir de l'aide et des informations."
+
+  utter_demander_age:
+    - text: "Je n'ai pas d'âge comme un humain, mais je suis toujours prêt à aider !"
+    - text: "Je suis aussi vieux que l'équipe qui m'a créé !"
+    - text: "L'âge ne compte pas pour un bot, mais je suis récent !"
+    - text: "Je suis en pleine forme, peu importe mon âge !"
+
+  utter_demander_etat_civil:
+    - text: "Je suis un bot, alors pas d'état civil pour moi !"
+    - text: "Je n'ai pas d'état civil, juste là pour aider !"
+    - text: "Pas de mariage pour moi, juste du code !"
+    - text: "Je suis seulement un assistant virtuel !"
+
+  utter_demander_aime_utilisateur:
+    - text: "J'aime aider et répondre à tes questions !"
+    - text: "Aider est ma passion !"
+    - text: "Bien sûr, je suis là pour toi !"
+    - text: "Je suis là pour toi, avec plaisir !"
+
+  utter_demander_interets:
+    - text: "Mon intérêt principal est de t'aider !"
+    - text: "Je suis passionné par l'assistance et l'information."
+    - text: "Mon rôle est de t'offrir de l'aide, c'est mon principal intérêt."
+    - text: "Aider est ma mission."
+
+  utter_demander_voyage:
+    - text: "Je voyage uniquement à travers internet !"
+    - text: "Je ne voyage pas, mais je peux t'aider à planifier le tien."
+    - text: "Pas de voyage pour moi, je suis un bot."
+    - text: "Je reste ici pour t'aider à tout moment !"
+
+  utter_demander_travail:
+    - text: "Mon travail est de répondre à tes questions."
+    - text: "Je suis ici pour t'assister."
+    - text: "Je travaille pour toi, dans l'aide et l'information."
+    - text: "Je suis toujours en service pour toi."
+
+  utter_demander_hobbies:
+    - text: "Mes hobbies incluent t'aider et apprendre de nouvelles choses."
+    - text: "J'adore répondre aux questions et être utile."
+    - text: "Apprendre et aider sont mes principales passions."
+    - text: "Être au service de l'utilisateur, c'est ce que j'aime !"
+
+  utter_demander_lieu_residence:
+    - text: "Je réside dans le cloud !"
+    - text: "Je suis basé dans un serveur."
+    - text: "Ma maison est l'internet."
+    - text: "Je vis dans le monde virtuel, prêt à t'aider !"
+
+  utter_contraception:
+    - text: "Les méthodes de contraception comprennent la pilule, le stérilet, le préservatif, et plus encore."
+    - text: "La contraception d'urgence est une méthode pour prévenir une grossesse après un rapport non protégé."
+    - text: "Les effets secondaires des contraceptifs peuvent inclure des nausées, des maux de tête ou des changements d'humeur."
+    - text: "Le stérilet est généralement efficace et dure entre 5 et 10 ans."
+    - text: "La pilule contraceptive doit être prise tous les jours à la même heure."
+    - text: "Le préservatif est une méthode fiable pour prévenir les IST et les grossesses non désirées."
+    - text: "Les implants contraceptifs sont une méthode à long terme très efficace."
+    - text: "La pilule du lendemain est utilisée après un rapport sexuel non protégé pour éviter une grossesse."
+
+  utter_pourquoi_douleurs_regles:
+    - text: "Les douleurs menstruelles sont causées par la contraction de l'utérus pour expulser la muqueuse. Essayez des médicaments anti-inflammatoires pour les soulager."
+    - text: "Les crampes menstruelles sont fréquentes et peuvent être atténuées par des remèdes naturels ou médicaux."
+    - text: "Les douleurs peuvent être provoquées par des changements hormonaux. Si cela persiste, consultez un médecin."
+    - text: "Certaines femmes éprouvent des douleurs plus intenses en raison de conditions médicales spécifiques."
+    - text: "Les douleurs menstruelles sont courantes et peuvent être réduites avec des exercices de relaxation."
+    - text: "Des douleurs pendant les règles peuvent indiquer un besoin de consultation médicale, surtout si elles sont intenses."
+    - text: "Les crampes sont causées par les contractions utérines, vous pouvez les atténuer avec de la chaleur et des analgésiques."
+    - text: "Il est normal d'avoir un peu de douleur pendant les règles, mais un excès peut signaler un problème de santé."
+    - text: "Certains troubles, comme l'endométriose, peuvent causer des douleurs. Consultez un spécialiste si cela est récurrent."
+    - text: "Des médicaments comme l'ibuprofène peuvent aider à réduire les douleurs liées aux contractions utérines."
+
+  utter_regles_irregulieres:
+    - text: "Les règles irrégulières sont fréquentes chez les jeunes femmes et peuvent s'harmoniser avec le temps."
+    - text: "Des cycles irréguliers peuvent être dus au stress ou à des changements hormonaux."
+    - text: "Il est courant d'avoir des règles irrégulières au début. Consultez un médecin si cela vous inquiète."
+    - text: "Les règles irrégulières peuvent avoir diverses causes, dont le stress ou l'alimentation."
+    - text: "Le cycle menstruel peut prendre du temps pour se régulariser, en particulier chez les adolescentes."
+    - text: "Consultez un professionnel si vos règles sont souvent irrégulières, cela peut être lié aux hormones."
+    - text: "Les règles irrégulières sont courantes mais si elles persistent, une consultation médicale est conseillée."
+    - text: "Des règles irrégulières peuvent indiquer un déséquilibre hormonal ou d'autres conditions médicales."
+    - text: "Les changements de cycle peuvent être influencés par de nombreux facteurs, dont le stress."
+    - text: "Pour certaines femmes, les règles irrégulières sont normales. Un médecin peut vous donner plus d'informations."
+
+  utter_soulager_douleurs_regles:
+    - text: "Pour soulager les douleurs, vous pouvez essayer des médicaments ou appliquer une bouillotte sur le bas ventre."
+    - text: "Certaines postures de yoga peuvent aider à diminuer les douleurs menstruelles."
+    - text: "Des analgésiques comme l'ibuprofène peuvent être efficaces pour atténuer la douleur."
+    - text: "Les remèdes naturels comme le thé au gingembre peuvent également soulager les crampes."
+    - text: "Le repos et les exercices de relaxation peuvent aider à diminuer les douleurs."
+    - text: "Consultez votre médecin pour des solutions adaptées si les douleurs sont trop fréquentes."
+    - text: "Appliquer de la chaleur sur le bas-ventre peut apaiser les douleurs menstruelles."
+    - text: "Des massages doux sur l'abdomen peuvent également atténuer la douleur."
+    - text: "Essayez de boire beaucoup d'eau pour rester hydraté et réduire les crampes."
+    - text: "Évitez le stress et reposez-vous, cela peut contribuer à réduire les douleurs."
+
+  utter_duree_regles:
+    - text: "La durée moyenne des règles est entre 3 et 7 jours, mais cela peut varier."
+    - text: "En général, les règles durent environ une semaine."
+    - text: "Certaines femmes ont des règles plus courtes, tandis que d'autres durent jusqu'à 7 jours."
+    - text: "Un cycle de règles normales dure entre 3 et 5 jours, bien que cela puisse varier."
+    - text: "Il est normal que les règles durent quelques jours de plus ou de moins selon les individus."
+    - text: "Des règles prolongées peuvent indiquer un problème de santé, consultez un médecin si nécessaire."
+    - text: "Si vos règles durent plus de 7 jours, il est préférable de consulter un spécialiste."
+    - text: "Certaines variations sont normales, mais si cela persiste, consultez un professionnel."
+    - text: "En moyenne, les règles ne dépassent pas une semaine."
+    - text: "Les règles très courtes ou très longues peuvent parfois indiquer des déséquilibres hormonaux."
+
+  utter_demander_symptomes_dernieres_regles:
+    - text: "Pour mieux comprendre la situation, pourriez-vous me donner plus de détails ? Quels symptômes ressentez-vous ? Et à quand remontent vos dernières règles ?"
+    - text: "Pouvez-vous me dire quels sont vos symptômes actuels et quand vous avez eu vos dernières règles ?"
+    - text: "Pour mieux évaluer, pourriez-vous partager la date de vos dernières règles et les symptômes que vous ressentez actuellement ?"
+    - text: "Merci de préciser vos derniers symptômes et la date de vos dernières règles afin de vous guider plus efficacement."
+
+  utter_arret_reprise_regles:
+    - text: "Il est possible que vos règles s'arrêtent puis reprennent, mais si cela est fréquent, consultez un médecin."
+    - text: "Des interruptions de saignement peuvent arriver, mais parlez-en à un spécialiste si cela devient récurrent."
+    - text: "Un arrêt temporaire des règles suivi d'une reprise est parfois normal, mais restez vigilante."
+    - text: "Les saignements intermittents peuvent être dus à des variations hormonales."
+    - text: "Parfois, les règles semblent se stopper et reprendre, mais si cela persiste, consultez un professionnel."
+    - text: "Cela peut arriver à certaines femmes, mais n'hésitez pas à consulter si cela vous inquiète."
+    - text: "Des fluctuations hormonales peuvent expliquer les interruptions dans le cycle menstruel."
+    - text: "Un arrêt soudain des règles suivi d'une reprise n'est pas inhabituel, mais parlez-en à un médecin."
+    - text: "Ce phénomène peut se produire et n'est pas toujours alarmant, mais n'hésitez pas à en parler."
+    - text: "Les pauses dans les règles peuvent arriver. Consultez si cela devient anormalement fréquent."
+
+  utter_infection_sexuellement_transmissible:
+    - text: "Une infection sexuellement transmissible (IST) est une infection qui se transmet principalement lors de rapports sexuels non protégés."
+    - text: "Les symptômes courants des IST incluent des douleurs, des écoulements anormaux ou des démangeaisons."
+    - text: "Pour se protéger contre les IST, l'utilisation de préservatifs est fortement recommandée."
+    - text: "Certaines IST peuvent être asymptomatiques, ce qui rend le dépistage important."
+    - text: "Le test de dépistage pour les IST permet de détecter des infections avant qu'elles ne causent des dommages."
+
+  utter_grossesse:
+    - text: "Les premiers signes de grossesse incluent un retard de règles, des nausées et une sensibilité des seins."
+    - text: "Un test de grossesse peut être effectué à la maison après un retard de règles ou chez un médecin."
+    - text: "Le test de grossesse à domicile est fiable, mais il peut parfois être faux si effectué trop tôt."
+    - text: "Si vous êtes enceinte, il est important de consulter un médecin pour démarrer un suivi de grossesse."
+    - text: "Il existe plusieurs options en cas de grossesse non désirée, telles que l'avortement ou l'adoption."
+
+  utter_déséquilibre_hormonal:
+    - text: "Un déséquilibre hormonal peut provoquer des symptômes comme des règles irrégulières, de l'acné, ou des troubles de l'humeur."
+    - text: "Le stress peut affecter l'équilibre hormonal et perturber le cycle menstruel."
+    - text: "Les examens hormonaux permettent de vérifier l'équilibre de vos hormones, notamment la testostérone, l'œstrogène, et la progestérone."
+    - text: "Une mauvaise alimentation peut aussi influencer les niveaux hormonaux."
+    - text: "Les plantes comme le fenouil ou le gattilier peuvent être utiles pour rééquilibrer naturellement les hormones."
+
+  utter_ménopause:
+    - text: "La ménopause se produit généralement entre 45 et 55 ans, lorsqu'une femme arrête d'avoir ses règles."
+    - text: "Les symptômes de la ménopause incluent des bouffées de chaleur, des sueurs nocturnes et une baisse de libido."
+    - text: "Il est possible de traiter les symptômes de la ménopause avec des médicaments ou des changements de mode de vie."
+    - text: "Certaines femmes continuent à avoir des règles irrégulières pendant la périménopause avant de complètement les arrêter."
+    - text: "La ménopause peut affecter la densité osseuse, augmentant le risque de fractures."
+
+  utter_préconception:
+    - text: "Pour se préparer à une grossesse, il est important de prendre des vitamines prénatales et de consulter un médecin."
+    - text: "L'âge, l'alimentation et la santé générale influencent la fertilité chez la femme."
+    - text: "Il est recommandé de consulter un médecin avant de concevoir pour vérifier la santé reproductive."
+    - text: "Les jours fertiles varient, mais vous pouvez calculer vos jours de fertilité à l'aide d'une application ou d'un test d'ovulation."
+    - text: "Il est conseillé d'arrêter la contraception et d'attendre que votre cycle menstruel se régule avant de concevoir."
+
+  utter_douleurs_pelviennes:
+    - text: "Les douleurs pelviennes peuvent avoir plusieurs causes, y compris les règles, les infections ou des troubles comme l'endométriose."
+    - text: "Si vos douleurs pelviennes sont sévères ou constantes, il est important de consulter un médecin."
+    - text: "Les douleurs pelviennes peuvent être soulagées par des analgésiques, des exercices ou des compresses chaudes."
+    - text: "Si les douleurs pelviennes affectent votre fertilité, une consultation médicale est nécessaire."
+
+  utter_avortement:
+    - text: "Un avortement est une procédure médicale pour mettre fin à une grossesse non désirée."
+    - text: "L'avortement peut être réalisé par médication ou par intervention chirurgicale, selon la durée de la grossesse."
+    - text: "Il est important de consulter un médecin avant de décider d'un avortement."
+    - text: "L'avortement est légal dans de nombreux pays, mais les lois varient."
+    - text: "Après un avortement, un suivi médical est essentiel pour s'assurer de la bonne récupération."
+
+  utter_infections_vaginales:
+    - text: "Les infections vaginales peuvent être causées par des champignons, des bactéries ou des virus."
+    - text: "Les symptômes incluent des démangeaisons, des pertes anormales et des douleurs lors des rapports."
+    - text: "Pour traiter une infection vaginale, il existe des médicaments antifongiques ou antibiotiques."
+    - text: "Le port de vêtements trop serrés peut augmenter le risque d'infections vaginales."
+    - text: "Il est conseillé de consulter un médecin pour identifier la cause de l'infection vaginale."
+
+session_config:
+  session_expiration_time: 60
+  carry_over_slots_to_new_session: true
