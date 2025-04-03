@@ -6,7 +6,7 @@ from rest_framework import status
 from apps.chatbot.models import Conversation, MessageChat
 from apps.chatbot.serializers import ConversationSerializer, MessageChatSerializer
 
-from helpers.helper import helloworld, messageChatRASA
+from helpers.ai_models.mistral import generer_texte
 import random
 
 
@@ -70,7 +70,7 @@ class MessageChatNewView(APIView):
                     status=status.HTTP_404_NOT_FOUND
                 )
 
-            messageChat_response = messageChatRASA(contenu, request.user.name, debug=1)
+            messageChat_response = generer_texte(contenu)
             
             message_data = {
                 "conversation": conversation.id_conversation, 
