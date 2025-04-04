@@ -2,17 +2,30 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 
 from apps.chatbot.models import Conversation, MessageChat
 from apps.chatbot.serializers import ConversationSerializer, MessageChatSerializer
 
 from helpers.ai_models.mistral import generer_texte
+from helpers.swagger.chatbot import bot_response_schema, message_request_schema, error_schema, conversation_request_schema
 import random
+import traceback
 
 
 class ConversationFilterView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @swagger_auto_schema(
+        tags=['Conversations'],
+        security=[{'Bearer': []}],
+        responses={
+            200: ConversationSerializer(many=True),
+            400: "Erreur dans la requête"
+        },
+        operation_description="Récupère la liste des conversations de l'utilisateur authentifié."
+    )
     def get(self, request):
         try:
             conversations = Conversation.objects.filter(user=request.user)
@@ -24,6 +37,16 @@ class ConversationFilterView(APIView):
 class ConversationProfileView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @swagger_auto_schema(
+        tags=['Conversations'],
+        security=[{'Bearer': []}],
+        responses={
+            200: ConversationSerializer(),
+            400: "Erreur dans la requête",
+            401: "Non autorisé"
+        },
+        operation_description="Récupère les détails d'une conversation spécifique par son ID."
+    )
     def get(self, request, conversation_id):
         try:
             conversation = Conversation.objects.get(id_conversation=conversation_id)
@@ -37,6 +60,16 @@ class ConversationProfileView(APIView):
 class ConversationNewView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @swagger_auto_schema(
+        tags=['Conversations'],
+        security=[{'Bearer': []}],
+        request_body=conversation_request_schema,
+        responses={
+            201: ConversationSerializer(), 
+            400: error_schema,
+        },
+        operation_description="Crée une nouvelle conversation pour l'utilisateur authentifié."
+    )
     def post(self, request):
         try:
             data = request.data
@@ -54,11 +87,21 @@ class ConversationNewView(APIView):
 class MessageChatNewView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @swagger_auto_schema(
+        tags=['Messages Bot'],
+        security=[{'Bearer': []}],
+        request_body=message_request_schema,
+        responses={
+            201: bot_response_schema,
+            400: error_schema, 
+            404: error_schema,
+        },
+        operation_description="Crée un nouveau message dans une conversation et génère une réponse du bot."
+    )
     def post(self, request):
         try:
-            # request.data.keys = ['conversation','contenu']
             data = request.data
-            conversation_id = data.get('conversation')
+            conversation_id = int(data.get('conversation'))
             contenu = data.get('contenu')
             from_user = data.get('from_user', True)
 
@@ -80,13 +123,9 @@ class MessageChatNewView(APIView):
             serializer = MessageChatSerializer(data=message_data)
             if serializer.is_valid():
                 serializer.save()
-                if len(messageChat_response)>0:
-                    message_bot = messageChat_response[0]['text']
-                else:
-                    message_bot = random.choices(['Veuillez donner plus d\'information sur ce sujet!', 'Donnez-moi plus de clarification', 'Expliquez-moi d\'avantages', 'Ceci n\'est pas encore dans mes competences','Ce sujet ne m\'est pas familier, désolé!'])
-                print(message_bot)
-                MessageChat.objects.create(conversation=conversation,contenu=message_bot,from_user=False)
-                return Response({"bot_response":message_bot}, status=status.HTTP_201_CREATED)
+                MessageChat.objects.create(conversation=conversation, contenu=messageChat_response, from_user=False)
+                return Response({"bot_response": messageChat_response}, status=status.HTTP_201_CREATED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            return Response({'error':str(e)},status=400)
+            print(traceback.format_exc())
+            return Response({'error': str(e)}, status=400)
