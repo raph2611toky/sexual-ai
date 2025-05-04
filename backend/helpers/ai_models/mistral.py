@@ -11,6 +11,7 @@ def generer_texte(texte_entree, modele=MODEL_DEFAULT, max_tokens=100, temperatur
     try:
         if lang not in ["fr", "en"]: raise Exception("Language non accepté.")
         
+        # prompt_francais = texte_entree
         prompt_francais = f"{PROMPT_LANG[lang]}{texte_entree}"
         reponse = ollama.generate(
             model=modele,
@@ -44,5 +45,3 @@ async def generer_texte_stream_websocket(texte_entree, modele=MODEL_DEFAULT, sen
     if texte_accumule and send_callback:
         await send_callback(texte_accumule)
     return texte_accumule
-
-

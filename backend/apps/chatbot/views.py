@@ -93,7 +93,7 @@ class MessageChatNewView(APIView):
         request_body=message_request_schema,
         responses={
             201: bot_response_schema,
-            400: error_schema, 
+            400: error_schema,
             404: error_schema,
         },
         operation_description="Crée un nouveau message dans une conversation et génère une réponse du bot."
@@ -103,6 +103,7 @@ class MessageChatNewView(APIView):
             data = request.data
             conversation_id = int(data.get('conversation'))
             contenu = data.get('contenu')
+            print(data)
             from_user = data.get('from_user', True)
 
             try:
@@ -113,7 +114,7 @@ class MessageChatNewView(APIView):
                     status=status.HTTP_404_NOT_FOUND
                 )
 
-            messageChat_response = generer_texte(contenu)
+            messageChat_response = generer_texte(contenu, lang=request.data.get("lang","fr"))
             
             message_data = {
                 "conversation": conversation.id_conversation, 

@@ -6,7 +6,6 @@ bot_response_schema = openapi.Schema(
         'bot_response': openapi.Schema(type=openapi.TYPE_STRING, description="Réponse générée par le bot")
     }
 )
-
 message_request_schema = openapi.Schema(
     type=openapi.TYPE_OBJECT,
     required=['conversation', 'contenu'],
@@ -23,6 +22,11 @@ message_request_schema = openapi.Schema(
             type=openapi.TYPE_BOOLEAN,
             description="Indique si le message provient de l'utilisateur (par défaut: true)",
             default=True
+        ),
+        'lang': openapi.Schema(
+            type=openapi.TYPE_STRING,
+            enum=['fr', 'en'],
+            description="Langue du message (optionnel, 'fr' pour français ou 'en' pour anglais)"
         ),
     }
 )
