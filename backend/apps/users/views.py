@@ -87,7 +87,7 @@ class RegisterView(APIView):
 
     def validate_data(self, data):
         try:
-            keys = ['name', 'email', 'password', 'sexe', 'birth_date']
+            keys = ['name', 'email', 'password', 'birth_date']
             if any(key not in data.keys() for key in keys):
                 return False
             return True
@@ -106,6 +106,7 @@ class RegisterView(APIView):
     def post(self, request):
         try:
             user_data = request.data
+            print(user_data)
             if not self.validate_data(user_data):
                 return Response({'erreur': 'Tous les attributs sont requis'}, status=status.HTTP_400_BAD_REQUEST)
             birth_date = request.data['birth_date'].replace('/', '-')

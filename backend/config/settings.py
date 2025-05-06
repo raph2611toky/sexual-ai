@@ -80,7 +80,7 @@ DATABASES = {
         'NAME': os.getenv('DATABASE_NAME'),
         'USER': os.getenv('DATABASE_USER'),
         'PASSWORD': os.getenv('DATABASE_PASSWORD'),
-        'HOST': IP_ADDR,
+        'HOST': 'localhost',
         'PORT': os.getenv('DATABASE_PORT'),
         'OPTIONS':{
         	'charset': 'utf8mb4'
