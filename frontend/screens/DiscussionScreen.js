@@ -461,7 +461,7 @@ export default function DiscussionScreen({ navigation }) {
           ) : (
             <FlatList
               data={conversations}
-              keyExtractor={(item) => item.id.toString()}
+              keyExtractor={(item) => item.id}
               renderItem={({ item }) => (
                 <TouchableOpacity
                   style={styles.conversationItem}

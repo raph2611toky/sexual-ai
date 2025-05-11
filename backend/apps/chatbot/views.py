@@ -79,6 +79,7 @@ class ConversationNewView(APIView):
             serializer = ConversationSerializer(data=data)
             if serializer.is_valid():
                 serializer.save()
+                print(serializer.data)
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
@@ -101,17 +102,23 @@ class MessageChatNewView(APIView):
     def post(self, request):
         try:
             data = request.data
-            conversation_id = int(data.get('conversation'))
+            print(data)
             contenu = data.get('contenu')
             print(data)
-            from_user = data.get('from_user', True)
+            conversation_id = data.get('conversation',None)
 
-            try:
-                conversation = Conversation.objects.get(id_conversation=conversation_id, user=request.user)
-            except Conversation.DoesNotExist:
-                return Response(
-                    {"error": "Conversation introuvable ou non autorisée."},
-                    status=status.HTTP_404_NOT_FOUND
+            if conversation_id is not None:
+                try:
+                    conversation = Conversation.objects.get(id_conversation=int(conversation_id), user=request.user)
+                except Conversation.DoesNotExist:
+                    return Response(
+                        {"error": "Conversation introuvable ou non autorisée."},
+                        status=status.HTTP_404_NOT_FOUND
+                    )
+            else:
+                conversation, created = Conversation.objects.get_or_create(
+                    user=request.user,
+                    defaults={'titre': 'Nouvelle discussion'}
                 )
 
             messageChat_response = generer_texte(contenu, lang=request.data.get("lang","fr"))
@@ -119,7 +126,7 @@ class MessageChatNewView(APIView):
             message_data = {
                 "conversation": conversation.id_conversation, 
                 "contenu": contenu,
-                "from_user": from_user
+                "from_user": True
             }
             serializer = MessageChatSerializer(data=message_data)
             if serializer.is_valid():
