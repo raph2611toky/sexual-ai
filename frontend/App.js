@@ -40,7 +40,7 @@ export default function App() {
           options={{ headerShown: false }}  
         /> 
         <Stack.Screen 
-          name="CycleManagement" component={CycleManagementScreen}  
+          name="CycleManagementScreen" component={CycleManagementScreen}  
           options={{ headerShown: false }}  
         /> 
         

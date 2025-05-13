@@ -490,12 +490,17 @@ export default function DiscussionScreen({ navigation }) {
 
       {/* Main Chat Interface */}
       <View style={styles.container}>
-       
         <LinearGradient colors={["#FF4081", "#C2185B"]} style={styles.header}>
           <TouchableOpacity style={styles.menuButton} onPress={toggleMenu}>
             <FontAwesome name="bars" size={20} color="#fff" />
           </TouchableOpacity>
           <Text style={styles.title}>Sexual AI</Text>
+          <TouchableOpacity
+            style={styles.menstruationButton}
+            onPress={() => navigation.navigate("CycleManagementScreen")}
+          >
+            <FontAwesome name="calendar" size={18} color="#fff" />
+          </TouchableOpacity>
           <View style={styles.languageSelector}>
             <TouchableOpacity
               style={[styles.languageButton, selectedLanguage === "FR" && styles.languageButtonActive]}
@@ -1018,5 +1023,9 @@ const styles = StyleSheet.create({
   languageTextActive: {
     color: "#FF4081",
   },
+  // Menstruation tracker styles
+  menstruationButton: {
+    padding: 8,
+    marginRight: 8,
+  },
 })
-
