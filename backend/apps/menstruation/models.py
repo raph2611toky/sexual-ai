@@ -1,6 +1,6 @@
 from django.db import models
 
-from apps.users.models import User
+from apps.users.models import User, default_created_at
 
 
 class Symptom(models.Model):
@@ -17,7 +17,7 @@ class Symptom(models.Model):
         ('humeur', 'Humeur')
     ]
     
-    date = models.DateField()
+    date = models.DateField(default=default_created_at)
     title = models.CharField(max_length=100)
     description = models.TextField()
     symptom_type = models.CharField(max_length=10, choices=TYPE_CHOICES, default='general')

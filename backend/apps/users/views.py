@@ -1,11 +1,12 @@
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework_simplejwt.tokens import TokenError
 from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework.views import APIView
 
-from apps.users.serializers import UserSerializer, LoginSerializer, RegisterSerializer
+from apps.users.serializers import UserSerializer, LoginSerializer, RegisterSerializer, UpdateProfileSerializer
 from apps.users.models import User
 
 from dotenv import load_dotenv
@@ -36,6 +37,27 @@ class ProfileView(APIView):
                 status=403
             )
         return Response(user, status=200)
+
+class ProfileUpdateView(APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+    
+    @swagger_auto_schema(
+        tags=['Users'],
+        security=[{'Bearer': []}],
+        request_body=UpdateProfileSerializer,
+        responses={
+            200: UserSerializer(),
+            400: "Requête invalide",
+        },
+        operation_description="Met à jour le profil de l'utilisateur."
+    )
+    def put(self, request):
+        serializer = UpdateProfileSerializer(instance=request.user, data=request.data, partial=True)
+        if serializer.is_valid():
+            user = serializer.save()
+            return Response(UserSerializer(user, context={'request': request}).data)
+        return Response(serializer.errors, status=400)
 
 class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
@@ -116,7 +138,7 @@ class RegisterView(APIView):
             if "profession_domaine" not in user_data:
                 user_data["profession_domaine"] = "Inconu"
             if user_data.get('sexe', 'I').lower() not in ['masculin', 'feminin']:
-                user_data['sexe'] = 'I'
+                user_data['sexe'] = 'F'
             else:
                 user_data['sexe'] = user_data['sexe'].strip()[0].upper()
 
