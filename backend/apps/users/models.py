@@ -23,7 +23,7 @@ class User(AbstractBaseUser):
     ]
     name = models.CharField(max_length=100)
     email = models.EmailField(unique=True)
-    sexe = models.CharField(max_length=1, choices=SEXE_CHOICE, default='I')
+    sexe = models.CharField(max_length=1, choices=SEXE_CHOICE, default='F')
     password = models.CharField(max_length=250)
     profession_domaine = models.CharField(max_length=100)
     birth_date = models.DateField()

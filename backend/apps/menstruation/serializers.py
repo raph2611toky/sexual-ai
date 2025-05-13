@@ -13,7 +13,7 @@ class SymptomSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Symptom
-        fields = ['id_symptom', 'date', 'description','title','category']
+        fields = ['id_symptom', 'date', 'description','title','category','symptom_type']
 
     def get_date(self, obj):
         return obj.date.strftime("%d-%m-%Y")

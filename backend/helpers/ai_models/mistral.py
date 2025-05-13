@@ -1,9 +1,12 @@
 # helpers/ai_models/mistral.py
+import os
+os.environ["OLLAMA_HOST"] = "http://127.0.0.1:11434"
+
 import ollama
 import asyncio
 
 
-MODEL_DEFAULT = "mistral:latest"
+MODEL_DEFAULT = "mistral"
 PROMPT_LANG = {"en":"Response only in english : ", "fr": "Réponds uniquement en francais : "}#, "mg": "Valio amin'ny teny gasy ny fanontaniana : "}
 
 
@@ -45,5 +48,3 @@ async def generer_texte_stream_websocket(texte_entree, modele=MODEL_DEFAULT, sen
     if texte_accumule and send_callback:
         await send_callback(texte_accumule)
     return texte_accumule
-
-print(generer_texte("Bonjour"))
