@@ -18,11 +18,6 @@ message_request_schema = openapi.Schema(
             type=openapi.TYPE_STRING,
             description="Contenu du message envoyé par l'utilisateur"
         ),
-        'from_user': openapi.Schema(
-            type=openapi.TYPE_BOOLEAN,
-            description="Indique si le message provient de l'utilisateur (par défaut: true)",
-            default=True
-        ),
         'lang': openapi.Schema(
             type=openapi.TYPE_STRING,
             enum=['fr', 'en'],
