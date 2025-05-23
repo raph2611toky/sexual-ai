@@ -8,11 +8,12 @@ from apps.menstruation.models import Woman, Menstruation, Ovulation, Symptom, No
 from apps.menstruation.serializers import WomanSerializer, MenstruationSerializer, OvulationSerializer, SymptomSerializer
 from apps.menstruation.permissions import IsAuthenticatedWoman
 from datetime import timedelta, datetime
-from helpers.services.sms import send_sms
+
 from django.utils import timezone
 import traceback
 import os
 import random
+from helpers.helper import get_notification
 
 class WomanLastInfoView(APIView):
     permission_classes = [IsAuthenticatedWoman]
@@ -745,28 +746,9 @@ class MenstruationNewFull(APIView):
             }
             today = timezone.now().date()
 
-            if start_date <= today <= end_date:
-                phase = "menstruation"
-            elif fertility_window_start <= today <= fertility_window_end:
-                phase = "fertilité"
-            elif today == predicted_ovulation_date:
-                phase = "ovulation"
-            elif today < predicted_ovulation_date:
-                phase = "pré-ovulation"
-            elif today > end_date:
-                phase = "phase luteale"
-            else:
-                phase = "inconnue"
-            conseils_cycle = {
-                "menstruation": "Repose-toi et bois beaucoup d'eau. C'est normal de se sentir fatiguée.",
-                "pré-ovulation": "C’est une bonne période pour être active et commencer de nouveaux projets.",
-                "fertilité": "Si tu envisages une grossesse, c’est le bon moment. Sinon, utilise une protection.",
-                "ovulation": "Ton corps est à son pic de fertilité aujourd’hui. Écoute ton corps.",
-                "phase luteale": "Tu pourrais te sentir un peu sensible. Mange équilibré et repose-toi bien.",
-                "inconnue": "Reste à l’écoute de ton corps et contacte un professionnel si besoin."
-            }
-            conseil = conseils_cycle.get(phase, conseils_cycle["inconnue"])
-            send_sms(f"Conseil du jour ({phase}): {conseil}", os.getenv('DEFAULT_PHONE_NUMBER'))
+            conseil = "Conseil du jour: Votre cycle menstruelle a bien été enregistré. On vous conseil de bien de se preparer si tu envisages une grossesse, c’est le bon moment. Sinon, utilise une protection."#get_notification(woman)
+            from helpers.services.sms.orange import send_sms
+            send_sms('+261375284868',conseil)
 
             serializer = MenstruationSerializer(data=data)
             if serializer.is_valid():
@@ -791,7 +773,7 @@ class MenstruationNewFull(APIView):
                     fertility_window_start=fertility_window_start,
                     fertility_window_end=fertility_window_end
                 )
-                for symptom_id in request.data['symptoms']:
+                for symptom_id in request.data.get('symptoms',[]):
                     symptom = Symptom.objects.get(id_symptom=int(symptom_id))
                     woman.symptoms.add(symptom)
                     woman.save()

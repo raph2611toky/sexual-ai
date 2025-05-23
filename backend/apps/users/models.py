@@ -45,3 +45,17 @@ class User(AbstractBaseUser):
     
     class Meta:
         db_table = 'users'
+        
+
+class SmsOrangeToken(models.Model):
+    id_sms_orange_token = models.AutoField(primary_key=True)
+    token_access = models.CharField(max_length=255)
+    token_type = models.CharField(max_length=50)
+    token_validity = models.PositiveIntegerField()
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return self.token_access
+    
+    class Meta:
+        db_table = 'smsorangetoken'

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from helpers.ai_models.mistral import generer_texte
+from helpers.ai_models.gemini import simple_chat
 import threading
 
 from apps.chatbot.models import Conversation, MessageChat
@@ -20,15 +20,3 @@ class ConversationSerializer(serializers.ModelSerializer):
     def get_messages(self, obj):
         messages = obj.messages.all() 
         return MessageChatSerializer(messages, many=True).data
-    
-    def to_representation(self, instance):
-        representation = super().to_representation(instance)
-        if instance.titre in ['','nouveau discussion'] and instance.messages.all().count()>=4:
-            threading.Thread(target=self.change_titre, args=(instance,), daemon=True).start()
-        return representation
-    
-    def change_titre(self, instance):
-        message_four = ". ".join([("Question : "if m['from_user'] else "Reponse : ")+m['contenu'] for m in MessageChatSerializer(instance.messages.all(),many=True).data])
-        texte = "Resumer ce paragraphe de discussion en une seule phrase très courte pour le titre de la dicussion:\n"+message_four
-        instance.titre = generer_texte(texte)
-        instance.save(update_fields=["titre"])

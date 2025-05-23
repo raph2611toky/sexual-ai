@@ -8,7 +8,7 @@ from drf_yasg import openapi
 from apps.chatbot.models import Conversation, MessageChat
 from apps.chatbot.serializers import ConversationSerializer, MessageChatSerializer
 
-from helpers.ai_models.mistral import generer_texte
+from helpers.ai_models.gemini import simple_chat
 from helpers.swagger.chatbot import bot_response_schema, message_request_schema, error_schema, conversation_request_schema
 import random
 import traceback
@@ -56,7 +56,7 @@ class ConversationProfileView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error':str(e)}, status=400)
-        
+
 class ConversationNewView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -75,14 +75,18 @@ class ConversationNewView(APIView):
             data = request.data
 
             data['user'] = request.user.id
-
+            if 'conversation' in data:
+                data['id_conversation'] = data['conversation']
+            print(data)
             serializer = ConversationSerializer(data=data)
-            if serializer.is_valid():
+            if serializer.is_valid(raise_exception=True):
                 serializer.save()
                 print(serializer.data)
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
+            print(e)
+            print(traceback.format_exc())
             return Response({'error':str(e)},status=400)
 
 class MessageChatNewView(APIView):
@@ -121,7 +125,7 @@ class MessageChatNewView(APIView):
                     defaults={'titre': 'Nouvelle discussion'}
                 )
 
-            messageChat_response = generer_texte(contenu, lang=request.data.get("lang","fr"))
+            messageChat_response = simple_chat(contenu, lang=request.data.get("lang","fr"))
             
             message_data = {
                 "conversation": conversation.id_conversation, 

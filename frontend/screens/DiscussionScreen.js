@@ -40,20 +40,16 @@ export default function DiscussionScreen({ navigation }) {
   const [recording, setRecording] = useState(null)
   const [isProcessingAudio, setIsProcessingAudio] = useState(false)
   const [isWaitingResponse, setIsWaitingResponse] = useState(false)
-  const [language, setLanguage] = useState("FR") // Ajout de l'état pour la langue
-  // Ajouter un nouvel état pour la langue sélectionnée après les autres états
   const [selectedLanguage, setSelectedLanguage] = useState("FR")
 
-  // Ajoutons des états pour l'animation d'onde sonore
+  // Audio visualization animation
   const [audioLevel, setAudioLevel] = useState(0)
   const pulseAnim = useRef(new Animated.Value(1)).current
-
   const flatListRef = useRef()
   const slideAnim = useRef(new Animated.Value(-300)).current
   const fadeAnim = useRef(new Animated.Value(0)).current
   const spinValue = useRef(new Animated.Value(0)).current
 
-  // Create a rotating animation
   const spin = spinValue.interpolate({
     inputRange: [0, 1],
     outputRange: ["0deg", "360deg"],
@@ -64,7 +60,6 @@ export default function DiscussionScreen({ navigation }) {
       handleCreateDiscussion()
     }
 
-    // Fade in animation for welcome screen
     Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 1000,
@@ -73,14 +68,12 @@ export default function DiscussionScreen({ navigation }) {
   }, [discussionCreated])
 
   useEffect(() => {
-    // Scroll to bottom when new messages arrive
     if (flatListRef.current && responses.length > 0) {
       flatListRef.current.scrollToEnd({ animated: true })
     }
   }, [responses])
 
   useEffect(() => {
-    // Start rotation animation when waiting for response
     if (isWaitingResponse) {
       Animated.loop(
         Animated.timing(spinValue, {
@@ -94,16 +87,46 @@ export default function DiscussionScreen({ navigation }) {
     }
   }, [isWaitingResponse])
 
+  useEffect(() => {
+    let audioLevelInterval
+    if (isRecording) {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, {
+            toValue: 1.3,
+            duration: 600,
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 600,
+            useNativeDriver: true,
+          }),
+        ]),
+      ).start()
+
+      audioLevelInterval = setInterval(() => {
+        const randomLevel = 0.3 + Math.random() * 0.7
+        setAudioLevel(randomLevel)
+      }, 150)
+    } else {
+      pulseAnim.setValue(1)
+      setAudioLevel(0)
+    }
+
+    return () => {
+      if (audioLevelInterval) clearInterval(audioLevelInterval)
+    }
+  }, [isRecording])
+
   const toggleMenu = () => {
     if (menuVisible) {
-      // Close menu
       Animated.timing(slideAnim, {
         toValue: -300,
         duration: 300,
         useNativeDriver: true,
       }).start(() => setMenuVisible(false))
     } else {
-      // Open menu and fetch conversations
       fetchConversations()
       setMenuVisible(true)
       Animated.timing(slideAnim, {
@@ -114,34 +137,25 @@ export default function DiscussionScreen({ navigation }) {
     }
   }
 
-  // Fonction pour changer la langue
-  const toggleLanguage = () => {
-    setLanguage((prevLang) => (prevLang === "FR" ? "EN" : "FR"))
-  }
-
   const fetchConversations = async () => {
     try {
       const userDataString = await AsyncStorage.getItem("userData")
-
       if (userDataString) {
         const userData = JSON.parse(userDataString)
         const userToken = userData.id
-
         if (userToken) {
           const response = await axios.get(`${config.apiUrl}/conversation/list/`, {
             headers: {
               Authorization: `Bearer ${userToken}`,
             },
           })
-
           setConversations(response.data || [])
           setIsLoading(false)
         }
       }
     } catch (error) {
-      console.error("Erreur lors de la récupération des conversations:", error)
+      console.error("Error fetching conversations:", error)
       setIsLoading(false)
-      // Populate with mock data if API fails
       setConversations([
         { id: "1", title: "Discussion sur la contraception", date: "2023-04-01" },
         { id: "2", title: "Questions sur la grossesse", date: "2023-04-02" },
@@ -151,90 +165,87 @@ export default function DiscussionScreen({ navigation }) {
   }
 
   const handleCreateDiscussion = async () => {
-    try {
-      const userDataString = await AsyncStorage.getItem("userData")
-
-      if (userDataString) {
-        const userData = JSON.parse(userDataString)
-        const userToken = userData.id
-
-        if (userToken) {
-          const responseConversation = await axios.post(
-            `${config.apiUrl}/conversation/new/`,
-            {},
-            {
-              headers: {
-                Authorization: `Bearer ${userToken}`,
-              },
-            },
-          )
-
-          const id_conversation = responseConversation.data.id_conversation
-          setId_conversation(id_conversation)
-          setDiscussionCreated(true)
-          setCurrentTitle("")
-          setResponses([])
-
-          console.log("Discussion créée avec succès")
-        }
-      }
-    } catch (error) {
-      console.error("Erreur lors de la création de la discussion:", error)
-    }
+    console.log("discussion initialiser")
+    // try {
+    //   // const userDataString = await AsyncStorage.getItem("userData");
+  
+    //   // if (userDataString) {
+    //   //   const userData = JSON.parse(userDataString);
+    //   //   const userToken = userData.id;
+    //   //       if (userToken) {
+    //   //     const responseConversation = await axios.post(
+    //   //       `${config.apiUrl}/conversation/new/`,
+            
+    //   //       {
+    //   //         headers: {
+    //   //           Authorization: `Bearer ${userToken}`,
+    //   //         },
+    //   //       },
+    //   //     )
+    //   //     const id_conversation = responseConversation.data.id_conversation
+    //   //     setId_conversation(id_conversation)
+    //   //     setDiscussionCreated(true)
+    //   //     setCurrentTitle("")
+    //   //     setResponses([])
+    //   //     console.log("Discussion created successfully")
+    //     // }
+        
+    //   }
+    // } catch (error) {
+    //   console.error("Error creating discussion:", error)
+    // }
   }
 
-  // Modifier la fonction handleAskQuestion pour concaténer l'instruction de langue
   const handleAskQuestion = async () => {
     if (question.trim()) {
-      // Ajouter l'instruction de langue à la question
-      const languageInstruction = selectedLanguage === "FR" ? "Réponds en français: " : "Answer in English: "
-      const questionWithLang = languageInstruction + question
+      const languageInstruction = {
+        FR: "Réponds en français: ",
+        EN: "Answer in English: ",
+        MG: "Valiny amin'ny teny Malagasy: ",
+      }[selectedLanguage]
 
-      // Afficher la question originale à l'utilisateur, mais envoyer la question avec instruction au backend
+      const questionWithLang = languageInstruction + question
       const newResponses = [{ type: "user", text: question, id: Date.now() }]
       setResponses((prevResponses) => [...prevResponses, ...newResponses])
       setQuestion("")
       Keyboard.dismiss()
-
-      // Show loading animation
       setIsWaitingResponse(true)
 
       try {
         const userDataString = await AsyncStorage.getItem("userData")
-
         if (userDataString) {
           const userData = JSON.parse(userDataString)
           const userToken = userData.id
-
           if (userToken) {
             const responseMessage = await axios.post(
               `${config.apiUrl}/messagechat/new/`,
-              { contenu: questionWithLang, conversation: id_conversation },
+              { contenu: questionWithLang, language: selectedLanguage },
               {
                 headers: {
                   Authorization: `Bearer ${userToken}`,
                 },
               },
             )
-
             const aiResponseId = Date.now().toString() + "1"
             const aiResponse = {
               type: "ai",
               text: responseMessage.data.bot_response,
               id: aiResponseId,
             }
-
             setResponses((prevResponses) => [...prevResponses, aiResponse])
           }
         }
       } catch (error) {
-        console.error("Erreur lors de l'envoi de la question:", error)
-        // Add error message
+        console.error("Error sending question:", error)
         setResponses((prevResponses) => [
           ...prevResponses,
           {
             type: "ai",
-            text: "Désolé, une erreur s'est produite. Veuillez réessayer.",
+            text: selectedLanguage === "FR"
+              ? "Désolé, une erreur s'est produite. Veuillez réessayer."
+              : selectedLanguage === "EN"
+              ? "Sorry, an error occurred. Please try again."
+              : "Miala tsiny, nisy olana. Andramo indray azafady.",
             id: Date.now().toString() + "error",
           },
         ])
@@ -247,44 +258,38 @@ export default function DiscussionScreen({ navigation }) {
   const handleSelectConversation = async (conversationId, title) => {
     setId_conversation(conversationId)
     setCurrentTitle(title || `Discussion ${conversationId}`)
-    toggleMenu() // Close the menu
+    toggleMenu()
 
     try {
       const userDataString = await AsyncStorage.getItem("userData")
-
       if (userDataString) {
         const userData = JSON.parse(userDataString)
         const userToken = userData.id
-
         if (userToken) {
           const response = await axios.get(`${config.apiUrl}/conversation/${conversationId}/messages/`, {
             headers: {
               Authorization: `Bearer ${userToken}`,
             },
           })
-
-          // Transform the messages to match our format
           const formattedMessages = response.data.map((msg) => ({
             type: msg.is_bot ? "ai" : "user",
             text: msg.contenu,
             id: msg.id || Date.now().toString() + Math.random().toString(36).substring(7),
           }))
-
           setResponses(formattedMessages)
         }
       }
     } catch (error) {
-      console.error("Erreur lors de la récupération des messages:", error)
+      console.error("Error fetching messages:", error)
     }
   }
 
   const formatDate = (dateString) => {
     const date = new Date(dateString)
-    return date.toLocaleDateString("fr-FR")
+    return date.toLocaleDateString(selectedLanguage === "FR" ? "fr-FR" : selectedLanguage === "EN" ? "en-US" : "mg-MG")
   }
 
   const speakText = (text, messageId) => {
-    // Stop any ongoing speech
     if (isSpeaking) {
       Speech.stop()
       if (speakingMessageId === messageId) {
@@ -297,8 +302,11 @@ export default function DiscussionScreen({ navigation }) {
     setIsSpeaking(true)
     setSpeakingMessageId(messageId)
 
-    // Utiliser la langue sélectionnée pour la synthèse vocale
-    const speechLanguage = language === "FR" ? "fr" : "en-US"
+    const speechLanguage = {
+      FR: "fr-FR",
+      EN: "en-US",
+      MG: "mg-MG"
+    }[selectedLanguage]
 
     Speech.speak(text, {
       language: speechLanguage,
@@ -315,51 +323,17 @@ export default function DiscussionScreen({ navigation }) {
     })
   }
 
-  // Fonction pour simuler les niveaux audio pendant l'enregistrement
-  useEffect(() => {
-    let audioLevelInterval
-
-    if (isRecording) {
-      // Démarrer l'animation de pulsation
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(pulseAnim, {
-            toValue: 1.3,
-            duration: 600,
-            useNativeDriver: true,
-          }),
-          Animated.timing(pulseAnim, {
-            toValue: 1,
-            duration: 600,
-            useNativeDriver: true,
-          }),
-        ]),
-      ).start()
-
-      // Simuler les niveaux audio changeants
-      audioLevelInterval = setInterval(() => {
-        // Générer un niveau aléatoire entre 0.3 et 1
-        const randomLevel = 0.3 + Math.random() * 0.7
-        setAudioLevel(randomLevel)
-      }, 150)
-    } else {
-      // Arrêter l'animation de pulsation
-      pulseAnim.setValue(1)
-      setAudioLevel(0)
-    }
-
-    return () => {
-      if (audioLevelInterval) clearInterval(audioLevelInterval)
-    }
-  }, [isRecording])
-
-  // Modifions la fonction startRecording pour ajouter des retours visuels
   async function startRecording() {
     try {
-      // Request permissions
       const { status } = await Audio.requestPermissionsAsync()
       if (status !== "granted") {
-        alert("Permission to access microphone is required!")
+        alert(
+          selectedLanguage === "FR"
+            ? "Permission d'accès au microphone requise !"
+            : selectedLanguage === "EN"
+            ? "Microphone access permission required!"
+            : "Ilaina ny fahazoan-dàlana hidirana amin'ny mikrô!"
+        )
         return
       }
 
@@ -368,7 +342,6 @@ export default function DiscussionScreen({ navigation }) {
         playsInSilentModeIOS: true,
       })
 
-      // Animation de démarrage
       Animated.sequence([
         Animated.timing(pulseAnim, {
           toValue: 1.5,
@@ -383,18 +356,42 @@ export default function DiscussionScreen({ navigation }) {
       ]).start()
 
       const recording = new Audio.Recording()
-      await recording.prepareToRecordAsync(Audio.RECORDING_OPTIONS_PRESET_HIGH_QUALITY)
+      await recording.prepareToRecordAsync({
+        android: {
+          extension: '.m4a',
+          outputFormat: Audio.RECORDING_OPTION_ANDROID_OUTPUT_FORMAT_MPEG_4,
+          audioEncoder: Audio.RECORDING_OPTION_ANDROID_AUDIO_ENCODER_AAC,
+          sampleRate: 44100,
+          numberOfChannels: 2,
+          bitRate: 128000,
+        },
+        ios: {
+          extension: '.m4a',
+          audioQuality: Audio.RECORDING_OPTION_IOS_AUDIO_QUALITY_MAX,
+          sampleRate: 44100,
+          numberOfChannels: 2,
+          bitRate: 128000,
+          linearPCMBitDepth: 16,
+          linearPCMIsBigEndian: false,
+          linearPCMIsFloat: false,
+        },
+      })
       await recording.startAsync()
       setRecording(recording)
       setIsRecording(true)
     } catch (err) {
       console.error("Failed to start recording", err)
+      alert(
+        selectedLanguage === "FR"
+          ? "Échec du démarrage de l'enregistrement"
+          : selectedLanguage === "EN"
+          ? "Failed to start recording"
+          : "Tsy nahomby ny fanombohana ny firaketana"
+      )
     }
   }
 
-  // Modifions la fonction stopRecording pour ajouter des retours visuels
   async function stopRecording() {
-    // Animation de fin d'enregistrement
     Animated.timing(pulseAnim, {
       toValue: 0.8,
       duration: 200,
@@ -409,33 +406,68 @@ export default function DiscussionScreen({ navigation }) {
     try {
       await recording.stopAndUnloadAsync()
       const uri = recording.getURI()
+      
+      // Send audio to backend for transcription
+      const userDataString = await AsyncStorage.getItem("userData")
+      if (userDataString) {
+        const userData = JSON.parse(userDataString)
+        const userToken = userData.id
+        if (userToken) {
+          const formData = new FormData()
+          formData.append('audio', {
+            uri,
+            type: 'audio/m4a',
+            name: 'recording.m4a',
+          })
+          formData.append('language', selectedLanguage)
 
-      // Ici, vous enverriez normalement le fichier audio à un service de reconnaissance vocale
-      // Pour cet exemple, nous allons simuler le processus avec un délai
-      setTimeout(() => {
-        // Simuler l'obtention de texte à partir de l'audio
-        const transcribedText =
-          language === "FR"
-            ? "Ceci est un exemple de texte transcrit à partir d'un enregistrement audio."
-            : "This is an example of text transcribed from an audio recording."
-        setQuestion(transcribedText)
-        setIsProcessingAudio(false)
-      }, 2000)
+          const response = await axios.post(
+            `${config.apiUrl}/transcribe/`,
+            formData,
+            {
+              headers: {
+                Authorization: `Bearer ${userToken}`,
+                'Content-Type': 'multipart/form-data',
+              },
+            }
+          )
+
+          const transcribedText = response.data.text
+          setQuestion(transcribedText)
+        }
+      }
     } catch (err) {
-      console.error("Failed to stop recording", err)
+      console.error("Failed to process recording", err)
+      setResponses((prevResponses) => [
+        ...prevResponses,
+        {
+          type: "ai",
+          text: selectedLanguage === "FR"
+            ? "Erreur lors du traitement de l'audio. Veuillez réessayer."
+            : selectedLanguage === "EN"
+            ? "Error processing audio. Please try again."
+            : "Hadisoana tamin'ny fanodinana ny feo. Andramo indray azafady.",
+          id: Date.now().toString() + "error",
+        },
+      ])
+    } finally {
       setIsProcessingAudio(false)
+      setRecording(null)
     }
   }
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" backgroundColor="#FF4081" />
-
-      {/* Sliding Menu */}
+      
       {menuVisible && (
         <Animated.View style={[styles.menuContainer, { transform: [{ translateX: slideAnim }] }]}>
           <LinearGradient colors={["#FF4081", "#C2185B"]} style={styles.menuHeader}>
-            <Text style={styles.menuTitle}>Mes Discussions</Text>
+            <Text style={styles.menuTitle}>
+              {selectedLanguage === "FR" ? "Mes Discussions" : 
+               selectedLanguage === "EN" ? "My Discussions" : 
+               "Ny Resakofiko"}
+            </Text>
             <TouchableOpacity onPress={toggleMenu} style={styles.closeButton}>
               <FontAwesome name="times" size={20} color="#fff" />
             </TouchableOpacity>
@@ -450,13 +482,21 @@ export default function DiscussionScreen({ navigation }) {
           >
             <LinearGradient colors={["#FF4081", "#C2185B"]} style={styles.newChatGradient}>
               <FontAwesome name="plus" size={16} color="#fff" style={styles.newChatIcon} />
-              <Text style={styles.newChatText}>Nouvelle discussion</Text>
+              <Text style={styles.newChatText}>
+                {selectedLanguage === "FR" ? "Nouvelle discussion" : 
+                 selectedLanguage === "EN" ? "New discussion" : 
+                 "Resaka vaovao"}
+              </Text>
             </LinearGradient>
           </TouchableOpacity>
 
           {isLoading ? (
             <View style={styles.loadingContainer}>
-              <Text style={styles.loadingText}>Chargement...</Text>
+              <Text style={styles.loadingText}>
+                {selectedLanguage === "FR" ? "Chargement..." : 
+                 selectedLanguage === "EN" ? "Loading..." : 
+                 "Ampidina..."}
+              </Text>
             </View>
           ) : (
             <FlatList
@@ -485,10 +525,8 @@ export default function DiscussionScreen({ navigation }) {
         </Animated.View>
       )}
 
-      {/* Overlay when menu is open */}
       {menuVisible && <TouchableOpacity style={styles.overlay} activeOpacity={0.5} onPress={toggleMenu} />}
 
-      {/* Main Chat Interface */}
       <View style={styles.container}>
         <LinearGradient colors={["#FF4081", "#C2185B"]} style={styles.header}>
           <TouchableOpacity style={styles.menuButton} onPress={toggleMenu}>
@@ -502,18 +540,17 @@ export default function DiscussionScreen({ navigation }) {
             <FontAwesome name="calendar" size={18} color="#fff" />
           </TouchableOpacity>
           <View style={styles.languageSelector}>
-            <TouchableOpacity
-              style={[styles.languageButton, selectedLanguage === "FR" && styles.languageButtonActive]}
-              onPress={() => setSelectedLanguage("FR")}
-            >
-              <Text style={[styles.languageText, selectedLanguage === "FR" && styles.languageTextActive]}>FR</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.languageButton, selectedLanguage === "EN" && styles.languageButtonActive]}
-              onPress={() => setSelectedLanguage("EN")}
-            >
-              <Text style={[styles.languageText, selectedLanguage === "EN" && styles.languageTextActive]}>EN</Text>
-            </TouchableOpacity>
+            {["FR", "EN", "MG"].map((lang) => (
+              <TouchableOpacity
+                key={lang}
+                style={[styles.languageButton, selectedLanguage === lang && styles.languageButtonActive]}
+                onPress={() => setSelectedLanguage(lang)}
+              >
+                <Text style={[styles.languageText, selectedLanguage === lang && styles.languageTextActive]}>
+                  {lang}
+                </Text>
+              </TouchableOpacity>
+            ))}
           </View>
         </LinearGradient>
 
@@ -533,9 +570,11 @@ export default function DiscussionScreen({ navigation }) {
               />
               <Text style={styles.welcomeTitle}>Sexual AI Assistant</Text>
               <Text style={styles.welcomeText}>
-                {language === "FR"
+                {selectedLanguage === "FR"
                   ? "Posez vos questions sur la santé reproductive en toute confidentialité."
-                  : "Ask your questions about reproductive health in complete confidentiality."}
+                  : selectedLanguage === "EN"
+                  ? "Ask your questions about reproductive health in complete confidentiality."
+                  : "Mametraha ny fanontanianao momba ny fahasalamana ara-panabeazana amin'ny tsiambaratelo tanteraka."}
               </Text>
             </Animated.View>
           </ImageBackground>
@@ -565,7 +604,6 @@ export default function DiscussionScreen({ navigation }) {
                   ) : (
                     <View style={styles.aiMessageContent}>
                       <Text style={styles.messageText}>{item.text}</Text>
-
                       <TouchableOpacity
                         style={[styles.audioButton, speakingMessageId === item.id && styles.audioButtonActive]}
                         onPress={() => speakText(item.text, item.id)}
@@ -589,7 +627,9 @@ export default function DiscussionScreen({ navigation }) {
                       <FontAwesome name="circle-o-notch" size={24} color="#FF4081" />
                     </Animated.View>
                     <Text style={styles.loadingResponseText}>
-                      {language === "FR" ? "En attente de réponse..." : "Waiting for response..."}
+                      {selectedLanguage === "FR" ? "En attente de réponse..." : 
+                       selectedLanguage === "EN" ? "Waiting for response..." : 
+                       "Miandry valiny..."}
                     </Text>
                   </View>
                 ) : null
@@ -602,7 +642,11 @@ export default function DiscussionScreen({ navigation }) {
           <View style={styles.inputWrapper}>
             <TextInput
               style={styles.input}
-              placeholder={language === "FR" ? "Tapez votre question ici..." : "Type your question here..."}
+              placeholder={
+                selectedLanguage === "FR" ? "Tapez votre question ici..." : 
+                selectedLanguage === "EN" ? "Type your question here..." : 
+                "Soraty eto ny fanontanianao..."
+              }
               value={question}
               onChangeText={setQuestion}
               multiline={true}
@@ -629,7 +673,6 @@ export default function DiscussionScreen({ navigation }) {
                     size={20}
                     color={isRecording ? "#FF4081" : "#888"}
                   />
-
                   {isRecording && (
                     <View style={styles.waveContainer}>
                       {[0, 1, 2, 3, 4].map((i) => (
@@ -702,25 +745,33 @@ const styles = StyleSheet.create({
     textAlign: "center",
     color: "#fff",
   },
-  // Styles pour le bouton de langue
+  menstruationButton: {
+    padding: 8,
+    marginRight: 8,
+  },
+  languageSelector: {
+    flexDirection: "row",
+    backgroundColor: "rgba(255,255,255,0.2)",
+    borderRadius: 16,
+    padding: 2,
+  },
   languageButton: {
-    marginLeft: 8,
-    borderRadius: 16,
-    overflow: "hidden",
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    borderRadius: 12,
+    marginHorizontal: 2,
   },
-  languageButtonGradient: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.5)",
+  languageButtonActive: {
+    backgroundColor: "#fff",
   },
-  languageButtonText: {
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: 14,
+  languageText: {
+    color: "rgba(255,255,255,0.8)",
+    fontWeight: "600",
+    fontSize: 12,
   },
-  // Welcome screen
+  languageTextActive: {
+    color: "#FF4081",
+  },
   welcomeBackground: {
     flex: 1,
     width: "100%",
@@ -750,7 +801,6 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     maxWidth: 300,
   },
-  // Menu styles
   overlay: {
     position: "absolute",
     top: 0,
@@ -850,7 +900,6 @@ const styles = StyleSheet.create({
     color: "#666",
     marginTop: 4,
   },
-  // Chat styles
   chatBackground: {
     flex: 1,
     width: "100%",
@@ -860,7 +909,7 @@ const styles = StyleSheet.create({
   },
   responsesContent: {
     padding: 16,
-    paddingBottom: 60, // Extra space at the bottom
+    paddingBottom: 60,
   },
   userMessage: {
     alignSelf: "flex-end",
@@ -895,7 +944,7 @@ const styles = StyleSheet.create({
   },
   aiMessageContent: {
     padding: 12,
-    paddingBottom: 30, // Space for audio button
+    paddingBottom: 30,
   },
   messageText: {
     fontSize: 15,
@@ -998,34 +1047,5 @@ const styles = StyleSheet.create({
     height: 45,
     justifyContent: "center",
     alignItems: "center",
-  },
-  // Ajouter les styles pour le sélecteur de langue à la fin
-  languageSelector: {
-    flexDirection: "row",
-    backgroundColor: "rgba(255,255,255,0.2)",
-    borderRadius: 16,
-    padding: 2,
-    marginLeft: "auto",
-  },
-  languageButton: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 14,
-  },
-  languageButtonActive: {
-    backgroundColor: "#fff",
-  },
-  languageText: {
-    color: "rgba(255,255,255,0.8)",
-    fontWeight: "600",
-    fontSize: 12,
-  },
-  languageTextActive: {
-    color: "#FF4081",
-  },
-  // Menstruation tracker styles
-  menstruationButton: {
-    padding: 8,
-    marginRight: 8,
   },
 })
