@@ -3,8 +3,8 @@ from apps.users.models import User, default_created_at
 
 class Conversation(models.Model):
     id_conversation = models.AutoField(primary_key=True)
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="conversations")
-    titre = models.CharField(max_length=100,default='')
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="conversation")
+    titre = models.CharField(max_length=100,default='nouveau discussion')
     created_at = models.DateTimeField(default=default_created_at())
     
     def __str__(self):

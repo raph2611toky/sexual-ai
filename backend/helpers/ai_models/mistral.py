@@ -1,13 +1,16 @@
 # helpers/ai_models/mistral.py
+import os
+os.environ["OLLAMA_HOST"] = "http://127.0.0.1:11434"
+
 import ollama
 import asyncio
 
 
-MODEL_DEFAULT = "mistral:latest"
+MODEL_DEFAULT = "mistral"
 PROMPT_LANG = {"en":"Response only in english : ", "fr": "Réponds uniquement en francais : "}#, "mg": "Valio amin'ny teny gasy ny fanontaniana : "}
 
 
-def generer_texte(texte_entree, modele=MODEL_DEFAULT, max_tokens=100, temperature=0.7, lang="fr"):
+def generer_texte(texte_entree, modele=MODEL_DEFAULT, max_tokens=1000, temperature=0.7, lang="fr"):
     try:
         if lang not in ["fr", "en"]: raise Exception("Language non accepté.")
         
@@ -17,7 +20,7 @@ def generer_texte(texte_entree, modele=MODEL_DEFAULT, max_tokens=100, temperatur
             model=modele,
             prompt=prompt_francais,
             options={
-                "num_predict": max_tokens,
+                # "num_predict": max_tokens,
                 "temperature": temperature
             }
         )
@@ -45,5 +48,3 @@ async def generer_texte_stream_websocket(texte_entree, modele=MODEL_DEFAULT, sen
     if texte_accumule and send_callback:
         await send_callback(texte_accumule)
     return texte_accumule
-
-print(generer_texte("Bonjour"))

@@ -1,7 +1,11 @@
 from django.db import models
 
-from apps.users.models import User
+from apps.users.models import User, default_created_at
 
+REGLE_TYPE = [
+        ('regulier','Régulier'),
+        ('irregulier', 'Irrégulier')
+    ]
 
 class Symptom(models.Model):
     id_symptom = models.AutoField(primary_key=True)
@@ -17,7 +21,7 @@ class Symptom(models.Model):
         ('humeur', 'Humeur')
     ]
     
-    date = models.DateField()
+    date = models.DateField(default=default_created_at)
     title = models.CharField(max_length=100)
     description = models.TextField()
     symptom_type = models.CharField(max_length=10, choices=TYPE_CHOICES, default='general')
@@ -38,9 +42,19 @@ class Woman(models.Model):
     average_menstruation_duration = models.IntegerField(default=4)
     last_period_date = models.DateField(null=True, blank=True)
     symptoms = models.ManyToManyField(Symptom,related_name='symptoms')
+    regle_type = models.CharField(max_length=50, choices=REGLE_TYPE, default='regulier')
     
     def __str__(self):
         return str(self.woman)
+    
+    def get_cycle(self):
+        menstruations = self.menstruations.all().order_by('-start_date')
+        if menstruations.count()<2: irregulier_cycle_length = self.average_cycle_length
+        else:
+            last_date = menstruations.first().start_date
+            next_last_date = menstruations[1].start_date
+            irregulier_cycle_length = (last_date - next_last_date).days
+        return self.average_cycle_length if self.regle_type=='regulier' else irregulier_cycle_length
     
     def update_average_cycle_length(self):
         menstruations = self.menstruations.all()

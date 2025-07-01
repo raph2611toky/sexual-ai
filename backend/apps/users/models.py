@@ -23,7 +23,7 @@ class User(AbstractBaseUser):
     ]
     name = models.CharField(max_length=100)
     email = models.EmailField(unique=True)
-    sexe = models.CharField(max_length=1, choices=SEXE_CHOICE, default='I')
+    sexe = models.CharField(max_length=1, choices=SEXE_CHOICE, default='F')
     password = models.CharField(max_length=250)
     profession_domaine = models.CharField(max_length=100)
     birth_date = models.DateField()
@@ -45,3 +45,17 @@ class User(AbstractBaseUser):
     
     class Meta:
         db_table = 'users'
+        
+
+class SmsOrangeToken(models.Model):
+    id_sms_orange_token = models.AutoField(primary_key=True)
+    token_access = models.CharField(max_length=255)
+    token_type = models.CharField(max_length=50)
+    token_validity = models.PositiveIntegerField()
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return self.token_access
+    
+    class Meta:
+        db_table = 'smsorangetoken'

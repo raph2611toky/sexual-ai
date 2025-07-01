@@ -49,6 +49,17 @@ class LoginSerializer(serializers.Serializer):
     def get_token(self, users):
         token = RefreshToken.for_user(users)
         return token
+
+class UpdateProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['name', 'sexe', 'profession_domaine', 'birth_date', 'profile']
+
+    def update(self, instance, validated_data):
+        for field, value in validated_data.items():
+            setattr(instance, field, value)
+        instance.save()
+        return instance
     
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
