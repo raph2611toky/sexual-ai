@@ -1,6 +1,6 @@
 from rest_framework import serializers
-from helpers.ai_models.gemini import simple_chat
-import threading
+# from helpers.ai_models.gemini import simple_chat
+# import threading
 
 from apps.chatbot.models import Conversation, MessageChat
 

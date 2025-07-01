@@ -1,12 +1,19 @@
 import speech_recognition as sr
 from pydub import AudioSegment
+import django
 import os
+from pathlib import Path
+
+
+MEDIA_ROOT = os.path.join(Path(__file__).resolve().parent.parent.parent.parent,'media')
 
 def speech_to_text_fichier_audio(chemin_audio, langue='fr-FR'):
     recognizer = sr.Recognizer()
     
+    chemin_audio = os.path.join(MEDIA_ROOT,chemin_audio)
+    
     if not chemin_audio.endswith('.wav'):
-        audio_wav = "temp_audio.wav"
+        audio_wav = chemin_audio.replace(chemin_audio.split('.')[-1],'.wav')
         son = AudioSegment.from_file(chemin_audio)
         son.export(audio_wav, format="wav")
         chemin_final = audio_wav
@@ -27,9 +34,7 @@ def speech_to_text_fichier_audio(chemin_audio, langue='fr-FR'):
         if chemin_audio != chemin_final and os.path.exists(chemin_final):
             os.remove(chemin_final)
 
-# 🔁 Exemple d'utilisation :
-# Français
-print(speech_to_text_fichier_audio("exemple_fr.mp3", langue='fr-FR'))
+# print(speech_to_text_fichier_audio("french_test.m4a", langue='fr-FR'))
 
 # Anglais
-# print(speech_to_text_fichier_audio("example_en.wav", langue='en-US'))
+print(speech_to_text_fichier_audio("english_test.wav", langue='en-US'))

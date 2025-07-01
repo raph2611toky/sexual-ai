@@ -219,7 +219,7 @@ export default function DiscussionScreen({ navigation }) {
           if (userToken) {
             const responseMessage = await axios.post(
               `${config.apiUrl}/messagechat/new/`,
-              { contenu: questionWithLang, language: selectedLanguage },
+              { contenu: questionWithLang, lang: selectedLanguage },
               {
                 headers: {
                   Authorization: `Bearer ${userToken}`,
@@ -323,74 +323,63 @@ export default function DiscussionScreen({ navigation }) {
     })
   }
 
-  async function startRecording() {
-    try {
-      const { status } = await Audio.requestPermissionsAsync()
-      if (status !== "granted") {
-        alert(
-          selectedLanguage === "FR"
-            ? "Permission d'accès au microphone requise !"
-            : selectedLanguage === "EN"
-            ? "Microphone access permission required!"
-            : "Ilaina ny fahazoan-dàlana hidirana amin'ny mikrô!"
-        )
-        return
-      }
-
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: true,
-        playsInSilentModeIOS: true,
-      })
-
-      Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 1.5,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulseAnim, {
-          toValue: 1,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-      ]).start()
-
-      const recording = new Audio.Recording()
-      await recording.prepareToRecordAsync({
-        android: {
-          extension: '.m4a',
-          outputFormat: Audio.RECORDING_OPTION_ANDROID_OUTPUT_FORMAT_MPEG_4,
-          audioEncoder: Audio.RECORDING_OPTION_ANDROID_AUDIO_ENCODER_AAC,
-          sampleRate: 44100,
-          numberOfChannels: 2,
-          bitRate: 128000,
-        },
-        ios: {
-          extension: '.m4a',
-          audioQuality: Audio.RECORDING_OPTION_IOS_AUDIO_QUALITY_MAX,
-          sampleRate: 44100,
-          numberOfChannels: 2,
-          bitRate: 128000,
-          linearPCMBitDepth: 16,
-          linearPCMIsBigEndian: false,
-          linearPCMIsFloat: false,
-        },
-      })
-      await recording.startAsync()
-      setRecording(recording)
-      setIsRecording(true)
-    } catch (err) {
-      console.error("Failed to start recording", err)
-      alert(
-        selectedLanguage === "FR"
-          ? "Échec du démarrage de l'enregistrement"
-          : selectedLanguage === "EN"
-          ? "Failed to start recording"
-          : "Tsy nahomby ny fanombohana ny firaketana"
-      )
-    }
+ async function startRecording() {
+  if (selectedLanguage === "EN") {
+    setResponses((prevResponses) => [
+      ...prevResponses,
+      {
+        type: "ai",
+        text: "Sorry, speech-to-text for English is not available yet.",
+        id: Date.now().toString() + "error",
+      },
+    ])
+    return
   }
 
+  try {
+    const { status } = await Audio.requestPermissionsAsync()
+    if (status !== "granted") {
+      alert(
+        selectedLanguage === "FR"
+          ? "Permission d'accès au microphone requise !"
+          : selectedLanguage === "EN"
+          ? "Microphone access permission required!"
+          : "Ilaina ny fahazoan-dàlana hidirana amin'ny mikrô!"
+      )
+      return
+    }
+
+    await Audio.setAudioModeAsync({
+      allowsRecordingIOS: true,
+      playsInSilentModeIOS: true,
+    })
+
+    Animated.sequence([
+      Animated.timing(pulseAnim, {
+        toValue: 1.5,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.timing(pulseAnim, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start()
+
+    await Voice.start(selectedLanguage === "FR" ? "fr-FR" : "mg-MG")
+    setIsRecording(true)
+  } catch (err) {
+    console.error("Failed to start recording", err)
+    alert(
+      selectedLanguage === "FR"
+        ? "Échec du démarrage de l'enregistrement"
+        : selectedLanguage === "EN"
+        ? "Failed to start recording"
+        : "Tsy nahomby ny fanombohana ny firaketana"
+    )
+  }
+}
   async function stopRecording() {
     Animated.timing(pulseAnim, {
       toValue: 0.8,
@@ -419,10 +408,10 @@ export default function DiscussionScreen({ navigation }) {
             type: 'audio/m4a',
             name: 'recording.m4a',
           })
-          formData.append('language', selectedLanguage)
+          formData.append('lang', selectedLanguage)
 
           const response = await axios.post(
-            `${config.apiUrl}/transcribe/`,
+            `${config.apiUrl}/messagechat/new/audio`,
             formData,
             {
               headers: {
