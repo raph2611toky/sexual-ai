@@ -176,18 +176,19 @@ const PrivacyPolicy = () => {
 
         <h3>8. Droit Applicable</h3>
         <p>
-          Ces conditions sont régies par les lois de [votre pays/juridiction]. Tout litige sera soumis aux tribunaux compétents de [votre juridiction].
+          Ces conditions sont régies par les lois de [Madagascar/juridiction]. Tout litige sera soumis aux tribunaux compétents de [votre juridiction].
         </p>
 
         <h3>9. Contact</h3>
         <p>
           Pour toute question concernant cette politique ou ces conditions, contactez-nous à : <br />
-          Email : support@sexualai.com <br />
-          Adresse : Sexual AI, [Adresse de l'entreprise], [Ville, Pays]
+          Email : sexualai24@gmail.com <br />
+          Adresse : Sexual AI, Tanambao Zoara Lot IB 368/3611, [Fianarantsoa, Madagascar]
+          Telephone : +261 38 47 023 93 / +261 37 52 848 68 / +261 32 16 447 65
         </p>
 
         <p className="privacy-policy-footer">
-          Dernière mise à jour : 1er juillet 2025
+          Dernière mise à jour : 3 juillet 2025
         </p>
       </div>
     </div>

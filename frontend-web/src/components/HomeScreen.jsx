@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import couverture from "../assets/couverture.png"
 import { useToast } from "../hooks/useToast"
@@ -16,7 +16,20 @@ function HomeScreen() {
     message: "",
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [cardState, setCardState] = useState({
+    topCard: "girl", // 'girl' ou 'boy'
+    isAnimating: false,
+  })
   const { toasts, success, error, removeToast } = useToast()
+
+  const [carousel3D, setCarousel3D] = useState({
+    currentIndex: 0,
+    isRotating: true,
+    isPaused: false,
+    pauseTimeout: null
+  })
+  const carousel3DRef = useRef(null)
+  const observerRef = useRef(null)
 
   useEffect(() => {
     const savedLanguage = localStorage.getItem("language") || "fr"
@@ -24,7 +37,23 @@ function HomeScreen() {
     setLanguage(savedLanguage)
     setTheme(savedTheme)
     document.documentElement.setAttribute("data-theme", savedTheme)
-  }, [])
+
+    // Initialiser les animations au scroll
+    setTimeout(setupScrollAnimations, 100)
+
+    // Rotation automatique du carrousel 3D
+    const carouselInterval = setInterval(nextCarousel3DSlide, 5000)
+
+    return () => {
+      clearInterval(carouselInterval)
+      if (carousel3D.pauseTimeout) {
+        clearTimeout(carousel3D.pauseTimeout)
+      }
+      if (observerRef.current) {
+        observerRef.current.disconnect()
+      }
+    }
+  }, [carousel3D.isRotating, carousel3D.isPaused])
 
   const toggleLanguage = () => {
     const newLang = language === "fr" ? "mg" : "fr"
@@ -37,6 +66,26 @@ function HomeScreen() {
     setTheme(newTheme)
     localStorage.setItem("theme", newTheme)
     document.documentElement.setAttribute("data-theme", newTheme)
+  }
+
+  const handleCardClick = (clickedCard) => {
+    if (cardState.isAnimating) return
+
+    // Si on clique sur la carte du dessous, on inverse
+    if (cardState.topCard !== clickedCard) {
+      setCardState((prev) => ({
+        ...prev,
+        isAnimating: true,
+      }))
+
+      // Animation de séparation puis inversion
+      setTimeout(() => {
+        setCardState({
+          topCard: clickedCard,
+          isAnimating: false,
+        })
+      }, 300)
+    }
   }
 
   const translations = {
@@ -202,11 +251,133 @@ function HomeScreen() {
   // Dupliquer pour créer un effet de boucle infinie
   const duplicatedTestimonials = [...testimonials, ...testimonials]
 
+  // Images pour le carrousel 3D
+  const carousel3DImages = [
+    { src: "/fille-cartable.png", alt: "Fille avec cartable", id: "fille-cartable" },
+    { src: "/fille-ecrit.png", alt: "Fille qui écrit", id: "fille-ecrit" },
+    { src: "/fille-pos.png", alt: "Fille en position", id: "fille-pos" },
+    { src: "/garcon-phone.png", alt: "Garçon avec téléphone", id: "garcon-phone" },
+    { src: "/garcon-pos.png", alt: "Garçon en position", id: "garcon-pos" }
+  ]
+
+  // Fonction d'animation au scroll optimisée
+  const setupScrollAnimations = () => {
+    if (observerRef.current) {
+      observerRef.current.disconnect()
+    }
+
+    const animateElements = (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          const element = entry.target
+          const animationType = element.dataset.animation
+
+          switch (animationType) {
+            case 'fadeIn':
+              element.style.opacity = '1'
+              element.style.transform = 'translateY(0)'
+              break
+            case 'slideInLeft':
+              element.style.opacity = '1'
+              element.style.transform = 'translateX(0)'
+              break
+            case 'slideInRight':
+              element.style.opacity = '1'
+              element.style.transform = 'translateX(0)'
+              break
+            case 'scaleIn':
+              element.style.opacity = '1'
+              element.style.transform = 'scale(1)'
+              break
+          }
+          
+          element.style.transition = 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
+          observerRef.current.unobserve(element)
+        }
+      })
+    }
+
+    observerRef.current = new IntersectionObserver(animateElements, {
+      threshold: 0.1,
+      rootMargin: '50px'
+    })
+
+    // Observer tous les éléments avec data-animation
+    const elementsToAnimate = document.querySelectorAll('[data-animation]')
+    elementsToAnimate.forEach((el) => {
+      // État initial
+      const animationType = el.dataset.animation
+      switch (animationType) {
+        case 'fadeIn':
+          el.style.opacity = '0'
+          el.style.transform = 'translateY(30px)'
+          break
+        case 'slideInLeft':
+          el.style.opacity = '0'
+          el.style.transform = 'translateX(-50px)'
+          break
+        case 'slideInRight':
+          el.style.opacity = '0'
+          el.style.transform = 'translateX(50px)'
+          break
+        case 'scaleIn':
+          el.style.opacity = '0'
+          el.style.transform = 'scale(0.8)'
+          break
+      }
+      observerRef.current.observe(el)
+    })
+  }
+
+  // Fonctions du carrousel 3D
+  const handleCarousel3DClick = (index) => {
+    // Nettoyer le timeout existant s'il y en a un
+    if (carousel3D.pauseTimeout) {
+      clearTimeout(carousel3D.pauseTimeout)
+    }
+
+    // Mettre à jour l'index et arrêter la rotation
+    setCarousel3D(prev => ({
+      ...prev,
+      currentIndex: index,
+      isRotating: false,
+      isPaused: true,
+      pauseTimeout: null
+    }))
+
+    // Reprendre la rotation après 30 secondes
+    const timeout = setTimeout(() => {
+      setCarousel3D(prev => ({
+        ...prev,
+        isRotating: true,
+        isPaused: false,
+        pauseTimeout: null
+      }))
+    }, 30000)
+
+    // Mettre à jour le timeout dans un second setState pour éviter les conflits
+    setTimeout(() => {
+      setCarousel3D(prev => ({
+        ...prev,
+        pauseTimeout: timeout
+      }))
+    }, 0)
+  }
+
+  const nextCarousel3DSlide = () => {
+    if (!carousel3D.isRotating || carousel3D.isPaused) return
+    
+    setCarousel3D(prev => ({
+      ...prev,
+      currentIndex: (prev.currentIndex + 1) % carousel3DImages.length
+    }))
+  }
+
   return (
     <div className="home-container">
       <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
 
-      {/* Header */}
+      {/* Header encore plus agrandi */}
       <header className="home-header">
         <div className="home-header-container">
           <div className="home-header-logo">
@@ -244,7 +415,7 @@ function HomeScreen() {
       <section id="hero" className="home-hero-section">
         <div className="home-hero-container">
           <div className="home-hero-content">
-            <div className="home-hero-text">
+            <div className="home-hero-text" data-animation="slideInLeft">
               <h1 className="home-hero-title">{t("heroTitle")}</h1>
               <p className="home-hero-subtitle">{t("heroSubtitle")}</p>
               <div className="home-hero-buttons">
@@ -267,12 +438,12 @@ function HomeScreen() {
       {/* Features Section */}
       <section id="features" className="home-features-section">
         <div className="home-features-container">
-          <div className="home-features-header">
+          <div className="home-features-header" data-animation="fadeIn">
             <h2 className="home-features-title">{t("featuresTitle")}</h2>
             <p className="home-features-subtitle">{t("featuresSubtitle")}</p>
           </div>
           <div className="home-features-scroll">
-            <div className="home-features-grid">
+            <div className="home-features-grid" data-animation="fadeIn">
               <div className="home-feature-card">
                 <div className="home-feature-icon">📅</div>
                 <h3 className="home-feature-title">{t("feature1Title")}</h3>
@@ -308,39 +479,90 @@ function HomeScreen() {
         </div>
       </section>
 
-      {/* Testimonials Section avec carrousel pleine largeur */}
+      {/* Testimonials Section avec carrousel 3D */}
       <section id="testimonials" className="home-testimonials-section">
         <div className="home-testimonials-container">
-          <div className="home-testimonials-header">
+          <div className="home-testimonials-header" data-animation="fadeIn">
             <h2 className="home-testimonials-title">{t("testimonialsTitle")}</h2>
           </div>
-        </div>
-        <div className="home-testimonials-carousel">
-          <div className="home-testimonials-track">
-            {duplicatedTestimonials.map((testimonial, index) => (
-              <div key={index} className="home-testimonial-card">
-                <p className="home-testimonial-text">"{testimonial.text}"</p>
-                <div className="home-testimonial-author">
-                  <div className="home-testimonial-avatar">{testimonial.avatar}</div>
-                  <span className="home-testimonial-name">{testimonial.author}</span>
+          
+          {/* Contenu avec carrousel et témoignages */}
+          <div className="home-testimonials-content">
+            {/* Carrousel 3D */}
+            <div className="home-carousel-3d-wrapper" data-animation="slideInLeft">
+              <div className="home-carousel-3d-container" ref={carousel3DRef}>
+                <div className="home-carousel-3d-stage">
+                  {carousel3DImages.map((image, index) => {
+                    const angle = (360 / carousel3DImages.length) * index
+                    const currentAngle = angle - (carousel3D.currentIndex * (360 / carousel3DImages.length))
+                    const isCenter = index === carousel3D.currentIndex
+                    
+                    return (
+                      <div
+                        key={image.id}
+                        className={`home-carousel-3d-card ${isCenter ? 'center' : ''}`}
+                        style={{
+                          transform: `rotateY(${currentAngle}deg) translateZ(280px) ${isCenter ? 'scale(1.1)' : 'scale(0.9)'}`,
+                          opacity: isCenter ? 1 : 0.7,
+                          zIndex: isCenter ? 10 : 1
+                        }}
+                        onClick={() => handleCarousel3DClick(index)}
+                      >
+                        <div className="home-carousel-3d-card-inner">
+                          <img src={image.src || "/placeholder.svg"} alt={image.alt} className="home-carousel-3d-image" />
+                          <div className="home-carousel-3d-overlay">
+                            <div className="home-carousel-3d-title">{image.alt}</div>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+                
+                {/* Indicateurs */}
+                <div className="home-carousel-3d-indicators">
+                  {carousel3DImages.map((_, index) => (
+                    <button
+                      key={index}
+                      className={`home-carousel-3d-indicator ${index === carousel3D.currentIndex ? 'active' : ''}`}
+                      onClick={() => handleCarousel3DClick(index)}
+                    />
+                  ))}
                 </div>
               </div>
-            ))}
+            </div>
+
+            {/* Témoignages en carrousel horizontal */}
+            <div className="home-testimonials-carousel-wrapper" data-animation="slideInRight">
+              <div className="home-testimonials-carousel">
+                <div className="home-testimonials-track">
+                  {duplicatedTestimonials.map((testimonial, index) => (
+                    <div key={index} className="home-testimonial-card">
+                      <p className="home-testimonial-text">"{testimonial.text}"</p>
+                      <div className="home-testimonial-author">
+                        <div className="home-testimonial-avatar">{testimonial.avatar}</div>
+                        <span className="home-testimonial-name">{testimonial.author}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Contact Section avec layout équilibré */}
+      {/* Section contact avec cartes interactives */}
       <section id="contact" className="home-contact-section">
         <div className="home-contact-container">
-          <div className="home-contact-header">
+          <div className="home-contact-header" data-animation="fadeIn">
             <h2 className="home-contact-title">{t("contactTitle")}</h2>
             <p className="home-contact-subtitle">{t("contactSubtitle")}</p>
           </div>
 
           <div className="home-contact-content">
             {/* Partie gauche - Informations et formulaire centré */}
-            <div className="home-contact-main">
+            <div className="home-contact-main" data-animation="slideInLeft">
               <div className="home-contact-text">
                 <h3 className="home-contact-info-title">Restons en contact</h3>
                 <p className="home-contact-description">{t("contactDescription")}</p>
@@ -420,10 +642,25 @@ function HomeScreen() {
               </div>
             </div>
 
-            {/* Partie droite - Image alignée à droite */}
-            <div className="home-contact-image-wrapper">
-              <div className="home-contact-image">
-                <img src="/fille-ecrit.png" alt="Femme avec téléphone" className="home-contact-img" />
+            {/* Partie droite - Cartes interactives */}
+            <div className="home-contact-images-wrapper" data-animation="slideInRight">
+              <div className="home-contact-cards-container">
+                <div
+                  className={`home-contact-card girl-card ${cardState.topCard === "girl" ? "top-card" : "bottom-card"}`}
+                  onClick={() => handleCardClick("girl")}
+                >
+                  <div className="home-contact-card-background">
+                    <img src="/fille-cartable.png" alt="Fille avec cartable" className="home-contact-card-img" />
+                  </div>
+                </div>
+                <div
+                  className={`home-contact-card boy-card ${cardState.topCard === "boy" ? "top-card" : "bottom-card"}`}
+                  onClick={() => handleCardClick("boy")}
+                >
+                  <div className="home-contact-card-background">
+                    <img src="/garcon-phone.png" alt="Garçon avec téléphone" className="home-contact-card-img" />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -467,11 +704,13 @@ function HomeScreen() {
                 className="home-footer-social-link github"
               >
                 <svg viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+                  <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.236 3.221-.124.303-.535 1.524.117 3.176 0 0 1.008.322 3.301-1.23.957.266 1.983.399 3.003.404 1.02-.005 2.047-.138 3.006-.404 2.291 1.552 3.297 1.23 3.297 1.23.653-1.653.242-2.874.118-3.176.77-.84 1.236-1.91 1.236-3.221 0-4.597-2.802-5.626-5.467-5.931.431.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
                 </svg>
               </a>
             </div>
           </div>
+
+          {/* Section copyright */}
           <div className="home-footer-bottom">
             <p className="home-footer-text">{t("footerText")}</p>
           </div>

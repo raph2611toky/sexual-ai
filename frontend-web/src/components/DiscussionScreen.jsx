@@ -46,6 +46,16 @@ export default function DiscussionScreen() {
   const analyserRef = useRef()
   const recognitionRef = useRef()
   const silenceTimerRef = useRef()
+  const callModeRef = useRef(isCallMode);
+
+  useEffect(() => {
+    callModeRef.current = isCallMode;
+    // if (isCallMode) {
+    //   startRecording();
+    // } else {
+    //   stopRecording();
+    // }
+  }, [isCallMode]);
 
   const getCookie = (name) => {
     const value = `; ${document.cookie}`;
@@ -108,14 +118,15 @@ export default function DiscussionScreen() {
         const transcript = Array.from(event.results)
           .map((result) => result[0].transcript)
           .join('');
-        if (isCallMode) {
+        console.log(`Mode appel actuel : ${callModeRef.current}`);
+        if (callModeRef.current) {
           setCallQuestion(transcript);
-          console.log(`Set call question to ${transcript}`)
+          console.log(`Mise à jour de callQuestion : ${transcript}`);
         } else {
           setQuestion(transcript);
-          console.log(`Set question to ${transcript}`)
+          console.log(`Mise à jour de question : ${transcript}`);
         }
-        if (event.results[event.results.length - 1].isFinal && isCallMode) {
+        if (event.results[event.results.length - 1].isFinal && callModeRef.current) {
           setSilenceStart(null);
         }
       };
@@ -302,17 +313,24 @@ export default function DiscussionScreen() {
     }
   }
 
+  // const toggleCallMode = () => {
+  //   setIsCallMode((prev) => !prev);
+  // };
+
   const toggleCallMode = () => {
-    const newCallMode = !isCallMode;
-    console.log(`Switching call mode from ${isCallMode} to ${newCallMode}`)
-    setIsCallMode(newCallMode)
-    
-    if (newCallMode) {
-      startCallMode()
-    } else {
-      stopCallMode()
-    }
-  }
+    setIsCallMode((prev) => {
+      const newCallMode = !prev;
+      if (newCallMode) {
+        startRecording();
+      } else {
+        stopRecording();
+      }
+      console.log(`Switching call mode to ${newCallMode}`);
+      console.log(`is recording ${isRecording}`);
+      console.log(`is AI speaking ${isAISpeaking}`);
+      return newCallMode;
+    });
+  };
 
   const startCallMode = async () => {
     try {
@@ -471,14 +489,14 @@ export default function DiscussionScreen() {
   }
 
   const handleAskQuestion = async (textToSend = null) => {
-    const questionText = textToSend || (isCallMode ? callQuestion : question)
+    const questionText = textToSend || (callModeRef.current ? callQuestion : question)
     if (questionText.trim()) {
       const languageInstruction = selectedLanguage === "FR" ? "Réponds en français: " : "Valiny amin'ny teny malagasy: "
       const questionWithLang = languageInstruction + questionText
 
       const newResponses = [{ type: "user", text: questionText, id: Date.now(), timestamp: new Date() }]
       setResponses((prevResponses) => [...prevResponses, ...newResponses])
-      if (isCallMode) {
+      if (callModeRef.current) {
         setCallQuestion("")
       } else {
         setQuestion("")
@@ -595,7 +613,7 @@ export default function DiscussionScreen() {
     setIsAISpeaking(true) // Marquer que l'IA parle
 
     // Arrêter temporairement la reconnaissance vocale
-    if (isCallMode && recognitionRef.current && isRecording) {
+    if (callModeRef.current && recognitionRef.current && isRecording) {
       recognitionRef.current.stop()
       setIsRecording(false)
     }
@@ -612,7 +630,7 @@ export default function DiscussionScreen() {
         setIsAISpeaking(false)
         
         // Redémarrer la reconnaissance vocale en mode appel
-        if (isCallMode && !isRecording) {
+        if (callModeRef.current && !isRecording) {
           setTimeout(() => {
             startRecording()
           }, 500)
@@ -631,7 +649,7 @@ export default function DiscussionScreen() {
         )
         
         // Redémarrer la reconnaissance vocale en cas d'erreur
-        if (isCallMode && !isRecording) {
+        if (callModeRef.current && !isRecording) {
           setTimeout(() => {
             startRecording()
           }, 500)
@@ -769,13 +787,13 @@ export default function DiscussionScreen() {
               </svg>
               {t("title")}
             </h1>
-            {isCallMode && (
+            {callModeRef.current && (
               <div className="discussion-call-indicator">
                 <div className="discussion-call-dot"></div>
                 <span className="discussion-call-duration">{formatCallDuration(callDuration)}</span>
               </div>
             )}
-            {!isCallMode && (
+            {!callModeRef.current && (
               <div className="discussion-status-indicator">
                 <div className="discussion-online-dot"></div>
                 <span className="discussion-status-text">{t("online")}</span>
@@ -785,11 +803,11 @@ export default function DiscussionScreen() {
 
           <div className="discussion-header-actions">
             <button
-              className={`discussion-call-button ${isCallMode ? "active" : ""}`}
+              className={`discussion-call-button ${callModeRef.current ? "active" : ""}`}
               onClick={toggleCallMode}
-              title={isCallMode ? t("stopCall") : t("startCall")}
+              title={callModeRef.current ? t("stopCall") : t("startCall")}
             >
-              {isCallMode ? (
+              {callModeRef.current ? (
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
                   <line x1="18" y1="2" x2="6" y2="14"></line>
@@ -862,7 +880,7 @@ export default function DiscussionScreen() {
           </div>
         </div>
 
-        {isCallMode && (
+        {callModeRef.current && (
           <div className="discussion-call-interface">
             <div className="discussion-call-header">
               <div className="discussion-call-status-bar">
@@ -972,7 +990,7 @@ export default function DiscussionScreen() {
           </div>
         )}
 
-        {!isCallMode && responses.length === 0 ? (
+        {!callModeRef.current && responses.length === 0 ? (
           <div className="discussion-welcome-background">
             <div className="discussion-welcome-container">
               <div className="discussion-welcome-icon">
@@ -987,7 +1005,7 @@ export default function DiscussionScreen() {
               <p className="discussion-welcome-text">{t("welcomeText")}</p>
             </div>
           </div>
-        ) : !isCallMode ? (
+        ) : !callModeRef.current ? (
           <div className="discussion-chat-background">
             <div className="discussion-responses-list" ref={chatContainerRef}>
               {responses.map((item) => (
@@ -1082,7 +1100,7 @@ export default function DiscussionScreen() {
           </div>
         ) : null}
 
-        {!isCallMode && (
+        {!callModeRef.current && (
           <div className="discussion-input-container">
             <div className="discussion-input-wrapper">
               <textarea
