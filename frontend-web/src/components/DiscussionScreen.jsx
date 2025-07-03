@@ -36,6 +36,7 @@ export default function DiscussionScreen() {
   const [showPricing, setShowPricing] = useState(false)
   const [selectedPlan, setSelectedPlan] = useState(null)
   const [toasts, setToasts] = useState([])
+  const [isAISpeaking, setIsAISpeaking] = useState(false) // Nouveau state pour savoir si l'IA parle
 
   const chatContainerRef = useRef()
   const mediaRecorderRef = useRef()
@@ -99,6 +100,11 @@ export default function DiscussionScreen() {
       recognitionRef.current.interimResults = true;
       recognitionRef.current.lang = selectedLanguage === "FR" ? "fr-FR" : "mg-MG";
       recognitionRef.current.onresult = (event) => {
+        // Ne pas traiter la reconnaissance vocale si l'IA est en train de parler
+        if (isAISpeaking) {
+          return;
+        }
+        
         const transcript = Array.from(event.results)
           .map((result) => result[0].transcript)
           .join('');
@@ -125,7 +131,7 @@ export default function DiscussionScreen() {
         setIsProcessingAudio(false);
       };
       recognitionRef.current.onend = () => {
-        if (isRecording) {
+        if (isRecording && !isAISpeaking) {
           recognitionRef.current.start();
         }
       };
@@ -189,7 +195,7 @@ export default function DiscussionScreen() {
   }, [isCallMode])
 
   useEffect(() => {
-    if (isCallMode && isRecording && callQuestion.trim()) {
+    if (isCallMode && isRecording && callQuestion.trim() && !isAISpeaking) {
       if (audioLevel < 0.1) {
         if (!silenceStart) {
           setSilenceStart(Date.now());
@@ -204,7 +210,7 @@ export default function DiscussionScreen() {
     } else {
       setSilenceStart(null);
     }
-  }, [audioLevel, isCallMode, isRecording, callQuestion])
+  }, [audioLevel, isCallMode, isRecording, callQuestion, isAISpeaking])
 
   const translations = {
     FR: {
@@ -221,6 +227,7 @@ export default function DiscussionScreen() {
       typing: "En train d'écrire...",
       speaking: "Vous parlez...",
       listening: "À l'écoute...",
+      aiSpeaking: "IA en train de parler...",
       stopReading: "Arrêter la lecture",
       readMessage: "Lire le message",
       startRecording: "Commencer l'enregistrement",
@@ -250,6 +257,7 @@ export default function DiscussionScreen() {
       typing: "Manoratra...",
       speaking: "Miteny ianao...",
       listening: "Mihaino...",
+      aiSpeaking: "IA miteny...",
       stopReading: "Ajanony ny famakiana",
       readMessage: "Vakio ny hafatra",
       startRecording: "Atombohy ny fandraketana",
@@ -295,10 +303,11 @@ export default function DiscussionScreen() {
   }
 
   const toggleCallMode = () => {
-    console.log(`Call mode is now : ${isCallMode}`)
-    setIsCallMode(!isCallMode)
-    console.log(`Call mode is now : ${isCallMode}`)
-    if (!isCallMode) {
+    const newCallMode = !isCallMode;
+    console.log(`Switching call mode from ${isCallMode} to ${newCallMode}`)
+    setIsCallMode(newCallMode)
+    
+    if (newCallMode) {
       startCallMode()
     } else {
       stopCallMode()
@@ -331,7 +340,7 @@ export default function DiscussionScreen() {
     } catch (error) {
       console.error("Erreur accès microphone:", error)
       addToast(t("micError"), "error")
-      setIsCallMode(!isCallMode)
+      setIsCallMode(false)
     }
   }
 
@@ -345,15 +354,16 @@ export default function DiscussionScreen() {
       setIsRecording(false)
     }
     setCallQuestion("")
+    setIsAISpeaking(false)
   }
 
   const startRecording = async () => {
     try {
-      if (recognitionRef.current) {
+      if (recognitionRef.current && !isAISpeaking) {
         recognitionRef.current.start()
         setIsRecording(true)
         setIsProcessingAudio(true)
-      } else {
+      } else if (!isAISpeaking) {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
         mediaRecorderRef.current = new MediaRecorder(stream)
         audioChunksRef.current = []
@@ -575,12 +585,20 @@ export default function DiscussionScreen() {
       if (speakingMessageId === messageId) {
         setIsSpeaking(false)
         setSpeakingMessageId(null)
+        setIsAISpeaking(false)
         return
       }
     }
 
     setIsSpeaking(true)
     setSpeakingMessageId(messageId)
+    setIsAISpeaking(true) // Marquer que l'IA parle
+
+    // Arrêter temporairement la reconnaissance vocale
+    if (isCallMode && recognitionRef.current && isRecording) {
+      recognitionRef.current.stop()
+      setIsRecording(false)
+    }
 
     if ("speechSynthesis" in window) {
       const utterance = new SpeechSynthesisUtterance(text)
@@ -591,17 +609,33 @@ export default function DiscussionScreen() {
       utterance.onend = () => {
         setIsSpeaking(false)
         setSpeakingMessageId(null)
+        setIsAISpeaking(false)
+        
+        // Redémarrer la reconnaissance vocale en mode appel
+        if (isCallMode && !isRecording) {
+          setTimeout(() => {
+            startRecording()
+          }, 500)
+        }
       }
 
       utterance.onerror = () => {
         setIsSpeaking(false)
         setSpeakingMessageId(null)
+        setIsAISpeaking(false)
         addToast(
           selectedLanguage === "FR"
             ? "Erreur lors de la lecture du texte"
             : "Fahadisoana tamin'ny famakiana ny lahatsoratra",
           "error"
         )
+        
+        // Redémarrer la reconnaissance vocale en cas d'erreur
+        if (isCallMode && !isRecording) {
+          setTimeout(() => {
+            startRecording()
+          }, 500)
+        }
       }
 
       window.speechSynthesis.speak(utterance)
@@ -641,7 +675,6 @@ export default function DiscussionScreen() {
     <div className="discussion-safe-area">
       <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
       {menuVisible && <div className="discussion-overlay" onClick={toggleMenu}></div>}
-      {/* {showPricing && <PricingPlans language={selectedLanguage} theme={theme} onClose={() => setShowPricing(false)} onSelectPlan={handleSelectPlan} />} */}
       {selectedPlan && <PaymentModal plan={selectedPlan} language={selectedLanguage} theme={theme} onClose={() => setSelectedPlan(null)} planDetails={translations[selectedLanguage].plans ? translations[selectedLanguage].plans[selectedPlan] : {}} />}
 
       {menuVisible && (
@@ -758,7 +791,9 @@ export default function DiscussionScreen() {
             >
               {isCallMode ? (
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M3 3l18 18M17.05 17.05A10 10 0 1 1 6.95 6.95"></path>
+                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                  <line x1="18" y1="2" x2="6" y2="14"></line>
+                  <line x1="6" y1="2" x2="18" y2="14"></line>
                 </svg>
               ) : (
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -796,7 +831,7 @@ export default function DiscussionScreen() {
                 <div className="discussion-header-profile-avatar">
                   {profile.profile_url ? (
                     <img
-                      src={profile.profile_url}
+                      src={profile.profile_url || "/placeholder.svg"}
                       alt="Profile"
                       className="discussion-profile-image"
                       onError={() => setProfile((prev) => ({ ...prev, profile_url: null }))}
@@ -829,33 +864,110 @@ export default function DiscussionScreen() {
 
         {isCallMode && (
           <div className="discussion-call-interface">
-            <div className="discussion-call-avatar">
-              <div className="discussion-avatar-container">
-                <div className="discussion-avatar-image">🩺</div>
-                <div className="discussion-audio-visualizer">
-                  {[...Array(5)].map((_, i) => (
-                    <div
-                      key={i}
-                      className="discussion-audio-bar"
-                      style={{
-                        height: `${20 + audioLevel * 30 * (i % 3 === 0 ? 0.6 : i % 2 === 0 ? 1 : 0.8)}px`,
-                        animationDelay: `${i * 0.1}s`,
-                      }}
-                    ></div>
-                  ))}
+            <div className="discussion-call-header">
+              <div className="discussion-call-status-bar">
+                <div className="discussion-call-signal">
+                  <div className="discussion-signal-bar"></div>
+                  <div className="discussion-signal-bar"></div>
+                  <div className="discussion-signal-bar"></div>
+                  <div className="discussion-signal-bar"></div>
+                </div>
+                <span className="discussion-call-carrier">Sexual AI</span>
+                <div className="discussion-call-time">{formatCallDuration(callDuration)}</div>
+              </div>
+            </div>
+            
+            <div className="discussion-call-main">
+              <div className="discussion-call-avatar-section">
+                <div className="discussion-call-avatar-container">
+                  <div className="discussion-call-avatar-image">
+                    <div className="discussion-avatar-icon">🩺</div>
+                    {(isRecording && !isAISpeaking) && (
+                      <div className="discussion-call-listening-indicator">
+                        <div className="discussion-listening-wave">
+                          {[...Array(4)].map((_, i) => (
+                            <div
+                              key={i}
+                              className="discussion-wave-bar"
+                              style={{
+                                animationDelay: `${i * 0.1}s`,
+                                height: `${10 + audioLevel * 20}px`
+                              }}
+                            ></div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {isAISpeaking && (
+                      <div className="discussion-call-speaking-indicator">
+                        <div className="discussion-speaking-rings">
+                          <div className="discussion-speaking-ring"></div>
+                          <div className="discussion-speaking-ring"></div>
+                          <div className="discussion-speaking-ring"></div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="discussion-call-info">
+                  <h2 className="discussion-call-contact-name">{t("aiAssistant")}</h2>
+                  <p className="discussion-call-status-text">
+                    {isAISpeaking ? t("aiSpeaking") : 
+                     isRecording ? t("listening") : 
+                     t("callActive")}
+                  </p>
                 </div>
               </div>
-              <h3 className="discussion-call-title">{t("aiAssistant")}</h3>
-              <p className="discussion-call-status">{isRecording ? `🎤 ${t("speaking")}` : `👂 ${t("listening")}`}</p>
+
+              <div className="discussion-call-transcript">
+                {callQuestion && (
+                  <div className="discussion-call-transcript-text">
+                    <span className="discussion-transcript-label">Vous:</span>
+                    <p>{callQuestion}</p>
+                  </div>
+                )}
+              </div>
             </div>
-            <div className="discussion-call-input-container">
-              <textarea
-                className="discussion-call-input"
-                placeholder={t("callInputPlaceholder")}
-                value={callQuestion}
-                readOnly
-                rows="1"
-              />
+
+            <div className="discussion-call-controls">
+              <button 
+                className="discussion-call-control-btn discussion-mute-btn"
+                onClick={isRecording ? stopRecording : startRecording}
+                disabled={isAISpeaking}
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  {isRecording && !isAISpeaking ? (
+                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z M19 10v2a7 7 0 0 1-14 0v-2 M12 19v4 M8 23h8"/>
+                  ) : (
+                    <>
+                      <line x1="1" y1="1" x2="23" y2="23"></line>
+                      <path d="M9 9v3a3 3 0 0 0 5.12 2.12l1.27-1.27A7 7 0 0 1 5 12v-2"></path>
+                      <path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"></path>
+                      <line x1="12" y1="19" x2="12" y2="23"></line>
+                      <line x1="8" y1="23" x2="16" y2="23"></line>
+                    </>
+                  )}
+                </svg>
+              </button>
+
+              <button 
+                className="discussion-call-control-btn discussion-end-call-btn"
+                onClick={toggleCallMode}
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                  <line x1="18" y1="2" x2="6" y2="14"></line>
+                  <line x1="6" y1="2" x2="18" y2="14"></line>
+                </svg>
+              </button>
+
+              <button className="discussion-call-control-btn discussion-speaker-btn">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polygon points="11,5 6,9 2,9 2,15 6,15 11,19"></polygon>
+                  <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                </svg>
+              </button>
             </div>
           </div>
         )}
@@ -891,7 +1003,7 @@ export default function DiscussionScreen() {
                       <div className="discussion-message-avatar user">
                         {profile.profile_url ? (
                           <img
-                            src={profile.profile_url}
+                            src={profile.profile_url || "/placeholder.svg"}
                             alt="User profile"
                             className="discussion-profile-image"
                             onError={() => setProfile((prev) => ({ ...prev, profile_url: null }))}
@@ -970,9 +1082,9 @@ export default function DiscussionScreen() {
           </div>
         ) : null}
 
-        <div className="discussion-input-container">
-          <div className="discussion-input-wrapper">
-            {!isCallMode && (
+        {!isCallMode && (
+          <div className="discussion-input-container">
+            <div className="discussion-input-wrapper">
               <textarea
                 className="discussion-input"
                 placeholder={t("inputPlaceholder")}
@@ -981,30 +1093,28 @@ export default function DiscussionScreen() {
                 onKeyPress={handleKeyPress}
                 rows="1"
               />
-            )}
 
-            <div className="discussion-voice-controls">
-              <button
-                className={`discussion-mic-button ${isRecording ? "recording" : ""}`}
-                onClick={isRecording ? stopRecording : startRecording}
-                title={isRecording ? t("stopRecording") : t("startRecording")}
-              >
-                {isRecording ? (
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <rect x="6" y="6" width="12" height="12" rx="2"></rect>
-                  </svg>
-                ) : (
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-                    <line x1="12" y1="19" x2="12" y2="23"></line>
-                    <line x1="8" y1="23" x2="16" y2="23"></line>
-                  </svg>
-                )}
-              </button>
-            </div>
+              <div className="discussion-voice-controls">
+                <button
+                  className={`discussion-mic-button ${isRecording ? "recording" : ""}`}
+                  onClick={isRecording ? stopRecording : startRecording}
+                  title={isRecording ? t("stopRecording") : t("startRecording")}
+                >
+                  {isRecording ? (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="6" y="6" width="12" height="12" rx="2"></rect>
+                    </svg>
+                  ) : (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                      <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                      <line x1="12" y1="19" x2="12" y2="23"></line>
+                      <line x1="8" y1="23" x2="16" y2="23"></line>
+                    </svg>
+                  )}
+                </button>
+              </div>
 
-            {!isCallMode && (
               <button
                 className={`discussion-send-button ${!question.trim() || isWaitingResponse ? "disabled" : ""}`}
                 onClick={() => handleAskQuestion()}
@@ -1020,9 +1130,9 @@ export default function DiscussionScreen() {
                   </svg>
                 )}
               </button>
-            )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   )
