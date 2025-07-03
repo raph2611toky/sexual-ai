@@ -13,6 +13,62 @@ from helpers.swagger.chatbot import bot_response_schema, message_request_schema,
 import random
 import traceback
 
+class ConversationModifierTitreView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @swagger_auto_schema(
+        tags=['Conversations'],
+        security=[{'Bearer': []}],
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'titre': openapi.Schema(type=openapi.TYPE_STRING, description='Nouveau titre de la conversation'),
+            }
+        ),
+        responses={
+            200: ConversationSerializer(),
+            400: error_schema,
+            401: "Non autorisé",
+            404: "Conversation introuvable"
+        },
+        operation_description="Modifie le titre d'une conversation spécifique."
+    )
+    def put(self, request, conversation_id):
+        try:
+            conversation = Conversation.objects.get(id_conversation=conversation_id, user=request.user)
+            titre = request.data.get('titre')
+            if titre:
+                conversation.titre = titre
+                conversation.save()
+                serializer = ConversationSerializer(conversation)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response({'error': 'Le titre est requis'}, status=status.HTTP_400_BAD_REQUEST)
+        except Conversation.DoesNotExist:
+            return Response({'error': 'Conversation introuvable ou non autorisée'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+class ConversationSupprimerView(APIView):
+    permission_classes = [IsAuthenticated]
+    @swagger_auto_schema(
+        tags=['Conversations'],
+        security=[{'Bearer': []}],
+        responses={
+            204: "Conversation supprimée avec succès",
+            401: "Non autorisé",
+            404: "Conversation introuvable"
+        },
+        operation_description="Supprime une conversation spécifique et tous ses messages associés."
+    )
+    def delete(self, request, conversation_id):
+        try:
+            conversation = Conversation.objects.get(id_conversation=conversation_id, user=request.user)
+            conversation.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except Conversation.DoesNotExist:
+            return Response({'error': 'Conversation introuvable ou non autorisée'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 class ConversationFilterView(APIView):
     permission_classes = [IsAuthenticated]
@@ -28,7 +84,7 @@ class ConversationFilterView(APIView):
     )
     def get(self, request):
         try:
-            conversations = Conversation.objects.filter(user=request.user)
+            conversations = Conversation.objects.filter(user=request.user).order_by("-created_at")
             serializer = ConversationSerializer(conversations, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
@@ -75,15 +131,15 @@ class ConversationNewView(APIView):
             data = request.data
 
             data['user'] = request.user.id
-            if 'conversation' in data:
-                data['id_conversation'] = data['conversation']
-            print(data)
-            serializer = ConversationSerializer(data=data)
-            if serializer.is_valid(raise_exception=True):
-                serializer.save()
-                print(serializer.data)
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            if Conversation.objects.filter(user=request.user).exists():
+                conversation_last = Conversation.objects.filter(user=request.user).last()
+                if conversation_last.messages.all().count() > 0:
+                    conversation_new = Conversation.objects.create(user=request.user)
+                    return Response(ConversationSerializer(conversation_new).data, status=status.HTTP_201_CREATED)
+                else:
+                    return Response(ConversationSerializer(conversation_last).data, status=status.HTTP_201_CREATED)
+            conversation_new = Conversation.objects.create(user=request.user)
+            return Response(ConversationSerializer(conversation_new).data, status=status.HTTP_201_CREATED)
         except Exception as e:
             print(e)
             print(traceback.format_exc())

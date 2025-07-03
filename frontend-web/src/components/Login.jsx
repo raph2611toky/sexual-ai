@@ -4,6 +4,8 @@ import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import axios from "axios"
 import config from "../config"
+import { useToast } from "../hooks/useToast"
+import ToastContainer from "./ToastContainer"
 import "./Login.css"
 
 const Login = () => {
@@ -15,6 +17,7 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [language, setLanguage] = useState("fr")
   const [theme, setTheme] = useState("light")
+  const { toasts, success, error, removeToast } = useToast()
 
   useEffect(() => {
     const savedLanguage = localStorage.getItem("language") || "fr"
@@ -22,6 +25,12 @@ const Login = () => {
     setLanguage(savedLanguage)
     setTheme(savedTheme)
     document.documentElement.setAttribute("data-theme", savedTheme)
+
+    // Animation flip d'entrée
+    document.body.classList.add("auth-flip-enter")
+    setTimeout(() => {
+      document.body.classList.remove("auth-flip-enter")
+    }, 800)
   }, [])
 
   const toggleLanguage = () => {
@@ -49,6 +58,7 @@ const Login = () => {
       signUp: "S'inscrire",
       fillFields: "Veuillez remplir tous les champs.",
       loginError: "Erreur de connexion. Veuillez vérifier vos identifiants.",
+      loginSuccess: "Connexion réussie ! Redirection en cours...",
     },
     mg: {
       welcome: "Tongasoa! 👋",
@@ -61,18 +71,22 @@ const Login = () => {
       signUp: "Hisoratra anarana",
       fillFields: "Fenoy ny saha rehetra azafady.",
       loginError: "Tsy afaka niditra. Hamarino ny antontan-kevitrao.",
+      loginSuccess: "Niditra soa aman-tsara ! Mandehana...",
     },
   }
 
   const t = (key) => translations[language][key] || key
 
   const handleSignup = () => {
-    navigate("/signup")
+    document.body.classList.add("auth-flip-exit")
+    setTimeout(() => {
+      navigate("/signup")
+    }, 400)
   }
 
   const handleLogin = async () => {
     if (!email || !password) {
-      alert(t("fillFields"))
+      error(t("fillFields"))
       return
     }
 
@@ -81,17 +95,30 @@ const Login = () => {
     try {
       const response = await axios.post(`${config.apiUrl}/login/`, { email, password })
 
+      const token = response.data.access;
+      const expires = isChecked ? 7 : 1;
+      const date = new Date();
+      date.setTime(date.getTime() + (expires * 24 * 60 * 60 * 1000));
+      document.cookie = `auth_token=${token};expires=${date.toUTCString()};path=/;SameSite=Strict`;
+
       localStorage.setItem(
         "userData",
         JSON.stringify({
-          id: response.data.access,
+          id: token,
         }),
       )
 
-      navigate("/discussion")
+      success(t("loginSuccess"))
+
+      setTimeout(() => {
+        document.body.classList.add("auth-flip-exit")
+        setTimeout(() => {
+          navigate("/discussion")
+        }, 400)
+      }, 1500)
     } catch (err) {
       console.error("Erreur de connexion:", err)
-      alert(t("loginError"))
+      error(t("loginError"))
     } finally {
       setIsLoading(false)
     }
@@ -99,13 +126,15 @@ const Login = () => {
 
   return (
     <div className="login-container">
+      <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
+
       <div className="login-content">
         <div className="login-header-controls">
           <button className="login-control-btn" onClick={toggleLanguage}>
             {language.toUpperCase()}
           </button>
           <button className="login-control-btn" onClick={toggleTheme}>
-            {theme === "light" ? "🌙" : "☀️"}
+            {theme === "light"? "🌙" : "☀️"}
           </button>
         </div>
 

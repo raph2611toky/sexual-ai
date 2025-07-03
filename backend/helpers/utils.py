@@ -6,7 +6,7 @@ load_dotenv()
 
 def get_server_settings():
     ip_addr = '127.0.0.1'
-    port = '8000'
+    port=8000
     if 'runserver' in sys.argv:
         runserver_index = sys.argv.index('runserver')
         if len(sys.argv) > runserver_index + 1:

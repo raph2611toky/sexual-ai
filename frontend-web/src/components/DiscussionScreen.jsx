@@ -4,11 +4,15 @@ import { useState, useEffect, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import axios from "axios"
 import config from "../config"
+import PricingPlans from "./PricingPlans"
+import PaymentModal from "./PaymentModal"
+import ToastContainer from "./ToastContainer"
 import "./DiscussionScreen.css"
 
 export default function DiscussionScreen() {
   const navigate = useNavigate()
-  const [question, setQuestion] = useState("")
+  const [question, setQuestion] = useState("") // Pour le mode non-appel
+  const [callQuestion, setCallQuestion] = useState("") // Pour le mode appel
   const [responses, setResponses] = useState([])
   const [id_conversation, setId_conversation] = useState("")
   const [discussionCreated, setDiscussionCreated] = useState(false)
@@ -25,7 +29,13 @@ export default function DiscussionScreen() {
   const [isCallMode, setIsCallMode] = useState(false)
   const [callDuration, setCallDuration] = useState(0)
   const [audioLevel, setAudioLevel] = useState(0)
+  const [silenceStart, setSilenceStart] = useState(null)
   const [theme, setTheme] = useState("light")
+  const [profile, setProfile] = useState({ name: "Utilisateur", profile_url: null })
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+  const [showPricing, setShowPricing] = useState(false)
+  const [selectedPlan, setSelectedPlan] = useState(null)
+  const [toasts, setToasts] = useState([])
 
   const chatContainerRef = useRef()
   const mediaRecorderRef = useRef()
@@ -33,6 +43,24 @@ export default function DiscussionScreen() {
   const callTimerRef = useRef()
   const audioContextRef = useRef()
   const analyserRef = useRef()
+  const recognitionRef = useRef()
+  const silenceTimerRef = useRef()
+
+  const getCookie = (name) => {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+    return null;
+  }
+
+  const addToast = (message, type = 'error', duration = 3000) => {
+    const id = Date.now().toString() + Math.random().toString(36).substring(7)
+    setToasts((prev) => [...prev, { id, message, type, duration }])
+  }
+
+  const removeToast = (id) => {
+    setToasts((prev) => prev.filter((toast) => toast.id !== id))
+  }
 
   useEffect(() => {
     const savedTheme = localStorage.getItem("theme") || "light"
@@ -41,10 +69,99 @@ export default function DiscussionScreen() {
     setSelectedLanguage(savedLanguage === "fr" ? "FR" : "MG")
     document.documentElement.setAttribute("data-theme", savedTheme)
 
+    const token = getCookie('auth_token');
+    if (!token) {
+      navigate('/login');
+      return;
+    }
+
+    fetchProfile();
+
     if (!discussionCreated) {
       handleCreateDiscussion()
     }
-  }, [discussionCreated])
+
+    initializeSpeechRecognition();
+
+    return () => {
+      if (silenceTimerRef.current) {
+        clearTimeout(silenceTimerRef.current);
+      }
+    };
+  }, [discussionCreated, navigate])
+
+  const initializeSpeechRecognition = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      console.log(`Speech recognition activated...`)
+      recognitionRef.current = new SpeechRecognition();
+      recognitionRef.current.continuous = true;
+      recognitionRef.current.interimResults = true;
+      recognitionRef.current.lang = selectedLanguage === "FR" ? "fr-FR" : "mg-MG";
+      recognitionRef.current.onresult = (event) => {
+        const transcript = Array.from(event.results)
+          .map((result) => result[0].transcript)
+          .join('');
+        if (isCallMode) {
+          setCallQuestion(transcript);
+          console.log(`Set call question to ${transcript}`)
+        } else {
+          setQuestion(transcript);
+          console.log(`Set question to ${transcript}`)
+        }
+        if (event.results[event.results.length - 1].isFinal && isCallMode) {
+          setSilenceStart(null);
+        }
+      };
+      recognitionRef.current.onerror = (event) => {
+        console.error("Speech recognition error:", event.error);
+        addToast(
+          selectedLanguage === "FR"
+            ? "Erreur de reconnaissance vocale : " + event.error
+            : "Fahadisoana amin'ny fahafantarana feo: " + event.error,
+          "error"
+        );
+        setIsRecording(false);
+        setIsProcessingAudio(false);
+      };
+      recognitionRef.current.onend = () => {
+        if (isRecording) {
+          recognitionRef.current.start();
+        }
+      };
+    } else {
+      addToast(
+        selectedLanguage === "FR"
+          ? "Reconnaissance vocale non prise en charge."
+          : "Fahafantarana feo tsy tohana.",
+        "warning"
+      );
+    }
+  }
+
+  const fetchProfile = async () => {
+    try {
+      const token = getCookie("auth_token")
+      if (token) {
+        const response = await axios.get(`${config.apiUrl}/profile/`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        setProfile({
+          name: response.data.name || "Utilisateur",
+          profile_url: response.data.profile_url || null,
+        })
+      }
+    } catch (error) {
+      console.error("Erreur lors de la récupération du profil:", error)
+      addToast(
+        selectedLanguage === "FR"
+          ? "Erreur lors de la récupération du profil"
+          : "Fahadisoana tamin'ny fakana ny mombamomba",
+        "error"
+      )
+      setProfile({ name: "Utilisateur", profile_url: null })
+    }
+  }
 
   useEffect(() => {
     if (chatContainerRef.current && responses.length > 0) {
@@ -71,16 +188,35 @@ export default function DiscussionScreen() {
     }
   }, [isCallMode])
 
+  useEffect(() => {
+    if (isCallMode && isRecording && callQuestion.trim()) {
+      if (audioLevel < 0.1) {
+        if (!silenceStart) {
+          setSilenceStart(Date.now());
+        } else if (Date.now() - silenceStart >= 3000) {
+          handleAskQuestion(callQuestion);
+          setCallQuestion("");
+          setSilenceStart(null);
+        }
+      } else {
+        setSilenceStart(null);
+      }
+    } else {
+      setSilenceStart(null);
+    }
+  }, [audioLevel, isCallMode, isRecording, callQuestion])
+
   const translations = {
     FR: {
       title: "Sexual AI",
       newDiscussion: "Nouvelle discussion",
       myDiscussions: "Mes Discussions",
       loading: "Chargement...",
-      welcomeTitle: "Sexual AI Assistant",
+      welcomeTitle: "Assistant Santé Reproductive",
       welcomeText:
-        "Posez vos questions sur la santé reproductive en toute confidentialité. Vous pouvez taper ou utiliser la reconnaissance vocale.",
+        "Posez vos questions sur la santé reproductive en toute confidentialité.",
       inputPlaceholder: "Tapez votre question ici...",
+      callInputPlaceholder: "Votre texte vocal apparaît ici...",
       processing: "Traitement...",
       typing: "En train d'écrire...",
       speaking: "Vous parlez...",
@@ -92,16 +228,24 @@ export default function DiscussionScreen() {
       sendMessage: "Envoyer le message",
       startCall: "Démarrer un appel vocal",
       stopCall: "Arrêter l'appel",
+      online: "En ligne",
+      callActive: "Appel en cours",
+      aiAssistant: "Assistant IA",
+      settings: "Paramètres",
+      subscriptions: "Abonnements",
+      logout: "Déconnexion",
+      micError: "Impossible d'accéder au microphone",
+      transcriptionError: "Erreur lors de la transcription audio",
     },
     MG: {
       title: "Sexual AI",
       newDiscussion: "Resaka vaovao",
       myDiscussions: "Ny Resakako",
       loading: "Mamaky...",
-      welcomeTitle: "Mpanampy Sexual AI",
-      welcomeText:
-        "Apetraho ny fanontanianao momba ny fahasalamana ara-piterahana amin'ny tsiambaratelo. Afaka manoratra na mampiasa ny fanekena feo ianao.",
+      welcomeTitle: "Mpanampy Fahasalamana",
+      welcomeText: "Apetraho ny fanontanianao momba ny fahasalamana ara-piterahana.",
       inputPlaceholder: "Soraty eto ny fanontanianao...",
+      callInputPlaceholder: "Ny lahatsoratrao amin'ny feo dia miseho eto...",
       processing: "Miasa...",
       typing: "Manoratra...",
       speaking: "Miteny ianao...",
@@ -113,6 +257,14 @@ export default function DiscussionScreen() {
       sendMessage: "Alefaso ny hafatra",
       startCall: "Atombohy ny antso",
       stopCall: "Ajanony ny antso",
+      online: "Eo ambony",
+      callActive: "Misy antso",
+      aiAssistant: "Mpanampy IA",
+      settings: "Fandrindrana",
+      subscriptions: "Famandrihana",
+      logout: "Mivoaka",
+      micError: "Tsy afaka miditra amin'ny mikrô",
+      transcriptionError: "Fahadisoana tamin'ny fandikana feo",
     },
   }
 
@@ -137,10 +289,15 @@ export default function DiscussionScreen() {
     const newLang = selectedLanguage === "FR" ? "MG" : "FR"
     setSelectedLanguage(newLang)
     localStorage.setItem("language", newLang === "FR" ? "fr" : "mg")
+    if (recognitionRef.current) {
+      recognitionRef.current.lang = newLang === "FR" ? "fr-FR" : "mg-MG";
+    }
   }
 
   const toggleCallMode = () => {
+    console.log(`Call mode is now : ${isCallMode}`)
     setIsCallMode(!isCallMode)
+    console.log(`Call mode is now : ${isCallMode}`)
     if (!isCallMode) {
       startCallMode()
     } else {
@@ -151,7 +308,6 @@ export default function DiscussionScreen() {
   const startCallMode = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-
       audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)()
       analyserRef.current = audioContextRef.current.createAnalyser()
       const source = audioContextRef.current.createMediaStreamSource(stream)
@@ -170,10 +326,12 @@ export default function DiscussionScreen() {
         }
       }
       updateAudioLevel()
+
+      startRecording()
     } catch (error) {
       console.error("Erreur accès microphone:", error)
-      alert("Impossible d'accéder au microphone")
-      setIsCallMode(false)
+      addToast(t("micError"), "error")
+      setIsCallMode(!isCallMode)
     }
   }
 
@@ -182,35 +340,51 @@ export default function DiscussionScreen() {
       audioContextRef.current.close()
     }
     setAudioLevel(0)
+    if (recognitionRef.current && isRecording) {
+      recognitionRef.current.stop()
+      setIsRecording(false)
+    }
+    setCallQuestion("")
   }
 
   const startRecording = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      if (recognitionRef.current) {
+        recognitionRef.current.start()
+        setIsRecording(true)
+        setIsProcessingAudio(true)
+      } else {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+        mediaRecorderRef.current = new MediaRecorder(stream)
+        audioChunksRef.current = []
 
-      mediaRecorderRef.current = new MediaRecorder(stream)
-      audioChunksRef.current = []
+        mediaRecorderRef.current.ondataavailable = (event) => {
+          audioChunksRef.current.push(event.data)
+        }
 
-      mediaRecorderRef.current.ondataavailable = (event) => {
-        audioChunksRef.current.push(event.data)
+        mediaRecorderRef.current.onstop = async () => {
+          const audioBlob = new Blob(audioChunksRef.current, { type: "audio/wav" })
+          await processAudioToText(audioBlob)
+          stream.getTracks().forEach((track) => track.stop())
+        }
+
+        mediaRecorderRef.current.start()
+        setIsRecording(true)
+        setIsProcessingAudio(true)
       }
-
-      mediaRecorderRef.current.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: "audio/wav" })
-        await processAudioToText(audioBlob)
-        stream.getTracks().forEach((track) => track.stop())
-      }
-
-      mediaRecorderRef.current.start()
-      setIsRecording(true)
     } catch (error) {
       console.error("Erreur enregistrement:", error)
-      alert("Impossible d'accéder au microphone")
+      addToast(t("micError"), "error")
+      setIsRecording(false)
     }
   }
 
   const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
+    if (recognitionRef.current && isRecording) {
+      recognitionRef.current.stop()
+      setIsRecording(false)
+      setIsProcessingAudio(false)
+    } else if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop()
       setIsRecording(false)
       setIsProcessingAudio(true)
@@ -220,134 +394,110 @@ export default function DiscussionScreen() {
   const processAudioToText = async (audioBlob) => {
     try {
       await new Promise((resolve) => setTimeout(resolve, 2000))
-
       const transcribedText =
         selectedLanguage === "FR"
-          ? "Bonjour, j'aimerais avoir des informations sur la contraception."
-          : "Salama, te-hiangavy fampahalalana momba ny fisorohana vohoka aho."
-
-      setQuestion(transcribedText)
-      setIsProcessingAudio(false)
-
+          ? "Bonjour, j'aimerais des infos sur la contraception."
+          : "Salama, te-hiangavy fampahalalana momba ny fisorohana vohoka."
       if (isCallMode) {
-        setTimeout(() => {
-          handleAskQuestion(transcribedText)
-        }, 500)
+        setCallQuestion(transcribedText)
+      } else {
+        setQuestion(transcribedText)
       }
+      setIsProcessingAudio(false)
     } catch (error) {
       console.error("Erreur transcription:", error)
+      addToast(t("transcriptionError"), "error")
       setIsProcessingAudio(false)
-      alert("Erreur lors de la transcription audio")
     }
   }
 
   const fetchConversations = async () => {
     try {
-      const userDataString = localStorage.getItem("userData")
-
-      if (userDataString) {
-        const userData = JSON.parse(userDataString)
-        const userToken = userData.id
-
-        if (userToken) {
-          const response = await axios.get(`${config.apiUrl}/conversation/list/`, {
-            headers: {
-              Authorization: `Bearer ${userToken}`,
-            },
-          })
-
-          setConversations(response.data || [])
-          setIsLoading(false)
-        }
+      const token = getCookie("auth_token")
+      if (token) {
+        const response = await axios.get(`${config.apiUrl}/conversation/list/`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        setConversations(response.data || [])
+        setIsLoading(false)
       }
     } catch (error) {
       console.error("Erreur lors de la récupération des conversations:", error)
+      addToast(
+        selectedLanguage === "FR"
+          ? "Erreur lors de la récupération des conversations"
+          : "Fahadisoana tamin'ny fakana ny resaka",
+        "error"
+      )
       setIsLoading(false)
-      setConversations([
-        { id: "1", title: "Discussion sur la contraception", date: "2023-04-01" },
-        { id: "2", title: "Questions sur la grossesse", date: "2023-04-02" },
-        { id: "3", title: "Santé reproductive", date: "2023-04-03" },
-      ])
     }
   }
 
   const handleCreateDiscussion = async () => {
     try {
-      const userDataString = localStorage.getItem("userData")
+      const token = getCookie("auth_token")
+      if (token) {
+        const responseConversation = await axios.post(
+          `${config.apiUrl}/conversation/new/`,
+          {},
+          { headers: { Authorization: `Bearer ${token}` } },
+        )
 
-      if (userDataString) {
-        const userData = JSON.parse(userDataString)
-        const userToken = userData.id
-
-        if (userToken) {
-          const responseConversation = await axios.post(
-            `${config.apiUrl}/conversation/new/`,
-            {},
-            {
-              headers: {
-                Authorization: `Bearer ${userToken}`,
-              },
-            },
-          )
-
-          const id_conversation = responseConversation.data.id_conversation
-          setId_conversation(id_conversation)
-          setDiscussionCreated(true)
-          setCurrentTitle("")
-          setResponses([])
-
-          console.log("Discussion créée avec succès")
-        }
+        const id_conversation = responseConversation.data.id_conversation
+        setId_conversation(id_conversation)
+        setDiscussionCreated(true)
+        setCurrentTitle("")
+        setResponses([])
       }
     } catch (error) {
       console.error("Erreur lors de la création de la discussion:", error)
+      addToast(
+        selectedLanguage === "FR"
+          ? "Erreur lors de la création de la discussion"
+          : "Fahadisoana tamin'ny famoronana resaka",
+        "error"
+      )
     }
   }
 
   const handleAskQuestion = async (textToSend = null) => {
-    const questionText = textToSend || question
+    const questionText = textToSend || (isCallMode ? callQuestion : question)
     if (questionText.trim()) {
       const languageInstruction = selectedLanguage === "FR" ? "Réponds en français: " : "Valiny amin'ny teny malagasy: "
       const questionWithLang = languageInstruction + questionText
 
-      const newResponses = [{ type: "user", text: questionText, id: Date.now() }]
+      const newResponses = [{ type: "user", text: questionText, id: Date.now(), timestamp: new Date() }]
       setResponses((prevResponses) => [...prevResponses, ...newResponses])
-      setQuestion("")
-
+      if (isCallMode) {
+        setCallQuestion("")
+      } else {
+        setQuestion("")
+      }
       setIsWaitingResponse(true)
 
       try {
-        const userDataString = localStorage.getItem("userData")
+        const token = getCookie("auth_token")
+        if (token) {
+          const responseMessage = await axios.post(
+            `${config.apiUrl}/messagechat/new/`,
+            { contenu: questionWithLang, conversation: id_conversation },
+            { headers: { Authorization: `Bearer ${token}` } },
+          )
 
-        if (userDataString) {
-          const userData = JSON.parse(userDataString)
-          const userToken = userData.id
+          const aiResponseId = Date.now().toString() + "1"
+          const aiResponse = {
+            type: "ai",
+            text: responseMessage.data.bot_response,
+            id: aiResponseId,
+            timestamp: new Date()
+          }
 
-          if (userToken) {
-            const responseMessage = await axios.post(
-              `${config.apiUrl}/messagechat/new/`,
-              { contenu: questionWithLang, conversation: id_conversation },
-              {
-                headers: {
-                  Authorization: `Bearer ${userToken}`,
-                },
-              },
-            )
+          setResponses((prevResponses) => [...prevResponses, aiResponse])
 
-            const aiResponseId = Date.now().toString() + "1"
-            const aiResponse = {
-              type: "ai",
-              text: responseMessage.data.bot_response,
-              id: aiResponseId,
-            }
-
-            setResponses((prevResponses) => [...prevResponses, aiResponse])
-
-            if (isCallMode) {
-              setTimeout(() => {
-                speakText(responseMessage.data.bot_response, aiResponseId)
-              }, 1000)
-            }
+          if (isCallMode) {
+            setTimeout(() => {
+              speakText(responseMessage.data.bot_response, aiResponseId)
+            }, 1000)
           }
         }
       } catch (error) {
@@ -358,11 +508,18 @@ export default function DiscussionScreen() {
             type: "ai",
             text:
               selectedLanguage === "FR"
-                ? "Désolé, une erreur s'est produite. Veuillez réessayer."
-                : "Miala tsiny, nisy olana. Andramo indray azafady.",
+                ? "Désolé, une erreur s'est produite."
+                : "Miala tsiny, nisy olana.",
             id: Date.now().toString() + "error",
+            timestamp: new Date()
           },
         ])
+        addToast(
+          selectedLanguage === "FR"
+            ? "Erreur lors de l'envoi de la question"
+            : "Fahadisoana tamin'ny fandefasana fanontaniana",
+          "error"
+        )
       } finally {
         setIsWaitingResponse(false)
       }
@@ -375,30 +532,29 @@ export default function DiscussionScreen() {
     setMenuVisible(false)
 
     try {
-      const userDataString = localStorage.getItem("userData")
+      const token = getCookie("auth_token")
+      if (token) {
+        const response = await axios.get(`${config.apiUrl}/conversation/${conversationId}/details/`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
 
-      if (userDataString) {
-        const userData = JSON.parse(userDataString)
-        const userToken = userData.id
+        const formattedMessages = response.data.messages.map((msg) => ({
+          type: msg.from_user ? "ai" : "user",
+          text: msg.contenu,
+          id: msg.id || Date.now().toString() + Math.random().toString(36).substring(7),
+          timestamp: new Date(msg.created_at)
+        }))
 
-        if (userToken) {
-          const response = await axios.get(`${config.apiUrl}/conversation/${conversationId}/messages/`, {
-            headers: {
-              Authorization: `Bearer ${userToken}`,
-            },
-          })
-
-          const formattedMessages = response.data.map((msg) => ({
-            type: msg.is_bot ? "ai" : "user",
-            text: msg.contenu,
-            id: msg.id || Date.now().toString() + Math.random().toString(36).substring(7),
-          }))
-
-          setResponses(formattedMessages)
-        }
+        setResponses(formattedMessages)
       }
     } catch (error) {
       console.error("Erreur lors de la récupération des messages:", error)
+      addToast(
+        selectedLanguage === "FR"
+          ? "Erreur lors de la récupération des messages"
+          : "Fahadisoana tamin'ny fakana ny hafatra",
+        "error"
+      )
     }
   }
 
@@ -407,11 +563,15 @@ export default function DiscussionScreen() {
     return date.toLocaleDateString(selectedLanguage === "FR" ? "fr-FR" : "mg-MG")
   }
 
+  const formatMessageTime = (timestamp) => {
+    if (!timestamp) return ""
+    const date = new Date(timestamp)
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+  }
+
   const speakText = (text, messageId) => {
     if (isSpeaking) {
-      if ("speechSynthesis" in window) {
-        window.speechSynthesis.cancel()
-      }
+      window.speechSynthesis.cancel()
       if (speakingMessageId === messageId) {
         setIsSpeaking(false)
         setSpeakingMessageId(null)
@@ -436,6 +596,12 @@ export default function DiscussionScreen() {
       utterance.onerror = () => {
         setIsSpeaking(false)
         setSpeakingMessageId(null)
+        addToast(
+          selectedLanguage === "FR"
+            ? "Erreur lors de la lecture du texte"
+            : "Fahadisoana tamin'ny famakiana ny lahatsoratra",
+          "error"
+        )
       }
 
       window.speechSynthesis.speak(utterance)
@@ -449,30 +615,40 @@ export default function DiscussionScreen() {
     }
   }
 
-  const toggleTheme = () => {
+  const toggleThemeHandler = () => {
     const newTheme = theme === "light" ? "dark" : "light"
     setTheme(newTheme)
     localStorage.setItem("theme", newTheme)
     document.documentElement.setAttribute("data-theme", newTheme)
   }
 
+  const handleLogout = () => {
+    localStorage.clear()
+    document.cookie = "auth_token=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;"
+    navigate("/login")
+  }
+
+  const handleSelectPlan = (plan) => {
+    setSelectedPlan(plan)
+    setShowPricing(false)
+  }
+
+  const handleShowPlan = ()=> {
+    navigate("/pricing")
+  }
+
   return (
     <div className="discussion-safe-area">
+      <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
       {menuVisible && <div className="discussion-overlay" onClick={toggleMenu}></div>}
+      {/* {showPricing && <PricingPlans language={selectedLanguage} theme={theme} onClose={() => setShowPricing(false)} onSelectPlan={handleSelectPlan} />} */}
+      {selectedPlan && <PaymentModal plan={selectedPlan} language={selectedLanguage} theme={theme} onClose={() => setSelectedPlan(null)} planDetails={translations[selectedLanguage].plans ? translations[selectedLanguage].plans[selectedPlan] : {}} />}
 
       {menuVisible && (
         <div className="discussion-menu-container">
           <div className="discussion-menu-header">
             <h3 className="discussion-menu-title">
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                style={{ marginRight: "8px" }}
-              >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
               </svg>
               {t("myDiscussions")}
@@ -485,59 +661,61 @@ export default function DiscussionScreen() {
             </button>
           </div>
 
-          <button
-            className="discussion-new-chat-button"
-            onClick={() => {
-              handleCreateDiscussion()
-              toggleMenu()
-            }}
-          >
-            <div className="discussion-new-chat-icon">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="12" y1="5" x2="12" y2="19"></line>
-                <line x1="5" y1="12" x2="19" y2="12"></line>
-              </svg>
-            </div>
-            <span className="discussion-new-chat-text">{t("newDiscussion")}</span>
-          </button>
+          <div className="discussion-menu-content">
+            <button
+              className="discussion-new-chat-button"
+              onClick={() => {
+                handleCreateDiscussion()
+                toggleMenu()
+              }}
+            >
+              <div className="discussion-new-chat-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+              </div>
+              <span className="discussion-new-chat-text">{t("newDiscussion")}</span>
+            </button>
 
-          {isLoading ? (
-            <div className="discussion-loading-container">
-              <div className="discussion-loading-spinner"></div>
-              <p className="discussion-loading-text">{t("loading")}</p>
-            </div>
-          ) : (
-            <div className="discussion-conversations-list">
-              {conversations.map((item) => (
-                <button
-                  key={item.id}
-                  className="discussion-conversation-item"
-                  onClick={() => handleSelectConversation(item.id, item.title)}
-                >
-                  <div className="discussion-conversation-icon">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                    </svg>
-                  </div>
-                  <div className="discussion-conversation-details">
-                    <p className="discussion-conversation-title">{item.title || `Discussion ${item.id}`}</p>
-                    <p className="discussion-conversation-date">{formatDate(item.date)}</p>
-                  </div>
-                  <svg
-                    className="discussion-conversation-arrow"
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
+            {isLoading ? (
+              <div className="discussion-loading-container">
+                <div className="discussion-loading-spinner"></div>
+                <p className="discussion-loading-text">{t("loading")}</p>
+              </div>
+            ) : (
+              <div className="discussion-conversations-list">
+                {conversations.map((item) => (
+                  <button
+                    key={item.id_conversation}
+                    className="discussion-conversation-item"
+                    onClick={() => handleSelectConversation(item.id_conversation, item.titre)}
                   >
-                    <polyline points="9,18 15,12 9,6"></polyline>
-                  </svg>
-                </button>
-              ))}
-            </div>
-          )}
+                    <div className="discussion-conversation-icon">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                      </svg>
+                    </div>
+                    <div className="discussion-conversation-details">
+                      <p className="discussion-conversation-title">{item.titre}</p>
+                      <p className="discussion-conversation-date">{formatDate(item.created_at)}</p>
+                    </div>
+                    <svg
+                      className="discussion-conversation-arrow"
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <polyline points="9,18 15,12 9,6"></polyline>
+                    </svg>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -553,16 +731,8 @@ export default function DiscussionScreen() {
 
           <div className="discussion-title-container">
             <h1 className="discussion-title">
-              <svg
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                style={{ marginRight: "8px" }}
-              >
-                <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7z"></path>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7z"></path>
               </svg>
               {t("title")}
             </h1>
@@ -570,6 +740,12 @@ export default function DiscussionScreen() {
               <div className="discussion-call-indicator">
                 <div className="discussion-call-dot"></div>
                 <span className="discussion-call-duration">{formatCallDuration(callDuration)}</span>
+              </div>
+            )}
+            {!isCallMode && (
+              <div className="discussion-status-indicator">
+                <div className="discussion-online-dot"></div>
+                <span className="discussion-status-text">{t("online")}</span>
               </div>
             )}
           </div>
@@ -600,23 +776,53 @@ export default function DiscussionScreen() {
               </svg>
             </button>
 
-            <button className="discussion-control-btn" onClick={toggleTheme}>
-              {theme === "light" ? "🌙" : "☀️"}
-            </button>
-
             <div className="discussion-language-selector">
               <button
                 className={`discussion-language-button ${selectedLanguage === "FR" ? "active" : ""}`}
-                onClick={toggleLanguage}
+                onClick={() => setSelectedLanguage("FR")}
               >
                 FR
               </button>
               <button
                 className={`discussion-language-button ${selectedLanguage === "MG" ? "active" : ""}`}
-                onClick={toggleLanguage}
+                onClick={() => setSelectedLanguage("MG")}
               >
                 MG
               </button>
+            </div>
+
+            <div className="discussion-header-profile">
+              <button className="discussion-profile-btn" onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
+                <div className="discussion-header-profile-avatar">
+                  {profile.profile_url ? (
+                    <img
+                      src={profile.profile_url}
+                      alt="Profile"
+                      className="discussion-profile-image"
+                      onError={() => setProfile((prev) => ({ ...prev, profile_url: null }))}
+                    />
+                  ) : (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                  )}
+                </div>
+                <div className="discussion-profile-active-dot"></div>
+              </button>
+              {isDropdownOpen && (
+                <div className="discussion-profile-dropdown">
+                  <button onClick={toggleThemeHandler}>
+                    {theme === "light" ? "🌙 Mode sombre" : "☀️ Mode clair"}
+                  </button>
+                  <button onClick={handleShowPlan}>
+                    {t("subscriptions")}
+                  </button>
+                  <button onClick={handleLogout}>
+                    {t("logout")}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -639,8 +845,17 @@ export default function DiscussionScreen() {
                   ))}
                 </div>
               </div>
-              <h3 className="discussion-call-title">{t("title")} Assistant</h3>
+              <h3 className="discussion-call-title">{t("aiAssistant")}</h3>
               <p className="discussion-call-status">{isRecording ? `🎤 ${t("speaking")}` : `👂 ${t("listening")}`}</p>
+            </div>
+            <div className="discussion-call-input-container">
+              <textarea
+                className="discussion-call-input"
+                placeholder={t("callInputPlaceholder")}
+                value={callQuestion}
+                readOnly
+                rows="1"
+              />
             </div>
           </div>
         )}
@@ -651,7 +866,7 @@ export default function DiscussionScreen() {
               <div className="discussion-welcome-icon">
                 <div className="discussion-welcome-avatar">
                   <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7z"></path>
+                    <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7z"></path>
                   </svg>
                 </div>
                 <div className="discussion-welcome-pulse"></div>
@@ -670,38 +885,34 @@ export default function DiscussionScreen() {
                 >
                   {item.type === "user" ? (
                     <div className="discussion-user-message-content">
-                      <div className="discussion-message-avatar user">
-                        <svg
-                          width="16"
-                          height="16"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                        >
-                          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                          <circle cx="12" cy="7" r="4"></circle>
-                        </svg>
-                      </div>
                       <div className="discussion-message-bubble user">
                         <p className="discussion-message-text">{item.text}</p>
-                        <span className="discussion-message-time">
-                          {new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                        </span>
+                      </div>
+                      <div className="discussion-message-avatar user">
+                        {profile.profile_url ? (
+                          <img
+                            src={profile.profile_url}
+                            alt="User profile"
+                            className="discussion-profile-image"
+                            onError={() => setProfile((prev) => ({ ...prev, profile_url: null }))}
+                          />
+                        ) : (
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                          </svg>
+                        )}
                       </div>
                     </div>
                   ) : (
                     <div className="discussion-ai-message-content">
                       <div className="discussion-message-avatar ai">
-                        <svg
-                          width="16"
-                          height="16"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                        >
-                          <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7z"></path>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <rect x="3" y="11" width="18" height="10" rx="2" ry="2"></rect>
+                          <circle cx="12" cy="5" r="2"></circle>
+                          <path d="M12 7v4"></path>
+                          <line x1="8" y1="16" x2="8" y2="16"></line>
+                          <line x1="16" y1="16" x2="16" y2="16"></line>
                         </svg>
                       </div>
                       <div className="discussion-message-bubble ai">
@@ -713,44 +924,38 @@ export default function DiscussionScreen() {
                             title={speakingMessageId === item.id ? t("stopReading") : t("readMessage")}
                           >
                             {speakingMessageId === item.id ? (
-                              <svg
-                                width="16"
-                                height="16"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                              >
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <rect x="6" y="4" width="4" height="16"></rect>
                                 <rect x="14" y="4" width="4" height="16"></rect>
                               </svg>
                             ) : (
-                              <svg
-                                width="16"
-                                height="16"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                              >
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <polygon points="11,5 6,9 2,9 2,15 6,15 11,19"></polygon>
                                 <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
                               </svg>
                             )}
                           </button>
-                          <span className="discussion-message-time">
-                            {new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                          </span>
                         </div>
                       </div>
                     </div>
                   )}
+                  <div className="discussion-message-timestamp">
+                    {formatMessageTime(item.timestamp)}
+                  </div>
                 </div>
               ))}
 
               {isWaitingResponse && (
                 <div className="discussion-loading-response-container">
-                  <div className="discussion-message-avatar ai">🩺</div>
+                  <div className="discussion-message-avatar ai">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="3" y="11" width="18" height="10" rx="2" ry="2"></rect>
+                      <circle cx="12" cy="5" r="2"></circle>
+                      <path d="M12 7v4"></path>
+                      <line x1="8" y1="16" x2="8" y2="16"></line>
+                      <line x1="16" y1="16" x2="16" y2="16"></line>
+                    </svg>
+                  </div>
                   <div className="discussion-typing-indicator">
                     <div className="discussion-typing-dots">
                       <div className="discussion-typing-dot"></div>
@@ -779,44 +984,24 @@ export default function DiscussionScreen() {
             )}
 
             <div className="discussion-voice-controls">
-              {isProcessingAudio ? (
-                <div className="discussion-processing-audio">
-                  <div className="discussion-processing-spinner"></div>
-                  <span className="discussion-processing-text">{t("processing")}</span>
-                </div>
-              ) : (
-                <button
-                  className={`discussion-mic-button ${isRecording ? "recording" : ""} ${isCallMode ? "call-mode" : ""}`}
-                  onClick={isRecording ? stopRecording : startRecording}
-                  title={isRecording ? t("stopRecording") : t("startRecording")}
-                >
-                  <div className="discussion-mic-icon">
-                    {isRecording ? (
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <rect x="6" y="6" width="12" height="12" rx="2"></rect>
-                      </svg>
-                    ) : (
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-                        <line x1="12" y1="19" x2="12" y2="23"></line>
-                        <line x1="8" y1="23" x2="16" y2="23"></line>
-                      </svg>
-                    )}
-                  </div>
-
-                  {isRecording && (
-                    <div className="discussion-recording-animation">
-                      <div className="discussion-recording-pulse"></div>
-                      <div className="discussion-recording-wave">
-                        {[...Array(3)].map((_, i) => (
-                          <div key={i} className="discussion-wave-bar" style={{ animationDelay: `${i * 0.1}s` }}></div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </button>
-              )}
+              <button
+                className={`discussion-mic-button ${isRecording ? "recording" : ""}`}
+                onClick={isRecording ? stopRecording : startRecording}
+                title={isRecording ? t("stopRecording") : t("startRecording")}
+              >
+                {isRecording ? (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="6" y="6" width="12" height="12" rx="2"></rect>
+                  </svg>
+                ) : (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                    <line x1="12" y1="19" x2="12" y2="23"></line>
+                    <line x1="8" y1="23" x2="16" y2="23"></line>
+                  </svg>
+                )}
+              </button>
             </div>
 
             {!isCallMode && (

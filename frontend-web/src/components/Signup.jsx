@@ -4,6 +4,8 @@ import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import axios from "axios"
 import config from "../config"
+import { useToast } from "../hooks/useToast"
+import ToastContainer from "./ToastContainer"
 import "./Signup.css"
 
 const Signup = () => {
@@ -19,6 +21,7 @@ const Signup = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [language, setLanguage] = useState("fr")
   const [theme, setTheme] = useState("light")
+  const { toasts, success, error, removeToast } = useToast()
 
   useEffect(() => {
     const savedLanguage = localStorage.getItem("language") || "fr"
@@ -26,6 +29,12 @@ const Signup = () => {
     setLanguage(savedLanguage)
     setTheme(savedTheme)
     document.documentElement.setAttribute("data-theme", savedTheme)
+
+    // Animation flip d'entrée
+    document.body.classList.add("auth-flip-enter")
+    setTimeout(() => {
+      document.body.classList.remove("auth-flip-enter")
+    }, 800)
   }, [])
 
   const toggleLanguage = () => {
@@ -49,13 +58,14 @@ const Signup = () => {
       email: "Adresse Email",
       password: "Mot de passe",
       phone: "Numéro de téléphone",
-      acceptTerms: "J'accepte les conditions et les politiques",
+      acceptTerms: "J'accepte les ",
+      termsLink: "conditions et politiques",
       signup: "Inscription",
       haveAccount: "J'ai déjà un compte",
       signIn: "Se connecter",
       acceptTermsError: "Veuillez accepter les conditions et les politiques.",
       fillFields: "Veuillez remplir tous les champs.",
-      signupSuccess: "Inscription réussie !",
+      signupSuccess: "Inscription réussie ! Redirection vers la connexion...",
       unexpectedError: "Une erreur inattendue est survenue.",
       signupError: "Erreur lors de l'inscription.",
     },
@@ -66,13 +76,14 @@ const Signup = () => {
       email: "Adiresy Email",
       password: "Teny miafina",
       phone: "Nomeraon-telefaona",
-      acceptTerms: "Ekeko ny fepetra sy ny politika",
+      acceptTerms: "Ekeko ny ",
+      termsLink: "fepetra sy politika",
       signup: "Hisoratra anarana",
       haveAccount: "Efa manana kaonty aho",
       signIn: "Hiditra",
       acceptTermsError: "Ekeo ny fepetra sy ny politika azafady.",
       fillFields: "Fenoy ny saha rehetra azafady.",
-      signupSuccess: "Fisoratana anarana nahomby!",
+      signupSuccess: "Fisoratana anarana nahomby ! Mandehana any amin'ny fidirana...",
       unexpectedError: "Nisy olana tsy nampoizina.",
       signupError: "Nisy olana tamin'ny fisoratana anarana.",
     },
@@ -80,14 +91,21 @@ const Signup = () => {
 
   const t = (key) => translations[language][key] || key
 
+  const handleLogin = () => {
+    document.body.classList.add("auth-flip-exit")
+    setTimeout(() => {
+      navigate("/login")
+    }, 400)
+  }
+
   const handleSignup = async () => {
     if (!isChecked) {
-      alert(t("acceptTermsError"))
+      error(t("acceptTermsError"))
       return
     }
 
     if (!username.trim() || !email.trim() || !password.trim() || !genre.trim()) {
-      alert(t("fillFields"))
+      error(t("fillFields"))
       return
     }
 
@@ -104,21 +122,43 @@ const Signup = () => {
       })
 
       if (response.status === 201) {
-        alert(t("signupSuccess"))
-        navigate("/login")
-      } else {
-        alert(t("unexpectedError"))
-      }
-    } catch (error) {
-      console.error(error)
-      alert(t("signupError"))
-    }
+        // Store token in cookie
+        const token = response.data.access;
+        const expires = isChecked ? 7 : 1; // 7 days if "accept terms" is checked, else 1 day
+        const date = new Date();
+        date.setTime(date.getTime() + (expires * 24 * 60 * 60 * 1000));
+        document.cookie = `auth_token=${token};expires=${date.toUTCString()};path=/;SameSite=Strict`;
 
-    setIsLoading(false)
+        localStorage.setItem(
+          "userData",
+          JSON.stringify({
+            id: token,
+          }),
+        )
+
+        success(t("signupSuccess"))
+
+        setTimeout(() => {
+          document.body.classList.add("auth-flip-exit")
+          setTimeout(() => {
+            navigate("/login")
+          }, 400)
+        }, 2000)
+      } else {
+        error(t("unexpectedError"))
+      }
+    } catch (err) {
+      console.error(err)
+      error(t("signupError"))
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
     <div className="signup-container">
+      <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
+
       <div className="signup-content">
         <div className="signup-header-controls">
           <button className="signup-control-btn" onClick={toggleLanguage}>
@@ -225,7 +265,10 @@ const Signup = () => {
             onChange={(e) => setIsChecked(e.target.checked)}
             className="signup-checkbox"
           />
-          <label htmlFor="terms">{t("acceptTerms")}</label>
+          <label htmlFor="terms">
+            {t("acceptTerms")}
+            <a href="/privacy-policy" className="signup-terms-link">{t("termsLink")}</a>
+          </label>
         </div>
 
         <button
@@ -238,7 +281,7 @@ const Signup = () => {
 
         <div className="signup-login-container">
           <span className="signup-login-text">{t("haveAccount")}</span>
-          <button className="signup-login-link" onClick={() => navigate("/login")}>
+          <button className="signup-login-link" onClick={handleLogin}>
             {t("signIn")}
           </button>
         </div>
