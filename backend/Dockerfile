@@ -6,11 +6,12 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-COPY . .
+COPY backend .
 
-RUN pip install --no-cache-dir -r backend/requirements.txt
+RUN ls
 
-RUN ls backend
+RUN pip install --no-cache-dir -r requirements.txt
+
 
 EXPOSE 8569
 
