@@ -108,7 +108,7 @@ export default function DiscussionScreen() {
       recognitionRef.current = new SpeechRecognition();
       recognitionRef.current.continuous = true;
       recognitionRef.current.interimResults = true;
-      recognitionRef.current.lang = sdelecteLanguage === "FR" ? "fr-FR" : "mg-MG";
+      recognitionRef.current.lang = selectedLanguage === "FR" ? "fr-FR" : "mg-MG";
       recognitionRef.current.onresult = (event) => {
         // Ne pas traiter la reconnaissance vocale si l'IA est en train de parler
         if (isAISpeaking) {
