@@ -83,7 +83,7 @@ DATABASES = {
         'NAME': os.getenv('DATABASE_NAME'),
         'USER': os.getenv('DATABASE_USER'),
         'PASSWORD': os.getenv('DATABASE_PASSWORD'),
-        'HOST': 'localhost',
+        'HOST': os.getenv("DOCKER_HOST"),
         'PORT': os.getenv('DATABASE_PORT'),
         'OPTIONS':{
         	'charset': 'utf8mb4'
