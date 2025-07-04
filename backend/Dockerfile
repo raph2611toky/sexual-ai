@@ -8,7 +8,7 @@ WORKDIR /app
 
 COPY backend .
 
-RUN ls
+RUN tree media
 
 RUN pip install --no-cache-dir -r requirements.txt
 

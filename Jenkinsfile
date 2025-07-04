@@ -76,7 +76,7 @@ pipeline {
                         docker run -d --name sexualai-backend \
                             --env-file .env.build \
                             --network sexualai-network \
-                            -v \$WORKSPACE/media:/app/media \
+                            -v \$WORKSPACE/backend/media:/app/media \
                             -p 127.0.0.1:${BACKEND_PORT}:8569 \
                             ${BACKEND_DOCKER_IMAGE}:${DOCKER_TAG} \
                             /bin/bash -c '

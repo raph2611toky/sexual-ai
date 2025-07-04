@@ -36,7 +36,7 @@ export default function DiscussionScreen() {
   const [showPricing, setShowPricing] = useState(false)
   const [selectedPlan, setSelectedPlan] = useState(null)
   const [toasts, setToasts] = useState([])
-  const [isAISpeaking, setIsAISpeaking] = useState(false) // Nouveau state pour savoir si l'IA parle
+  const [isAISpeaking, setIsAISpeaking] = useState(false)
 
   const chatContainerRef = useRef()
   const mediaRecorderRef = useRef()
@@ -210,7 +210,7 @@ export default function DiscussionScreen() {
       if (audioLevel < 0.1) {
         if (!silenceStart) {
           setSilenceStart(Date.now());
-        } else if (Date.now() - silenceStart >= 2000) {
+        } else if (Date.now() - silenceStart >= 3000) {
           handleAskQuestion(callQuestion);
           setCallQuestion("");
           setSilenceStart(null);
