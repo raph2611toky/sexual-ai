@@ -34,7 +34,7 @@ pipeline {
             when {
                 anyOf {
                     branch 'backend'
-                    branch 'web'
+                    branch 'frontend'
                 }
             }
             steps {
