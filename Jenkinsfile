@@ -85,6 +85,7 @@ pipeline {
                                 python manage.py makemigrations && \
                                 python manage.py migrate && \
                                 python manage.py collectstatic --noinput && \
+                                python manage.py seed_symptom && \
                                 exec gunicorn --bind 0.0.0.0:8569 config.wsgi:application
                             '
                     """
