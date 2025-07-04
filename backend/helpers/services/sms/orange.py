@@ -1,6 +1,5 @@
 from apps.users.models import SmsOrangeToken
 import os, base64, urllib, json
-from datetime import timedelta, datetime
 import http.client
 
 def getAuthToken():

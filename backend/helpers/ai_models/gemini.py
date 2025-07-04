@@ -1,7 +1,7 @@
 from openai import OpenAI
 from dotenv import load_dotenv
 import os
-import asyncio, traceback
+import traceback
 from helpers.services.google.traduction import traduire_texte
 
 load_dotenv()

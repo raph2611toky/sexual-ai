@@ -1,5 +1,5 @@
 from twilio.rest import Client
-import argparse, os
+import os
 from dotenv import load_dotenv
 
 load_dotenv()
