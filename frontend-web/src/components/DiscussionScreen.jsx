@@ -108,7 +108,7 @@ export default function DiscussionScreen() {
       recognitionRef.current = new SpeechRecognition();
       recognitionRef.current.continuous = true;
       recognitionRef.current.interimResults = true;
-      recognitionRef.current.lang = selectedLanguage === "FR" ? "fr-FR" : "mg-MG";
+      recognitionRef.current.lang = sdelecteLanguage === "FR" ? "fr-FR" : "mg-MG";
       recognitionRef.current.onresult = (event) => {
         // Ne pas traiter la reconnaissance vocale si l'IA est en train de parler
         if (isAISpeaking) {
@@ -210,7 +210,7 @@ export default function DiscussionScreen() {
       if (audioLevel < 0.1) {
         if (!silenceStart) {
           setSilenceStart(Date.now());
-        } else if (Date.now() - silenceStart >= 3000) {
+        } else if (Date.now() - silenceStart >= 2000) {
           handleAskQuestion(callQuestion);
           setCallQuestion("");
           setSilenceStart(null);
@@ -321,9 +321,9 @@ export default function DiscussionScreen() {
     setIsCallMode((prev) => {
       const newCallMode = !prev;
       if (newCallMode) {
-        startRecording();
+        startCallMode();
       } else {
-        stopRecording();
+        stopCallMode();
       }
       console.log(`Switching call mode to ${newCallMode}`);
       console.log(`is recording ${isRecording}`);
@@ -367,10 +367,7 @@ export default function DiscussionScreen() {
       audioContextRef.current.close()
     }
     setAudioLevel(0)
-    if (recognitionRef.current && isRecording) {
-      recognitionRef.current.stop()
-      setIsRecording(false)
-    }
+    stopRecording()
     setCallQuestion("")
     setIsAISpeaking(false)
   }
@@ -830,18 +827,17 @@ export default function DiscussionScreen() {
             </button>
 
             <div className="discussion-language-selector">
-              <button
-                className={`discussion-language-button ${selectedLanguage === "FR" ? "active" : ""}`}
-                onClick={() => setSelectedLanguage("FR")}
-              >
-                FR
-              </button>
-              <button
+              {selectedLanguage === "FR" ? (<button
                 className={`discussion-language-button ${selectedLanguage === "MG" ? "active" : ""}`}
                 onClick={() => setSelectedLanguage("MG")}
               >
                 MG
-              </button>
+              </button>) : (<button
+                className={`discussion-language-button ${selectedLanguage === "FR" ? "active" : ""}`}
+                onClick={() => setSelectedLanguage("FR")}
+              >
+                FR
+              </button>)}
             </div>
 
             <div className="discussion-header-profile">

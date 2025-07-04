@@ -36,13 +36,6 @@ const CycleManagementScreen = () => {
     setTheme(savedTheme)
     document.documentElement.setAttribute("data-theme", savedTheme)
 
-    // Check if user is authenticated
-    const token = getCookie('auth_token');
-    if (!token) {
-      navigate('/login');
-      return;
-    }
-
     loadSymptoms()
   }, [navigate])
 
