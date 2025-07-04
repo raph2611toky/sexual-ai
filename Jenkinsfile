@@ -50,7 +50,7 @@ pipeline {
                 branch 'backend'
             }
             steps {
-                sh "docker build --build-arg BRANCH_NAME=${env.BRANCH_NAME} -t ${BACKEND_DOCKER_IMAGE}:${DOCKER_TAG} -f Dockerfile.backend ."
+                sh "docker build --build-arg BRANCH_NAME=${env.BRANCH_NAME} -t ${BACKEND_DOCKER_IMAGE}:${DOCKER_TAG} -f backend/Dockerfile ."
             }
         }
 
@@ -59,7 +59,7 @@ pipeline {
                 branch 'frontend'
             }
             steps {
-                sh "docker build --build-arg BRANCH_NAME=${env.BRANCH_NAME} -t ${FRONTEND_DOCKER_IMAGE}:${DOCKER_TAG} -f Dockerfile.frontend ."
+                sh "docker build --build-arg BRANCH_NAME=${env.BRANCH_NAME} -t ${FRONTEND_DOCKER_IMAGE}:${DOCKER_TAG} -f frontend/Dockerfile ."
             }
         }
 
