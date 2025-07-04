@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import axios from "axios"
 import config from "../config"
-import PricingPlans from "./PricingPlans"
+import Donation from "./Donation"
 import PaymentModal from "./PaymentModal"
 import ToastContainer from "./ToastContainer"
 import "./DiscussionScreen.css"
@@ -250,7 +250,7 @@ export default function DiscussionScreen() {
       callActive: "Appel en cours",
       aiAssistant: "Assistant IA",
       settings: "Paramètres",
-      subscriptions: "Abonnements",
+      donation: "Abonnements",
       logout: "Déconnexion",
       micError: "Impossible d'accéder au microphone",
       transcriptionError: "Erreur lors de la transcription audio",
@@ -280,7 +280,7 @@ export default function DiscussionScreen() {
       callActive: "Misy antso",
       aiAssistant: "Mpanampy IA",
       settings: "Fandrindrana",
-      subscriptions: "Famandrihana",
+      donation: "Famandrihana",
       logout: "Mivoaka",
       micError: "Tsy afaka miditra amin'ny mikrô",
       transcriptionError: "Fahadisoana tamin'ny fandikana feo",
@@ -869,7 +869,7 @@ export default function DiscussionScreen() {
                     {theme === "light" ? "🌙 Mode sombre" : "☀️ Mode clair"}
                   </button>
                   <button onClick={handleShowPlan}>
-                    {t("subscriptions")}
+                    {t("donation")}
                   </button>
                   <button onClick={handleLogout}>
                     {t("logout")}

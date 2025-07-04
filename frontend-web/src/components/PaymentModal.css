@@ -372,8 +372,8 @@
 }
 
 .payment-card-icons img {
-  width: 32px;
-  height: 20px;
+  width: 60px;
+  height: 50px;
   object-fit: contain;
   border-radius: var(--radius-sm, 4px);
   box-shadow: var(--shadow-sm);

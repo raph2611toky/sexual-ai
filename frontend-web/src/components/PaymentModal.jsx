@@ -25,8 +25,8 @@ const PaymentModal = ({ plan, language = "FR", theme = "light", onClose, planDet
 
   const translations = {
     FR: {
-      title: "Finaliser votre abonnement",
-      planSelected: "Plan sélectionné",
+      title: plan === 'donation' ? "Finaliser votre don" : "Finaliser votre abonnement",
+      planSelected: plan === 'donation' ? "Don sélectionné" : "Plan sélectionné",
       billingCycle: "Cycle de facturation",
       monthly: "Mensuel",
       yearly: "Annuel (20% de réduction)",
@@ -45,9 +45,9 @@ const PaymentModal = ({ plan, language = "FR", theme = "light", onClose, planDet
       country: "Pays",
       total: "Total",
       processing: "Traitement en cours...",
-      payNow: "Payer maintenant",
+      payNow: plan === 'donation' ? "Faire le don" : "Payer maintenant",
       securePayment: "Paiement sécurisé SSL",
-      moneyBackGuarantee: "Garantie satisfait ou remboursé 30 jours",
+      moneyBackGuarantee: plan === 'donation' ? "Don sécurisé et transparent" : "Garantie satisfait ou remboursé 30 jours",
       operators: {
         orange: "Orange Money",
         mvola: "MVola",
@@ -60,8 +60,8 @@ const PaymentModal = ({ plan, language = "FR", theme = "light", onClose, planDet
       }
     },
     MG: {
-      title: "Famaranana ny famandrihana",
-      planSelected: "Drafitra voafidy",
+      title: plan === 'donation' ? "Famaranana ny fanomezana" : "Famaranana ny famandrihana",
+      planSelected: plan === 'donation' ? "Fanomezana voafidy" : "Drafitra voafidy",
       billingCycle: "Fomba fandoavam-bola",
       monthly: "Isam-bolana",
       yearly: "Isan-taona (fihenam-bidy 20%)",
@@ -80,9 +80,9 @@ const PaymentModal = ({ plan, language = "FR", theme = "light", onClose, planDet
       country: "Firenena",
       total: "Totalin'ny vidiny",
       processing: "Miasa...",
-      payNow: "Mandoa izao",
+      payNow: plan === 'donation' ? "Manome" : "Mandoa izao",
       securePayment: "Fandoavam-bola azo antoka SSL",
-      moneyBackGuarantee: "Antoka famerenana vola 30 andro",
+      moneyBackGuarantee: plan === 'donation' ? "Fanomezana azo antoka" : "Antoka famerenana vola 30 andro",
       operators: {
         orange: "Orange Money",
         mvola: "MVola", 
@@ -100,6 +100,9 @@ const PaymentModal = ({ plan, language = "FR", theme = "light", onClose, planDet
 
   const calculatePrice = () => {
     const basePrice = parseFloat(planDetails.price)
+    if (plan === 'donation') {
+      return basePrice.toFixed(2)
+    }
     return billingCycle === "yearly" ? (basePrice * 12 * 0.8).toFixed(2) : basePrice.toFixed(2)
   }
 
@@ -117,7 +120,10 @@ const PaymentModal = ({ plan, language = "FR", theme = "light", onClose, planDet
     // Simulate payment processing
     setTimeout(() => {
       setIsProcessing(false)
-      alert(language === 'FR' ? 'Paiement réussi!' : 'Fandoavam-bola nahomby!')
+      const successMessage = plan === 'donation' 
+        ? (language === 'FR' ? 'Don effectué avec succès! Merci pour votre générosité!' : 'Fanomezana nahomby! Misaotra!')
+        : (language === 'FR' ? 'Paiement réussi!' : 'Fandoavam-bola nahomby!')
+      alert(successMessage)
       onClose()
     }, 3000)
   }
@@ -144,57 +150,62 @@ const PaymentModal = ({ plan, language = "FR", theme = "light", onClose, planDet
               <h3>{t.planSelected}</h3>
               <div className="payment-plan-info">
                 <div className="payment-plan-name">
+                  {plan === 'donation' && '❤️'} 
                   {plan === 'premium' && '⭐'} 
                   {plan === 'pro' && '👑'}
                   {planDetails.name}
                 </div>
                 <div className="payment-plan-price">
                   ${calculatePrice()}
-                  <span>/{billingCycle === 'monthly' ? t.monthly.toLowerCase() : (language === 'FR' ? 'an' : 'taona')}</span>
+                  {plan !== 'donation' && (
+                    <span>/{billingCycle === 'monthly' ? t.monthly.toLowerCase() : (language === 'FR' ? 'an' : 'taona')}</span>
+                  )}
                 </div>
               </div>
             </div>
 
-            {/* Billing Cycle */}
-            <div className="payment-section">
-              <h3>{t.billingCycle}</h3>
-              <div className="payment-billing-options">
-                <label className={`payment-billing-option ${billingCycle === 'monthly' ? 'active' : ''}`}>
-                  <input 
-                    type="radio" 
-                    name="billing" 
-                    value="monthly"
-                    checked={billingCycle === 'monthly'}
-                    onChange={(e) => setBillingCycle(e.target.value)}
-                  />
-                  <span className="payment-radio-custom"></span>
-                  <div className="payment-billing-info">
-                    <div className="payment-billing-name">{t.monthly}</div>
-                    <div className="payment-billing-price">${planDetails.price}/mois</div>
-                  </div>
-                </label>
-                
-                <label className={`payment-billing-option ${billingCycle === 'yearly' ? 'active' : ''}`}>
-                  <input 
-                    type="radio" 
-                    name="billing" 
-                    value="yearly"
-                    checked={billingCycle === 'yearly'}
-                    onChange={(e) => setBillingCycle(e.target.value)}
-                  />
-                  <span className="payment-radio-custom"></span>
-                  <div className="payment-billing-info">
-                    <div className="payment-billing-name">
-                      {t.yearly}
-                      <span className="payment-save-badge">-20%</span>
+            {/* Billing Cycle - Only show for non-donation plans */}
+            {plan !== 'donation' && (
+              <div className="payment-section">
+                <h3>{t.billingCycle}</h3>
+                <div className="payment-billing-options">
+                  <label className={`payment-billing-option ${billingCycle === 'monthly' ? 'active' : ''}`}>
+                    <input 
+                      type="radio" 
+                      name="billing" 
+                      value="monthly"
+                      checked={billingCycle === 'monthly'}
+                      onChange={(e) => setBillingCycle(e.target.value)}
+                    />
+                    <span className="payment-radio-custom"></span>
+                    <div className="payment-billing-info">
+                      <div className="payment-billing-name">{t.monthly}</div>
+                      <div className="payment-billing-price">${planDetails.price}/mois</div>
                     </div>
-                    <div className="payment-billing-price">
-                      ${(parseFloat(planDetails.price) * 12 * 0.8).toFixed(2)}/{language === 'FR' ? 'an' : 'taona'}
+                  </label>
+                  
+                  <label className={`payment-billing-option ${billingCycle === 'yearly' ? 'active' : ''}`}>
+                    <input 
+                      type="radio" 
+                      name="billing" 
+                      value="yearly"
+                      checked={billingCycle === 'yearly'}
+                      onChange={(e) => setBillingCycle(e.target.value)}
+                    />
+                    <span className="payment-radio-custom"></span>
+                    <div className="payment-billing-info">
+                      <div className="payment-billing-name">
+                        {t.yearly}
+                        <span className="payment-save-badge">-20%</span>
+                      </div>
+                      <div className="payment-billing-price">
+                        ${(parseFloat(planDetails.price) * 12 * 0.8).toFixed(2)}/{language === 'FR' ? 'an' : 'taona'}
+                      </div>
                     </div>
-                  </div>
-                </label>
+                  </label>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Payment Method */}
             <div className="payment-section">
@@ -288,9 +299,9 @@ const PaymentModal = ({ plan, language = "FR", theme = "light", onClose, planDet
                       required 
                     />
                     <div className="payment-card-icons">
-                      <img src="/visa-icon.svg" alt="Visa" />
-                      <img src="/mastercard-icon.svg" alt="Mastercard" />
-                      <img src="/paypal-icon.svg" alt="PayPal" />
+                      <img src="visa.png" alt="Visa" />
+                      <img src="mastercard.png" alt="Mastercard" />
+                      <img src="paypal.png" alt="PayPal" />
                     </div>
                   </div>
                   
@@ -358,10 +369,10 @@ const PaymentModal = ({ plan, language = "FR", theme = "light", onClose, planDet
               {/* Order Summary */}
               <div className="payment-order-summary">
                 <div className="payment-summary-row">
-                  <span>Plan {planDetails.name}</span>
+                  <span>{plan === 'donation' ? 'Don' : `Plan ${planDetails.name}`}</span>
                   <span>${planDetails.price}</span>
                 </div>
-                {billingCycle === 'yearly' && (
+                {plan !== 'donation' && billingCycle === 'yearly' && (
                   <div className="payment-summary-row discount">
                     <span>Réduction annuelle (-20%)</span>
                     <span>-${(parseFloat(planDetails.price) * 12 * 0.2).toFixed(2)}</span>
@@ -377,7 +388,8 @@ const PaymentModal = ({ plan, language = "FR", theme = "light", onClose, planDet
               <button 
                 type="submit" 
                 className="payment-submit-btn"
-                disabled={isProcessing}
+                // disabled={isProcessing}
+                disabled={true}
               >
                 {isProcessing ? (
                   <>
@@ -387,9 +399,15 @@ const PaymentModal = ({ plan, language = "FR", theme = "light", onClose, planDet
                 ) : (
                   <>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                      <circle cx="12" cy="16" r="1"></circle>
-                      <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                      {plan === 'donation' ? (
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                      ) : (
+                        <>
+                          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                          <circle cx="12" cy="16" r="1"></circle>
+                          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                        </>
+                      )}
                     </svg>
                     {t.payNow} ${calculatePrice()}
                   </>

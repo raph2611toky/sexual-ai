@@ -6,7 +6,7 @@ import Signup from "./components/Signup"
 import DiscussionScreen from "./components/DiscussionScreen"
 import CycleManagementScreen from "./components/CycleManagementScreen"
 import PrivacyPolicy from "./components/PrivacyPolicy"
-import PricingPlans from "./components/PricingPlans"
+import Donation from "./components/Donation"
 import NotFound from "./components/NotFound"
 
 import "./App.css"
@@ -36,7 +36,7 @@ function App() {
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/pricing" element={
               <PrivateRoute>
-                <PricingPlans />
+                <Donation />
               </PrivateRoute>
             } />
           <Route
