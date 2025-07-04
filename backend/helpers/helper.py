@@ -3,9 +3,7 @@ from datetime import timedelta, datetime
 from django.utils import timezone as django_timezone
 
 import os
-import requests
-import pyttsx3
-import json, random
+import random
 from helpers.constantes import *
 load_dotenv()
 
