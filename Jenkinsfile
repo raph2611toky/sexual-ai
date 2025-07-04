@@ -40,7 +40,7 @@ pipeline {
             steps {
                 sh '''
                     [ -f .env.build ] && rm .env.build
-                    cp .env .env.build
+                    cp backend/.env .env.build
                 '''
             }
         }
