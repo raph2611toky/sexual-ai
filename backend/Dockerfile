@@ -10,6 +10,7 @@ COPY . .
 
 RUN pip install --no-cache-dir -r backend/requirements.txt
 
+RUN ls backend
 
 EXPOSE 8569
 

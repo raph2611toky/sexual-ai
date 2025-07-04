@@ -80,6 +80,8 @@ pipeline {
                             -p 127.0.0.1:${BACKEND_PORT}:8569 \
                             ${BACKEND_DOCKER_IMAGE}:${DOCKER_TAG} \
                             /bin/bash -c '
+                                ls
+                                pwd
                                 python manage.py makemigrations && \
                                 python manage.py migrate && \
                                 python manage.py collectstatic --noinput && \
