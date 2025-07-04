@@ -59,7 +59,7 @@ pipeline {
                 branch 'frontend'
             }
             steps {
-                sh "docker build --build-arg BRANCH_NAME=${env.BRANCH_NAME} -t ${FRONTEND_DOCKER_IMAGE}:${DOCKER_TAG} -f frontend/Dockerfile ."
+                sh "docker build --build-arg BRANCH_NAME=${env.BRANCH_NAME} -t ${FRONTEND_DOCKER_IMAGE}:${DOCKER_TAG} -f frontend-web/Dockerfile ."
             }
         }
 

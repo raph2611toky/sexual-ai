@@ -4,6 +4,8 @@ WORKDIR /app
 
 COPY frontend-web .
 
+RUN ls
+
 RUN npm install
 RUN npm run build
 
