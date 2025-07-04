@@ -6,8 +6,8 @@ pipeline {
         FRONTEND_DOCKER_IMAGE = "sexualai_frontend"
         DOCKER_TAG = "latest"
         ENV_FILE = ".env"
-        BACKEND_PORT = "8000"
-        FRONTEND_PORT = "8080"
+        BACKEND_PORT = "8569"
+        FRONTEND_PORT = "8568"
     }
 
     triggers {
@@ -77,13 +77,13 @@ pipeline {
                             --env-file .env.build \
                             --network sexualai-network \
                             -v \$WORKSPACE/media:/app/media \
-                            -p 127.0.0.1:${BACKEND_PORT}:8000 \
+                            -p 127.0.0.1:${BACKEND_PORT}:8569 \
                             ${BACKEND_DOCKER_IMAGE}:${DOCKER_TAG} \
                             /bin/bash -c '
                                 python manage.py makemigrations && \
                                 python manage.py migrate && \
                                 python manage.py collectstatic --noinput && \
-                                exec gunicorn --bind 0.0.0.0:8000 config.wsgi:application
+                                exec gunicorn --bind 0.0.0.0:8569 config.wsgi:application
                             '
                     """
                     sh "sleep 10 && curl -f http://127.0.0.1:${BACKEND_PORT}/ || echo '⚠️ Le backend ne répond pas encore...'"
