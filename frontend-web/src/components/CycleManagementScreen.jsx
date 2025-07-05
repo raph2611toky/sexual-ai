@@ -450,8 +450,8 @@ const CycleManagementScreen = () => {
                   {physicalSymptoms.map((symptom) => (
                     <button
                       key={symptom.id_symptom}
-                      className={`cycle-symptom-btn modern ${selectedSymptoms.includes(symptom.id) ? "selected" : ""}`}
-                      onClick={() => toggleSymptom(symptom.id)}
+                      className={`cycle-symptom-btn modern ${selectedSymptoms.includes(symptom.id_symptom) ? "selected" : ""}`}
+                      onClick={() => toggleSymptom(symptom.id_symptom)}
                     >
                       <div className="cycle-symptom-icon">{symptom.icon || "💊"}</div>
                       <span className="cycle-symptom-text">
@@ -482,8 +482,8 @@ const CycleManagementScreen = () => {
                   {emotionalSymptoms.map((symptom) => (
                     <button
                       key={symptom.id_symptom}
-                      className={`cycle-symptom-btn modern ${selectedSymptoms.includes(symptom.id) ? "selected" : ""}`}
-                      onClick={() => toggleSymptom(symptom.id)}
+                      className={`cycle-symptom-btn modern ${selectedSymptoms.includes(symptom.id_symptom) ? "selected" : ""}`}
+                      onClick={() => toggleSymptom(symptom.id_symptom)}
                     >
                       <div className="cycle-symptom-icon">{symptom.icon || "💭"}</div>
                       <span className="cycle-symptom-text">
