@@ -362,10 +362,36 @@ export default function DiscussionScreen() {
       updateAudioLevel()
 
       if (!welcomeMessageRead) {
+        const welcomePhrases = [
+          {
+            FR: "Bonjour, comment puis‑je vous accompagner dans votre santé sexuelle aujourd’hui ?",            // formel
+            MG: "Salama, ahoana no ahafahako manampy anao momba ny fahasalamana ara-nofo androany ?"
+          },
+          {
+            FR: "Salut ! Prêt·e pour un petit bilan intime sérieux ?",                                       // sérieux
+            MG: "Manao ahoana! Vonona hanao fanadihadiana momba ny fahasalamana ara-nofo ianao androany ?"
+          },
+          {
+            FR: "Allons-y sans tabou : comment va votre vie sexuelle ?",                                      // direct
+            MG: "Andao tsy ho kivy: manao ahoana ny fiainana ara-nofo misy anao ?"
+          },
+          {
+            FR: "Bonjour, dis‑moi tout pour garder ta santé sexuelle au top !",                               // chaleureux
+            MG: "Salama, lazao ahy daholo mba hitazonana ny fahasalamana ara-nofonao ho tsara foana !"
+          },
+          {
+            FR: "Hey, prêt·e à booster ton bien‑être sexy ? Je suis là pour ça !",                             // humouriste
+            MG: "Hey, vonona hanome hery ny fahasalamana ara-nofonao ve ianao? Eto aho hanampy izany!"
+          }
+        ];
+
+        const randomIndex = Math.floor(Math.random() * welcomePhrases.length);
+        const { FR, MG } = welcomePhrases[randomIndex];
+
         const welcomeText =
           selectedLanguage === "FR"
-            ? "Bonjour, comment puis-je vous aider aujourd'hui ?"
-            : "Salama, ahoana no ahafahako manampy anao anio?"
+            ? FR
+            : MG;
         await speakText(welcomeText, "welcome")
         setWelcomeMessageRead(true)
       }
