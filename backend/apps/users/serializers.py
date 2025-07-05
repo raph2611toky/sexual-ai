@@ -22,7 +22,7 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'email','birth_date', 'profile_url', 'sexe','is_active', 'profession_domaine']
         
     def get_profile_url(self, obj):
-        return f'{settings.BASE_URL}api/media/{obj.profile}' if obj.profile else None
+        return f'{settings.BASE_URL}{obj.profile.url}' if obj.profile else None
     
     def get_birth_date(self,obj):
         return obj.birth_date.strftime('%d-%m-%Y')
