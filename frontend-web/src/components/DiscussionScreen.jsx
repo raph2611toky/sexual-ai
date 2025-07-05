@@ -11,8 +11,8 @@ import "./DiscussionScreen.css"
 
 export default function DiscussionScreen() {
   const navigate = useNavigate()
-  const [question, setQuestion] = useState("") // Pour le mode non-appel
-  const [callQuestion, setCallQuestion] = useState("") // Pour le mode appel
+  const [question, setQuestion] = useState("")
+  const [callQuestion, setCallQuestion] = useState("")
   const [responses, setResponses] = useState([])
   const [id_conversation, setId_conversation] = useState("")
   const [discussionCreated, setDiscussionCreated] = useState(false)
@@ -37,6 +37,8 @@ export default function DiscussionScreen() {
   const [selectedPlan, setSelectedPlan] = useState(null)
   const [toasts, setToasts] = useState([])
   const [isAISpeaking, setIsAISpeaking] = useState(false)
+  const [isRecognitionActive, setIsRecognitionActive] = useState(false)
+  const [welcomeMessageRead, setWelcomeMessageRead] = useState(false)
 
   const chatContainerRef = useRef()
   const mediaRecorderRef = useRef()
@@ -45,23 +47,25 @@ export default function DiscussionScreen() {
   const audioContextRef = useRef()
   const analyserRef = useRef()
   const recognitionRef = useRef()
-  const silenceTimerRef = useRef()
-  const callModeRef = useRef(isCallMode);
+  const callModeRef = useRef(isCallMode)
+  const isAISpeakingRef = useRef(isAISpeaking)
+  const isRecognitionActiveRef = useRef(isRecognitionActive)
 
   useEffect(() => {
-    callModeRef.current = isCallMode;
-    // if (isCallMode) {
-    //   startRecording();
-    // } else {
-    //   stopRecording();
-    // }
-  }, [isCallMode]);
+    callModeRef.current = isCallMode
+  }, [isCallMode])
+  useEffect(() => {
+    isAISpeakingRef.current = isAISpeaking
+  }, [isAISpeaking])
+  useEffect(() => {
+    isRecognitionActiveRef.current = isRecognitionActive
+  }, [isRecognitionActive])
 
   const getCookie = (name) => {
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) return parts.pop().split(';').shift();
-    return null;
+    const value = `; ${document.cookie}`
+    const parts = value.split(`; ${name}=`)
+    if (parts.length === 2) return parts.pop().split(';').shift()
+    return null
   }
 
   const addToast = (message, type = 'error', duration = 3000) => {
@@ -80,79 +84,77 @@ export default function DiscussionScreen() {
     setSelectedLanguage(savedLanguage === "fr" ? "FR" : "MG")
     document.documentElement.setAttribute("data-theme", savedTheme)
 
-    const token = getCookie('auth_token');
+    const token = getCookie('auth_token')
     if (!token) {
-      navigate('/login');
-      return;
+      navigate('/login')
+      return
     }
 
-    fetchProfile();
+    fetchProfile()
 
     if (!discussionCreated) {
       handleCreateDiscussion()
     }
 
-    initializeSpeechRecognition();
+    initializeSpeechRecognition()
 
     return () => {
-      if (silenceTimerRef.current) {
-        clearTimeout(silenceTimerRef.current);
+      if (callTimerRef.current) {
+        clearInterval(callTimerRef.current)
       }
-    };
+    }
   }, [discussionCreated, navigate])
 
   const initializeSpeechRecognition = () => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
     if (SpeechRecognition) {
-      console.log(`Speech recognition activated...`)
-      recognitionRef.current = new SpeechRecognition();
-      recognitionRef.current.continuous = true;
-      recognitionRef.current.interimResults = true;
-      recognitionRef.current.lang = selectedLanguage === "FR" ? "fr-FR" : "mg-MG";
+      console.log("Speech recognition activated...")
+      recognitionRef.current = new SpeechRecognition()
+      recognitionRef.current.continuous = true
+      recognitionRef.current.interimResults = true
+      recognitionRef.current.lang = selectedLanguage === "FR" ? "fr-FR" : "mg-MG"
       recognitionRef.current.onresult = (event) => {
-        // Ne pas traiter la reconnaissance vocale si l'IA est en train de parler
-        if (isAISpeaking) {
-          return;
-        }
-        
+        if (isAISpeaking) return
         const transcript = Array.from(event.results)
           .map((result) => result[0].transcript)
-          .join('');
-        console.log(`Mode appel actuel : ${callModeRef.current}`);
+          .join("")
+        console.log(`Mode appel actuel : ${callModeRef.current}`)
         if (callModeRef.current) {
-          setCallQuestion(transcript);
-          console.log(`Mise à jour de callQuestion : ${transcript}`);
+          setCallQuestion(transcript)
+          console.log(`Mise à jour de callQuestion : ${transcript}`)
         } else {
-          setQuestion(transcript);
-          console.log(`Mise à jour de question : ${transcript}`);
+          setQuestion(transcript)
+          console.log(`Mise à jour de question : ${transcript}`)
         }
         if (event.results[event.results.length - 1].isFinal && callModeRef.current) {
-          setSilenceStart(null);
+          setSilenceStart(null)
         }
-      };
+      }
       recognitionRef.current.onerror = (event) => {
-        console.error("Speech recognition error:", event.error);
+        console.error("Speech recognition error:", event.error)
         addToast(
           selectedLanguage === "FR"
             ? "Erreur de reconnaissance vocale : " + event.error
             : "Fahadisoana amin'ny fahafantarana feo: " + event.error,
           "error"
-        );
-        setIsRecording(false);
-        setIsProcessingAudio(false);
-      };
+        )
+        setIsRecognitionActive(false)
+      }
       recognitionRef.current.onend = () => {
-        if (isRecording && !isAISpeaking) {
-          recognitionRef.current.start();
+        console.log("Speech recognition ended")
+        setIsRecognitionActive(false)
+        if (isCallMode && isRecording && !isAISpeaking) {
+          console.log("Restarting recognition...")
+          setTimeout(() => startRecording(), 100)
         }
-      };
+      }
     } else {
       addToast(
         selectedLanguage === "FR"
           ? "Reconnaissance vocale non prise en charge."
           : "Fahafantarana feo tsy tohana.",
         "warning"
-      );
+      )
     }
   }
 
@@ -207,19 +209,26 @@ export default function DiscussionScreen() {
 
   useEffect(() => {
     if (isCallMode && isRecording && callQuestion.trim() && !isAISpeaking) {
-      if (audioLevel < 0.1) {
+      console.log(`Audio level: ${audioLevel}`)
+      if (audioLevel < 0.05) {
         if (!silenceStart) {
-          setSilenceStart(Date.now());
-        } else if (Date.now() - silenceStart >= 3000) {
-          handleAskQuestion(callQuestion);
-          setCallQuestion("");
-          setSilenceStart(null);
+          setSilenceStart(Date.now())
+          console.log("silence start : "+silenceStart)
+        } else if (Date.now() - silenceStart >= 5000) {
+          console.log("Silence detected, sending message...")
+          if (isRecognitionActive) {
+            stopRecording()
+            setIsRecording(false)
+          }
+          handleAskQuestion(callQuestion)
+          setCallQuestion("")
+          setSilenceStart(null)
         }
       } else {
-        setSilenceStart(null);
+        setSilenceStart(null)
       }
     } else {
-      setSilenceStart(null);
+      setSilenceStart(null)
     }
   }, [audioLevel, isCallMode, isRecording, callQuestion, isAISpeaking])
 
@@ -252,7 +261,7 @@ export default function DiscussionScreen() {
       settings: "Paramètres",
       donation: "Abonnements",
       logout: "Déconnexion",
-      micError: "Impossible d'accéder au microphone",
+      micOff: "Microphone désactivé",
       transcriptionError: "Erreur lors de la transcription audio",
     },
     MG: {
@@ -282,7 +291,7 @@ export default function DiscussionScreen() {
       settings: "Fandrindrana",
       donation: "Famandrihana",
       logout: "Mivoaka",
-      micError: "Tsy afaka miditra amin'ny mikrô",
+      micOff: "Mikrô tapaka",
       transcriptionError: "Fahadisoana tamin'ny fandikana feo",
     },
   }
@@ -309,30 +318,28 @@ export default function DiscussionScreen() {
     setSelectedLanguage(newLang)
     localStorage.setItem("language", newLang === "FR" ? "fr" : "mg")
     if (recognitionRef.current) {
-      recognitionRef.current.lang = newLang === "FR" ? "fr-FR" : "mg-MG";
+      recognitionRef.current.lang = newLang === "FR" ? "fr-FR" : "mg-MG"
     }
   }
 
-  // const toggleCallMode = () => {
-  //   setIsCallMode((prev) => !prev);
-  // };
-
   const toggleCallMode = () => {
     setIsCallMode((prev) => {
-      const newCallMode = !prev;
+      const newCallMode = !prev
+      console.log("new call mode : "+newCallMode)
       if (newCallMode) {
-        startCallMode();
+        setIsRecording(true)
+        startCallMode()
       } else {
-        stopCallMode();
+        setIsRecording(false)
+        stopCallMode()
       }
-      console.log(`Switching call mode to ${newCallMode}`);
-      console.log(`is recording ${isRecording}`);
-      console.log(`is AI speaking ${isAISpeaking}`);
-      return newCallMode;
-    });
-  };
+      console.log(`Switching call mode to ${newCallMode}`)
+      return newCallMode
+    })
+  }
 
   const startCallMode = async () => {
+    console.log("Start call mode now...")
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)()
@@ -354,10 +361,20 @@ export default function DiscussionScreen() {
       }
       updateAudioLevel()
 
-      startRecording()
+      if (!welcomeMessageRead) {
+        const welcomeText =
+          selectedLanguage === "FR"
+            ? "Bonjour, comment puis-je vous aider aujourd'hui ?"
+            : "Salama, ahoana no ahafahako manampy anao anio?"
+        await speakText(welcomeText, "welcome")
+        setWelcomeMessageRead(true)
+      }
+      if (isRecording && !isRecognitionActive) {
+        startRecording()
+      }
     } catch (error) {
       console.error("Erreur accès microphone:", error)
-      addToast(t("micError"), "error")
+      addToast(t("micOff"), "error")
       setIsCallMode(false)
     }
   }
@@ -367,72 +384,41 @@ export default function DiscussionScreen() {
       audioContextRef.current.close()
     }
     setAudioLevel(0)
-    stopRecording()
+    if (isRecognitionActive) {
+      stopRecording()
+    }
     setCallQuestion("")
     setIsAISpeaking(false)
+    setWelcomeMessageRead(false)
   }
 
-  const startRecording = async () => {
-    try {
-      if (recognitionRef.current && !isAISpeaking) {
-        recognitionRef.current.start()
-        setIsRecording(true)
-        setIsProcessingAudio(true)
-      } else if (!isAISpeaking) {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-        mediaRecorderRef.current = new MediaRecorder(stream)
-        audioChunksRef.current = []
-
-        mediaRecorderRef.current.ondataavailable = (event) => {
-          audioChunksRef.current.push(event.data)
-        }
-
-        mediaRecorderRef.current.onstop = async () => {
-          const audioBlob = new Blob(audioChunksRef.current, { type: "audio/wav" })
-          await processAudioToText(audioBlob)
-          stream.getTracks().forEach((track) => track.stop())
-        }
-
-        mediaRecorderRef.current.start()
-        setIsRecording(true)
-        setIsProcessingAudio(true)
+  const startRecording = () => {
+    if (recognitionRef.current && !isRecognitionActive && !isAISpeaking) {
+      console.log("Tentative de démarrage de l'enregistrement...");
+      try {
+        recognitionRef.current.start();
+        setIsRecognitionActive(true);
+        setIsRecording(true);
+        updateMicIcon(true);
+        console.log("Enregistrement démarré avec succès.");
+      } catch (error) {
+        console.error("Erreur enregistrement:", error);
+        addToast(selectedLanguage === "FR" ? "Micro éteint" : "Mikrô maty", "error");
+        setIsRecognitionActive(false);
+        setIsRecording(false);
+        updateMicIcon(false);
       }
-    } catch (error) {
-      console.error("Erreur enregistrement:", error)
-      addToast(t("micError"), "error")
-      setIsRecording(false)
+    } else {
+      console.log("Enregistrement non démarré : reconnaissance active ou IA en train de parler", {
+        isRecognitionActive,
+        isAISpeaking,
+      });
     }
-  }
+  };
 
   const stopRecording = () => {
-    if (recognitionRef.current && isRecording) {
+    if (recognitionRef.current && isRecognitionActive) {
       recognitionRef.current.stop()
-      setIsRecording(false)
-      setIsProcessingAudio(false)
-    } else if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop()
-      setIsRecording(false)
-      setIsProcessingAudio(true)
-    }
-  }
-
-  const processAudioToText = async (audioBlob) => {
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 2000))
-      const transcribedText =
-        selectedLanguage === "FR"
-          ? "Bonjour, j'aimerais des infos sur la contraception."
-          : "Salama, te-hiangavy fampahalalana momba ny fisorohana vohoka."
-      if (isCallMode) {
-        setCallQuestion(transcribedText)
-      } else {
-        setQuestion(transcribedText)
-      }
-      setIsProcessingAudio(false)
-    } catch (error) {
-      console.error("Erreur transcription:", error)
-      addToast(t("transcriptionError"), "error")
-      setIsProcessingAudio(false)
     }
   }
 
@@ -465,7 +451,7 @@ export default function DiscussionScreen() {
         const responseConversation = await axios.post(
           `${config.apiUrl}/conversation/new/`,
           {},
-          { headers: { Authorization: `Bearer ${token}` } },
+          { headers: { Authorization: `Bearer ${token}` } }
         )
 
         const id_conversation = responseConversation.data.id_conversation
@@ -506,7 +492,7 @@ export default function DiscussionScreen() {
           const responseMessage = await axios.post(
             `${config.apiUrl}/messagechat/new/`,
             { contenu: questionWithLang, conversation: id_conversation },
-            { headers: { Authorization: `Bearer ${token}` } },
+            { headers: { Authorization: `Bearer ${token}` } }
           )
 
           const aiResponseId = Date.now().toString() + "1"
@@ -514,14 +500,14 @@ export default function DiscussionScreen() {
             type: "ai",
             text: responseMessage.data.bot_response,
             id: aiResponseId,
-            timestamp: new Date()
+            timestamp: new Date(),
           }
 
           setResponses((prevResponses) => [...prevResponses, aiResponse])
 
           if (isCallMode) {
             setTimeout(() => {
-              speakText(responseMessage.data.bot_response, aiResponseId)
+              if (!isSpeaking) speakText(responseMessage.data.bot_response, aiResponseId)
             }, 1000)
           }
         }
@@ -536,7 +522,7 @@ export default function DiscussionScreen() {
                 ? "Désolé, une erreur s'est produite."
                 : "Miala tsiny, nisy olana.",
             id: Date.now().toString() + "error",
-            timestamp: new Date()
+            timestamp: new Date(),
           },
         ])
         addToast(
@@ -567,7 +553,7 @@ export default function DiscussionScreen() {
           type: msg.from_user ? "ai" : "user",
           text: msg.contenu,
           id: msg.id || Date.now().toString() + Math.random().toString(36).substring(7),
-          timestamp: new Date(msg.created_at)
+          timestamp: new Date(msg.created_at),
         }))
 
         setResponses(formattedMessages)
@@ -595,67 +581,121 @@ export default function DiscussionScreen() {
   }
 
   const speakText = (text, messageId) => {
-    if (isSpeaking) {
-      window.speechSynthesis.cancel()
-      if (speakingMessageId === messageId) {
-        setIsSpeaking(false)
-        setSpeakingMessageId(null)
-        setIsAISpeaking(false)
-        return
+    return new Promise((resolve, reject) => {
+      if (isSpeaking && speakingMessageId === messageId) {
+        window.speechSynthesis.cancel();
+        setIsSpeaking(false);
+        setSpeakingMessageId(null);
+        setIsAISpeaking(false);
+        resolve();
+        return;
       }
-    }
 
-    setIsSpeaking(true)
-    setSpeakingMessageId(messageId)
-    setIsAISpeaking(true) // Marquer que l'IA parle
+      if (isSpeaking) {
+        window.speechSynthesis.cancel();
+      }
 
-    // Arrêter temporairement la reconnaissance vocale
-    if (callModeRef.current && recognitionRef.current && isRecording) {
-      recognitionRef.current.stop()
-      setIsRecording(false)
-    }
+      setIsSpeaking(true);
+      setSpeakingMessageId(messageId);
+      setIsAISpeaking(true);
 
-    if ("speechSynthesis" in window) {
-      const utterance = new SpeechSynthesisUtterance(text)
-      utterance.lang = selectedLanguage === "FR" ? "fr-FR" : "mg-MG"
-      utterance.pitch = 1.0
-      utterance.rate = 0.9
+      if ("speechSynthesis" in window) {
+        console.log("Speak text...");
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = selectedLanguage === "FR" ? "fr-FR" : "mg-MG";
+        utterance.pitch = 1.0;
+        utterance.rate = 0.9;
 
-      utterance.onend = () => {
-        setIsSpeaking(false)
-        setSpeakingMessageId(null)
-        setIsAISpeaking(false)
-        
-        // Redémarrer la reconnaissance vocale en mode appel
-        if (callModeRef.current && !isRecording) {
+        utterance.onend = () => {
+          setIsSpeaking(false);
+          setSpeakingMessageId(null);
+          setIsAISpeaking(false);
+          resolve();
+          // Forcer le redémarrage de l'écoute après un délai pour éviter les conflits
           setTimeout(() => {
-            startRecording()
-          }, 500)
-        }
-      }
+            if (callModeRef.current) {
+              console.log("Fin de la parole de l'IA, forçage du redémarrage de l'enregistrement...");
+              forceStartRecording();
+            } else {
+              console.log("Mode appel désactivé, pas de redémarrage de l'enregistrement.");
+            }
+          }, 500); // Délai de 500ms pour s'assurer que tout est bien arrêté
+        };
 
-      utterance.onerror = () => {
-        setIsSpeaking(false)
-        setSpeakingMessageId(null)
-        setIsAISpeaking(false)
+        utterance.onerror = (error) => {
+          setIsSpeaking(false);
+          setSpeakingMessageId(null);
+          setIsAISpeaking(false);
+          addToast(
+            selectedLanguage === "FR"
+              ? "Erreur lors de la lecture du texte"
+              : "Fahadisoana tamin'ny famakiana ny lahatsoratra",
+            "error"
+          );
+          reject(error);
+        };
+
+        window.speechSynthesis.speak(utterance);
+      } else {
         addToast(
           selectedLanguage === "FR"
             ? "Erreur lors de la lecture du texte"
             : "Fahadisoana tamin'ny famakiana ny lahatsoratra",
           "error"
-        )
-        
-        // Redémarrer la reconnaissance vocale en cas d'erreur
-        if (callModeRef.current && !isRecording) {
-          setTimeout(() => {
-            startRecording()
-          }, 500)
-        }
+        );
+        reject(new Error("Speech synthesis not supported"));
       }
+    });
+  };
 
-      window.speechSynthesis.speak(utterance)
+  const forceStartRecording = () => {
+    if (recognitionRef.current) {
+      console.log("Forçage du redémarrage de l'enregistrement...");
+
+      const restartRecognition = () => {
+        setTimeout(() => {
+          try {
+            if (!isRecognitionActiveRef.current) {
+              recognitionRef.current.start();
+              setIsRecognitionActive(true);
+              setIsRecording(true);
+              console.log("Enregistrement redémarré avec succès.");
+              updateMicIcon(true);
+            } else {
+              console.log("Reconnaissance déjà active, pas de redémarrage nécessaire.");
+            }
+          } catch (error) {
+            console.error("Erreur lors du forçage de l'enregistrement:", error);
+            addToast(selectedLanguage === "FR" ? "Erreur micro" : "Fahadisoana mikrô", "error");
+            setIsRecognitionActive(false);
+            setIsRecording(false);
+            updateMicIcon(false);
+          }
+        }, 600); // Légère augmentation à 600ms pour plus de sécurité
+      };
+
+      if (isRecognitionActiveRef.current) {
+        recognitionRef.current.stop();
+        setIsRecognitionActive(false);
+        setIsRecording(false);
+        console.log("Reconnaissance vocale arrêtée avant redémarrage.");
+        restartRecognition();
+      } else {
+        console.log("Reconnaissance inactive, démarrage direct.");
+        restartRecognition();
+      }
+    } else {
+      console.log("Erreur : reconnaissance vocale non initialisée.");
     }
-  }
+  };
+
+  const updateMicIcon = (isListening) => {
+    const micIcon = document.getElementById("mic-icon");
+    if (micIcon) {
+      micIcon.className = isListening ? "mic-on" : "mic-off";
+      console.log(`Icône microphone mise à jour : ${isListening ? "en écoute" : "éteint"}`);
+    }
+  };
 
   const handleKeyPress = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -682,7 +722,7 @@ export default function DiscussionScreen() {
     setShowPricing(false)
   }
 
-  const handleShowPlan = ()=> {
+  const handleShowPlan = () => {
     navigate("/pricing")
   }
 
@@ -690,7 +730,21 @@ export default function DiscussionScreen() {
     <div className="discussion-safe-area">
       <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
       {menuVisible && <div className="discussion-overlay" onClick={toggleMenu}></div>}
-      {selectedPlan && <PaymentModal plan={selectedPlan} language={selectedLanguage} theme={theme} onClose={() => setSelectedPlan(null)} planDetails={translations[selectedLanguage].plans ? translations[selectedLanguage].plans[selectedPlan] : {}} />}
+      {selectedPlan && (
+        <PaymentModal
+          plan={selectedPlan}
+          language={selectedLanguage}
+          theme={theme}
+          onClose={() => setSelectedPlan(null)}
+          planDetails={translations[selectedLanguage].plans ? translations[selectedLanguage].plans[selectedPlan] : {}}
+        />
+      )}
+
+      {isCallMode && !isRecording && (
+        <div className="mic-notification">
+          <span>{t("micOff")}</span>
+        </div>
+      )}
 
       {menuVisible && (
         <div className="discussion-menu-container">
@@ -780,7 +834,7 @@ export default function DiscussionScreen() {
           <div className="discussion-title-container">
             <h1 className="discussion-title">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7z"></path>
+                <path d="M 19 14 c 1.49 -1.46 3 -3.21 3 -5.5 A 5.5 5.5 0 0 0 16.5 3 c -1.76 0 -3 .5 -4.5 2 -1.5 -1.5 -2.74 -2 -4.5 -2 A 5.5 5.5 0 0 0 2 8.5 c 0 2.29 1.51 4.04 3 5.5 l 7 7 z"></path>
               </svg>
               {t("title")}
             </h1>
@@ -827,17 +881,21 @@ export default function DiscussionScreen() {
             </button>
 
             <div className="discussion-language-selector">
-              {selectedLanguage === "FR" ? (<button
-                className={`discussion-language-button ${selectedLanguage === "MG" ? "active" : ""}`}
-                onClick={() => setSelectedLanguage("MG")}
-              >
-                MG
-              </button>) : (<button
-                className={`discussion-language-button ${selectedLanguage === "FR" ? "active" : ""}`}
-                onClick={() => setSelectedLanguage("FR")}
-              >
-                FR
-              </button>)}
+              {selectedLanguage === "FR" ? (
+                <button
+                  className={`discussion-language-button ${selectedLanguage === "MG" ? "active" : ""}`}
+                  onClick={() => setSelectedLanguage("MG")}
+                >
+                  MG
+                </button>
+              ) : (
+                <button
+                  className={`discussion-language-button ${selectedLanguage === "FR" ? "active" : ""}`}
+                  onClick={() => setSelectedLanguage("FR")}
+                >
+                  FR
+                </button>
+              )}
             </div>
 
             <div className="discussion-header-profile">
@@ -864,12 +922,8 @@ export default function DiscussionScreen() {
                   <button onClick={toggleThemeHandler}>
                     {theme === "light" ? "🌙 Mode sombre" : "☀️ Mode clair"}
                   </button>
-                  <button onClick={handleShowPlan}>
-                    {t("donation")}
-                  </button>
-                  <button onClick={handleLogout}>
-                    {t("logout")}
-                  </button>
+                  <button onClick={handleShowPlan}>{t("donation")}</button>
+                  <button onClick={handleLogout}>{t("logout")}</button>
                 </div>
               )}
             </div>
@@ -890,13 +944,13 @@ export default function DiscussionScreen() {
                 <div className="discussion-call-time">{formatCallDuration(callDuration)}</div>
               </div>
             </div>
-            
+
             <div className="discussion-call-main">
               <div className="discussion-call-avatar-section">
                 <div className="discussion-call-avatar-container">
                   <div className="discussion-call-avatar-image">
                     <div className="discussion-avatar-icon">🩺</div>
-                    {(isRecording && !isAISpeaking) && (
+                    {isRecognitionActive && !isAISpeaking && (
                       <div className="discussion-call-listening-indicator">
                         <div className="discussion-listening-wave">
                           {[...Array(4)].map((_, i) => (
@@ -905,7 +959,7 @@ export default function DiscussionScreen() {
                               className="discussion-wave-bar"
                               style={{
                                 animationDelay: `${i * 0.1}s`,
-                                height: `${10 + audioLevel * 20}px`
+                                height: `${10 + audioLevel * 20}px`,
                               }}
                             ></div>
                           ))}
@@ -923,13 +977,15 @@ export default function DiscussionScreen() {
                     )}
                   </div>
                 </div>
-                
+
                 <div className="discussion-call-info">
                   <h2 className="discussion-call-contact-name">{t("aiAssistant")}</h2>
                   <p className="discussion-call-status-text">
-                    {isAISpeaking ? t("aiSpeaking") : 
-                     isRecording ? t("listening") : 
-                     t("callActive")}
+                    {isAISpeaking
+                      ? t("aiSpeaking")
+                      : isRecognitionActive
+                      ? t("listening")
+                      : t("callActive")}
                   </p>
                 </div>
               </div>
@@ -945,14 +1001,21 @@ export default function DiscussionScreen() {
             </div>
 
             <div className="discussion-call-controls">
-              <button 
+              <button
                 className="discussion-call-control-btn discussion-mute-btn"
-                onClick={isRecording ? stopRecording : startRecording}
-                disabled={isAISpeaking}
+                onClick={() => {
+                  if (isRecording) {
+                    setIsRecording(false)
+                    stopRecording()
+                  } else {
+                    setIsRecording(true)
+                    startRecording()
+                  }
+                }}
               >
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  {isRecording && !isAISpeaking ? (
-                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z M19 10v2a7 7 0 0 1-14 0v-2 M12 19v4 M8 23h8"/>
+                  {isRecording ? (
+                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z M19 10v2a7 7 0 0 1-14 0v-2 M12 19v4 M8 23h8" />
                   ) : (
                     <>
                       <line x1="1" y1="1" x2="23" y2="23"></line>
@@ -965,10 +1028,7 @@ export default function DiscussionScreen() {
                 </svg>
               </button>
 
-              <button 
-                className="discussion-call-control-btn discussion-end-call-btn"
-                onClick={toggleCallMode}
-              >
+              <button className="discussion-call-control-btn discussion-end-call-btn" onClick={toggleCallMode}>
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
                   <line x1="18" y1="2" x2="6" y2="14"></line>
@@ -992,7 +1052,7 @@ export default function DiscussionScreen() {
               <div className="discussion-welcome-icon">
                 <div className="discussion-welcome-avatar">
                   <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7z"></path>
+                    <path d="M 19 14 c 1.49 -1.46 3 -3.21 3 -5.5 A 5.5 5.5 0 0 0 16.5 3 c -1.76 0 -3 .5 -4.5 2 -1.5 -1.5 -2.74 -2 -4.5 -2 A 5.5 5.5 0 0 0 2 8.5 c 0 2.29 1.51 4.04 3 5.5 l 7 7 z"></path>
                   </svg>
                 </div>
                 <div className="discussion-welcome-pulse"></div>
@@ -1065,9 +1125,7 @@ export default function DiscussionScreen() {
                       </div>
                     </div>
                   )}
-                  <div className="discussion-message-timestamp">
-                    {formatMessageTime(item.timestamp)}
-                  </div>
+                  <div className="discussion-message-timestamp">{formatMessageTime(item.timestamp)}</div>
                 </div>
               ))}
 
@@ -1111,7 +1169,15 @@ export default function DiscussionScreen() {
               <div className="discussion-voice-controls">
                 <button
                   className={`discussion-mic-button ${isRecording ? "recording" : ""}`}
-                  onClick={isRecording ? stopRecording : startRecording}
+                  onClick={() => {
+                    if (isRecording) {
+                      setIsRecording(false)
+                      stopRecording()
+                    } else {
+                      setIsRecording(true)
+                      startRecording()
+                    }
+                  }}
                   title={isRecording ? t("stopRecording") : t("startRecording")}
                 >
                   {isRecording ? (
