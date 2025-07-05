@@ -125,7 +125,7 @@ const CycleManagementScreen = () => {
     try {
       const token = getCookie("auth_token")
       if (token) {
-        const response = await axios.get(`${config.apiUrl}/symptoms/`, {
+        const response = await axios.get(`${config.apiUrl}/symptom/list/`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
