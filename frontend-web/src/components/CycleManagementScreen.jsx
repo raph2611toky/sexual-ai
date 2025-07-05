@@ -151,8 +151,8 @@ const CycleManagementScreen = () => {
     }
   }
 
-  const physicalSymptoms = symptoms.filter((s) => s.type === "physical")
-  const emotionalSymptoms = symptoms.filter((s) => s.type ===Lemon)
+  const physicalSymptoms = symptoms.length === 0 ? [] : symptoms.physiques
+  const emotionalSymptoms = symptoms.length === 0 ? [] : symptoms.emotions 
 
   const getNextPeriodDate = () => {
     if (!cycleData.startDate) return null
@@ -203,7 +203,7 @@ const CycleManagementScreen = () => {
       const token = getCookie("auth_token")
       if (token) {
         await axios.post(
-          `${config.apiUrl}/cycle/`,
+          `${config.apiUrl}/symptom/new/`,
           {
             ...cycleData,
             symptoms: selectedSymptoms,
@@ -449,15 +449,15 @@ const CycleManagementScreen = () => {
                 <div className="cycle-symptoms-grid modern">
                   {physicalSymptoms.map((symptom) => (
                     <button
-                      key={symptom.id}
+                      key={symptom.id_symptom}
                       className={`cycle-symptom-btn modern ${selectedSymptoms.includes(symptom.id) ? "selected" : ""}`}
                       onClick={() => toggleSymptom(symptom.id)}
                     >
                       <div className="cycle-symptom-icon">{symptom.icon || "💊"}</div>
                       <span className="cycle-symptom-text">
-                        {language === "fr" ? symptom.name_fr : symptom.name_mg}
+                        {language === "fr" ? symptom.description : symptom.description}
                       </span>
-                      {selectedSymptoms.includes(symptom.id) && (
+                      {selectedSymptoms.includes(symptom.id_symptom) && (
                         <div className="cycle-symptom-check">
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <polyline points="20,6 9,17 4,12"/>
@@ -481,15 +481,15 @@ const CycleManagementScreen = () => {
                 <div className="cycle-symptoms-grid modern">
                   {emotionalSymptoms.map((symptom) => (
                     <button
-                      key={symptom.id}
+                      key={symptom.id_symptom}
                       className={`cycle-symptom-btn modern ${selectedSymptoms.includes(symptom.id) ? "selected" : ""}`}
                       onClick={() => toggleSymptom(symptom.id)}
                     >
                       <div className="cycle-symptom-icon">{symptom.icon || "💭"}</div>
                       <span className="cycle-symptom-text">
-                        {language === "fr" ? symptom.name_fr : symptom.name_mg}
+                        {language === "fr" ? symptom.description : symptom.description}
                       </span>
-                      {selectedSymptoms.includes(symptom.id) && (
+                      {selectedSymptoms.includes(symptom.id_symptom) && (
                         <div className="cycle-symptom-check">
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <polyline points="20,6 9,17 4,12"/>
