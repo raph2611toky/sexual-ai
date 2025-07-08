@@ -12,11 +12,14 @@ from apps.users.serializers import UserSerializer, LoginSerializer, RegisterSeri
 from apps.users.models import User, UserOtp, default_created_at
 
 from dotenv import load_dotenv
+from django.core.validators import EmailValidator
+from django.core.exceptions import ValidationError
+from bleach.sanitizer import Cleaner
 from helpers.swagger.user import *
 from helpers.services.emails import envoyer_email
 from helpers.helper import generate_jwt_token, enc_dec, decode_jwt_token
 import random, string
-from datetime import timezone, timedelta
+from datetime import timezone, timedelta, datetime
 
 import os
 
@@ -328,3 +331,86 @@ class UserResetPasswordView(APIView):
         except Exception as e:
             return Response({"erreur": str(e)}, status=400)
 
+class ContactSupportView(APIView):
+    permission_classes = [AllowAny]
+
+    def validate_data(self, data):
+        required_keys = ['nom_complet', 'adresse_email', 'message']
+        if not all(key in data for key in required_keys):
+            return False, {'erreur': 'Tous les champs (nom_complet, adresse_email, message) sont requis'}
+        
+        validator = EmailValidator()
+        try:
+            validator(data['adresse_email'])
+        except ValidationError:
+            return False, {'erreur': 'Adresse email invalide'}
+
+        if not data['nom_complet'].strip() or len(data['nom_complet']) > 100:
+            return False, {'erreur': 'Le nom complet doit être non vide et inférieur à 100 caractères'}
+
+        if not data['message'].strip() or len(data['message']) > 1000:
+            return False, {'erreur': 'Le message doit être non vide et inférieur à 1000 caractères'}
+
+        return True, None
+
+    def sanitize_message(self, message):
+        cleaner = Cleaner(
+            tags=['p', 'br', 'strong', 'em'], 
+            attributes={}, 
+            strip=True
+        )
+        return cleaner.clean(message)
+
+    @swagger_auto_schema(
+        tags=['Support'],
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'nom_complet': openapi.Schema(type=openapi.TYPE_STRING, description='Nom complet de l\'utilisateur'),
+                'adresse_email': openapi.Schema(type=openapi.TYPE_STRING, description='Adresse email de l\'utilisateur'),
+                'message': openapi.Schema(type=openapi.TYPE_STRING, description='Message de l\'utilisateur'),
+            },
+            required=['nom_complet', 'adresse_email', 'message']
+        ),
+        responses={
+            200: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'message': openapi.Schema(type=openapi.TYPE_STRING, description='Confirmation de l\'envoi')
+                }
+            ),
+            400: openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={
+                    'erreur': openapi.Schema(type=openapi.TYPE_STRING, description='Message d\'erreur')
+                }
+            )
+        },
+        operation_description="Envoie un message au support de Sexual AI."
+    )
+    def post(self, request):
+        try:
+            data = request.data
+            is_valid, error_response = self.validate_data(data)
+            if not is_valid:
+                return Response(error_response, status=status.HTTP_400_BAD_REQUEST)
+
+            sanitized_message = self.sanitize_message(data['message'])
+
+            email_data = {
+                'subject': 'Nouveau message de contact - Sexual AI',
+                'nom_complet': data['nom_complet'],
+                'adresse_email': data['adresse_email'],
+                'message': sanitized_message,
+                'current_year': datetime.now().year,
+            }
+
+            support_email = os.getenv('SUPPORT_EMAIL')
+            envoyer_email([support_email], 'support_message', email_data)
+
+            return Response({'message': 'Votre message a été envoyé avec succès au support.'}, status=status.HTTP_200_OK)
+        except Exception as e:
+            import traceback
+            print(traceback.format_exc())
+            return Response({'erreur': f'Erreur lors de l\'envoi du message : {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+    
