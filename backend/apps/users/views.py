@@ -19,7 +19,8 @@ from helpers.swagger.user import *
 from helpers.services.emails import envoyer_email
 from helpers.helper import generate_jwt_token, enc_dec, decode_jwt_token
 import random, string
-from datetime import timezone, timedelta, datetime
+from datetime import timedelta, datetime
+from django.utils import timezone
 
 import os
 
