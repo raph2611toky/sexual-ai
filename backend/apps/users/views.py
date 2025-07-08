@@ -149,7 +149,7 @@ class RegisterView(APIView):
 
             serializer = RegisterSerializer(data=user_data)
             if serializer.is_valid(raise_exception=True):
-                user = serializer.data["user"]
+                user = User.objects.get(email=serializer.validated_data["email"])
 
                 date_expiration = timezone.now() + timedelta(minutes=30)
                 UserOtp.objects.create(code_otp=code_otp, user=user, expirer_le=date_expiration)
@@ -233,7 +233,7 @@ class UserVerifyOtpView(APIView):
             user.save()
             UserOtp.objects.filter(user=user).delete()
                         
-            return Response({"message": "Compte vérifié avec succès"}, status=status.HTTP_200_OK)
+            return Response({"message": "Compte vérifié avec succès", "email":email}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"erreur": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
