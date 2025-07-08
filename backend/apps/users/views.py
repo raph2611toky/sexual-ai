@@ -3,6 +3,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework_simplejwt.tokens import TokenError
 from rest_framework.response import Response
+from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.request import Request
 from rest_framework.views import APIView
 
@@ -233,8 +234,10 @@ class UserVerifyOtpView(APIView):
             user.is_verified = True
             user.save()
             UserOtp.objects.filter(user=user).delete()
+            
+            refresh = RefreshToken.for_user(user)
                         
-            return Response({"message": "Compte vérifié avec succès", "email":email}, status=status.HTTP_200_OK)
+            return Response({"message": "Compte vérifié avec succès", "email":email, "refresh":str(refresh),"access":str(refresh.access_token)}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"erreur": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
