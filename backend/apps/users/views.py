@@ -165,7 +165,7 @@ class RegisterView(APIView):
                     'type_utilisateur': 'user' if user.is_staff else 'client',
                 }
 
-                envoyer_email([user.email], 'otp_verification', data)
+                envoyer_email([user.email], 'envoie_code_otp', data)
 
                 return Response({"email": serializer.validated_data["email"], 'message':f"Une code Otp de verification a été envoyé à {user.email}"}, status=status.HTTP_201_CREATED)
             else:

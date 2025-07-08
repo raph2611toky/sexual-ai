@@ -136,7 +136,7 @@ MEDIA_URL = '/media/'
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-BASE_URL = f"https://sa-backend.learnix.school/"
+BASE_URL = f"https://sa-backend.learnix.school"
 
 AUTH_USER_MODEL = 'users.User'
 AUTHENTICATION_BACKENDS = ['apps.users.backends.EmailBackend']
