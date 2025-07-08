@@ -30,10 +30,10 @@ class User(AbstractBaseUser):
     profile = models.ImageField(upload_to='users/profiles', default='users/profiles/default.png')
     code_id = models.CharField(max_length=100)
     is_staff = models.BooleanField(default=False)
-    est_verifier = models.BooleanField(default=False)
+    # est_verifier = models.BooleanField(default=False)
     is_active = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
-    is_anonymous = models.BooleanField(default=False)
+    # is_anonymous = models.BooleanField(default=False)
     date_joined = models.DateTimeField(default=django_timezone.now)
     
     USERNAME = None

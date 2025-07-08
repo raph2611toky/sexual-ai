@@ -231,7 +231,7 @@ class UserVerifyOtpView(APIView):
                 otp.delete()
                 return Response({"erreur": "Code OTP expiré"}, status=status.HTTP_410_GONE)
             
-            user.est_verifier = True
+            user.is_verified = True
             user.save()
             UserOtp.objects.filter(user=user).delete()
             
