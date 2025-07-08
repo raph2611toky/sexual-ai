@@ -125,6 +125,30 @@ function HomeScreen() {
       emailLabel: "Adresse email",
       messageLabel: "Votre message",
       sendMessage: "Envoyer le message",
+      donationTitle: "Soutenez Sexual AI",
+      donationSubtitle: "Votre soutien nous aide à maintenir ce service gratuit et à l'améliorer continuellement",
+      freePlan: "Gratuit",
+      basicPlan: "Soutien modéré",
+      premiumPlan: "Grand soutien",
+      freePrice: "0€",
+      basicPrice: "5€",
+      premiumPrice: "15€",
+      perMonth: "/don unique",
+      freePlanFeatures: ["Accès complet gratuit", "Toutes les fonctionnalités", "Support communautaire"],
+      basicPlanFeatures: ["Soutenez le développement", "Aidez à maintenir le service", "Contribuez aux améliorations"],
+      premiumPlanFeatures: ["Soutien généreux", "Impact significatif", "Développement accéléré", "Nouvelles fonctionnalités"],
+      choosePlan: "Faire ce don",
+      donationFeature1Title: "Confidentialité totale",
+      donationFeature1Desc: "Vos données restent privées et sécurisées",
+      donationFeature2Title: "IA de pointe",
+      donationFeature2Desc: "Conseils personnalisés basés sur l'IA",
+      donationFeature3Title: "Support expert",
+      donationFeature3Desc: "Équipe médicale disponible 24/7",
+      donationFeature4Title: "Mises à jour régulières",
+      donationFeature4Desc: "Nouvelles fonctionnalités chaque mois",
+      donationCtaTitle: "Prêt à commencer ?",
+      donationCtaText: "Rejoignez des milliers d'utilisatrices qui font confiance à Sexual AI pour leur santé reproductive. Votre soutien nous aide à garder ce service gratuit pour tous.",
+      startNow: "Commencer maintenant",
       footerText: "© 2025 Sexual AI. Tous droits réservés.",
       messageSuccess: "Message envoyé avec succès !",
       messageError: "Erreur lors de l'envoi du message.",
@@ -162,9 +186,33 @@ function HomeScreen() {
       contactDescription:
         "Mihaino anay izahay mba hanatsarana ny traikefanao. Zarao aminay ny sosokevitrao, fanontanianao na ny traikefanao miaraka amin'ny ekipanay voatokana.",
       nameLabel: "Anarana feno",
-      emailLabel: "Adiresy email",
+      emailLabel: "Adiresy mailaka",
       messageLabel: "Ny hafatrao",
       sendMessage: "Alefa ny hafatra",
+      donationTitle: "Tohano ny Sexual AI",
+      donationSubtitle: "Ny fanampianao dia manampy anay hitazona ity serivisy maimaim-poana ity sy hanatsara azy hatrany",
+      freePlan: "Maimaim-poana",
+      basicPlan: "Fanampiana antonony",
+      premiumPlan: "Fanampiana lehibe",
+      freePrice: "0€",
+      basicPrice: "5€",
+      premiumPrice: "15€",
+      perMonth: "/fanomezana tokana",
+      freePlanFeatures: ["Fidirana feno maimaim-poana", "Endri-javatra rehetra", "Fanohanana vondrom-bahoaka"],
+      basicPlanFeatures: ["Tohano ny fampandrosoana", "Manampy amin'ny fitazonana ny serivisy", "Mandray anjara amin'ny fanatsarana"],
+      premiumPlanFeatures: ["Fanampiana be dia be", "Fiantraikany lehibe", "Fampandrosoana haingana", "Endri-javatra vaovao"],
+      choosePlan: "Ataovy ity fanomezana ity",
+      donationFeature1Title: "Tsiambaratelo tanteraka",
+      donationFeature1Desc: "Ny angonao dia mijanona ho tsy miharihary sy voaaro",
+      donationFeature2Title: "IA avo lenta",
+      donationFeature2Desc: "Torohevitra manokana mifototra amin'ny IA",
+      donationFeature3Title: "Fanohanana manam-pahaizana",
+      donationFeature3Desc: "Ekipa ara-pitsaboana azo alaina 24/7",
+      donationFeature4Title: "Fanavaozana tsy tapaka",
+      donationFeature4Desc: "Endri-javatra vaovao isaky ny volana",
+      donationCtaTitle: "Vonona hanomboka ve ianao?",
+      donationCtaText: "Midira amin'ireo mpampiasa an'arivony izay matoky ny Sexual AI ho an'ny fahasalamana ara-piterahana. Ny fanampianao dia manampy anay hitazona ity serivisy maimaim-poana ity ho an'ny rehetra.",
+      startNow: "Atombohy izao",
       footerText: "© 2025 Sexual AI. Zo rehetra voatahiry.",
       messageSuccess: "Hafatra nalefa soa aman-tsara !",
       messageError: "Nisy olana tamin'ny fandefasana ny hafatra.",
@@ -393,6 +441,9 @@ function HomeScreen() {
             <button className="home-header-nav-link" onClick={() => scrollToSection("testimonials")}>
               Témoignages
             </button>
+            <button className="home-header-nav-link" onClick={() => scrollToSection("donation")}>
+              Tarifs
+            </button>
             <button className="home-header-nav-link" onClick={() => scrollToSection("contact")}>
               Contact
             </button>
@@ -548,6 +599,59 @@ function HomeScreen() {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Section Donation */}
+      <section id="donation" className="home-donation-section">
+        <div className="home-donation-container">
+          <div className="home-donation-header" data-animation="fadeIn">
+            <h2 className="home-donation-title">{t("donationTitle")}</h2>
+            <p className="home-donation-subtitle">{t("donationSubtitle")}</p>
+          </div>
+
+          
+
+          {/* Fonctionnalités de donation */}
+          <div className="home-donation-features" data-animation="fadeIn">
+            <div className="home-donation-feature">
+              <div className="home-donation-feature-icon">🔒</div>
+              <div className="home-donation-feature-content">
+                <h4>{t("donationFeature1Title")}</h4>
+                <p>{t("donationFeature1Desc")}</p>
+              </div>
+            </div>
+            <div className="home-donation-feature">
+              <div className="home-donation-feature-icon">🤖</div>
+              <div className="home-donation-feature-content">
+                <h4>{t("donationFeature2Title")}</h4>
+                <p>{t("donationFeature2Desc")}</p>
+              </div>
+            </div>
+            <div className="home-donation-feature">
+              <div className="home-donation-feature-icon">👩‍⚕️</div>
+              <div className="home-donation-feature-content">
+                <h4>{t("donationFeature3Title")}</h4>
+                <p>{t("donationFeature3Desc")}</p>
+              </div>
+            </div>
+            <div className="home-donation-feature">
+              <div className="home-donation-feature-icon">🔄</div>
+              <div className="home-donation-feature-content">
+                <h4>{t("donationFeature4Title")}</h4>
+                <p>{t("donationFeature4Desc")}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Call to action */}
+          <div className="home-donation-cta" data-animation="fadeIn">
+            <h3 className="home-donation-cta-title">{t("donationCtaTitle")}</h3>
+            <p className="home-donation-cta-text">{t("donationCtaText")}</p>
+            <button className="home-donation-cta-button" onClick={handleStart}>
+              {t("startNow")}
+            </button>
           </div>
         </div>
       </section>

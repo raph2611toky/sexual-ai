@@ -4,8 +4,6 @@ import { useState, useEffect, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import axios from "axios"
 import config from "../config"
-import Donation from "./Donation"
-import PaymentModal from "./PaymentModal"
 import ToastContainer from "./ToastContainer"
 import "./DiscussionScreen.css"
 
@@ -32,13 +30,13 @@ export default function DiscussionScreen() {
   const [silenceStart, setSilenceStart] = useState(null)
   const [theme, setTheme] = useState("light")
   const [profile, setProfile] = useState({ name: "Utilisateur", profile_url: null })
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
-  const [showPricing, setShowPricing] = useState(false)
-  const [selectedPlan, setSelectedPlan] = useState(null)
+  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false)
+  const [isSettingsDropdownOpen, setIsSettingsDropdownOpen] = useState(false)
   const [toasts, setToasts] = useState([])
   const [isAISpeaking, setIsAISpeaking] = useState(false)
   const [isRecognitionActive, setIsRecognitionActive] = useState(false)
   const [welcomeMessageRead, setWelcomeMessageRead] = useState(false)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
 
   const chatContainerRef = useRef()
   const mediaRecorderRef = useRef()
@@ -85,12 +83,12 @@ export default function DiscussionScreen() {
     document.documentElement.setAttribute("data-theme", savedTheme)
 
     const token = getCookie('auth_token')
-    if (!token) {
-      navigate('/login')
-      return
+    if (token) {
+      setIsLoggedIn(true)
+      fetchProfile(token)
+    } else {
+      setIsLoggedIn(false)
     }
-
-    fetchProfile()
 
     if (!discussionCreated) {
       handleCreateDiscussion()
@@ -108,7 +106,6 @@ export default function DiscussionScreen() {
   const initializeSpeechRecognition = () => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
     if (SpeechRecognition) {
-      console.log("Speech recognition activated...")
       recognitionRef.current = new SpeechRecognition()
       recognitionRef.current.continuous = true
       recognitionRef.current.interimResults = true
@@ -118,13 +115,10 @@ export default function DiscussionScreen() {
         const transcript = Array.from(event.results)
           .map((result) => result[0].transcript)
           .join("")
-        console.log(`Mode appel actuel : ${callModeRef.current}`)
         if (callModeRef.current) {
           setCallQuestion(transcript)
-          console.log(`Mise à jour de callQuestion : ${transcript}`)
         } else {
           setQuestion(transcript)
-          console.log(`Mise à jour de question : ${transcript}`)
         }
         if (event.results[event.results.length - 1].isFinal && callModeRef.current) {
           setSilenceStart(null)
@@ -141,10 +135,8 @@ export default function DiscussionScreen() {
         setIsRecognitionActive(false)
       }
       recognitionRef.current.onend = () => {
-        console.log("Speech recognition ended")
         setIsRecognitionActive(false)
         if (isCallMode && isRecording && !isAISpeaking) {
-          console.log("Restarting recognition...")
           setTimeout(() => startRecording(), 100)
         }
       }
@@ -158,18 +150,15 @@ export default function DiscussionScreen() {
     }
   }
 
-  const fetchProfile = async () => {
+  const fetchProfile = async (token) => {
     try {
-      const token = getCookie("auth_token")
-      if (token) {
-        const response = await axios.get(`${config.apiUrl}/profile/`, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        setProfile({
-          name: response.data.name || "Utilisateur",
-          profile_url: response.data.profile_url || null,
-        })
-      }
+      const response = await axios.get(`${config.apiUrl}/profile/`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      setProfile({
+        name: response.data.name || "Utilisateur",
+        profile_url: response.data.profile_url || null,
+      })
     } catch (error) {
       console.error("Erreur lors de la récupération du profil:", error)
       addToast(
@@ -207,31 +196,6 @@ export default function DiscussionScreen() {
     }
   }, [isCallMode])
 
-  useEffect(() => {
-    if (isCallMode && isRecording && callQuestion.trim() && !isAISpeaking) {
-      console.log(`Audio level: ${audioLevel}`)
-      if (audioLevel < 0.05) {
-        if (!silenceStart) {
-          setSilenceStart(Date.now())
-          console.log("silence start : "+silenceStart)
-        } else if (Date.now() - silenceStart >= 5000) {
-          console.log("Silence detected, sending message...")
-          if (isRecognitionActive) {
-            stopRecording()
-            setIsRecording(false)
-          }
-          handleAskQuestion(callQuestion)
-          setCallQuestion("")
-          setSilenceStart(null)
-        }
-      } else {
-        setSilenceStart(null)
-      }
-    } else {
-      setSilenceStart(null)
-    }
-  }, [audioLevel, isCallMode, isRecording, callQuestion, isAISpeaking])
-
   const translations = {
     FR: {
       title: "Sexual AI",
@@ -239,8 +203,7 @@ export default function DiscussionScreen() {
       myDiscussions: "Mes Discussions",
       loading: "Chargement...",
       welcomeTitle: "Assistant Santé Reproductive",
-      welcomeText:
-        "Posez vos questions sur la santé reproductive en toute confidentialité.",
+      welcomeText: "Posez vos questions sur la santé reproductive en toute confidentialité.",
       inputPlaceholder: "Tapez votre question ici...",
       callInputPlaceholder: "Votre texte vocal apparaît ici...",
       processing: "Traitement...",
@@ -259,10 +222,16 @@ export default function DiscussionScreen() {
       callActive: "Appel en cours",
       aiAssistant: "Assistant IA",
       settings: "Paramètres",
-      donation: "Abonnements",
+      donation: "Faire un don",
       logout: "Déconnexion",
       micOff: "Microphone désactivé",
       transcriptionError: "Erreur lors de la transcription audio",
+      home: "Accueil",
+      login: "Se connecter",
+      privacyPolicy: "Politique de confidentialité",
+      termsOfService: "Conditions d'utilisation",
+      darkMode: "Mode sombre",
+      lightMode: "Mode clair",
     },
     MG: {
       title: "Sexual AI",
@@ -289,10 +258,16 @@ export default function DiscussionScreen() {
       callActive: "Misy antso",
       aiAssistant: "Mpanampy IA",
       settings: "Fandrindrana",
-      donation: "Famandrihana",
+      donation: "Fanomezana",
       logout: "Mivoaka",
       micOff: "Mikrô tapaka",
       transcriptionError: "Fahadisoana tamin'ny fandikana feo",
+      home: "Fandraisana",
+      login: "Hiditra",
+      privacyPolicy: "Politikan'ny tsiambaratelo",
+      termsOfService: "Fepetra fampiasana",
+      darkMode: "Maizina",
+      lightMode: "Mazava",
     },
   }
 
@@ -308,7 +283,9 @@ export default function DiscussionScreen() {
     if (menuVisible) {
       setMenuVisible(false)
     } else {
-      fetchConversations()
+      if (isLoggedIn) {
+        fetchConversations()
+      }
       setMenuVisible(true)
     }
   }
@@ -325,7 +302,6 @@ export default function DiscussionScreen() {
   const toggleCallMode = () => {
     setIsCallMode((prev) => {
       const newCallMode = !prev
-      console.log("new call mode : "+newCallMode)
       if (newCallMode) {
         setIsRecording(true)
         startCallMode()
@@ -333,13 +309,11 @@ export default function DiscussionScreen() {
         setIsRecording(false)
         stopCallMode()
       }
-      console.log(`Switching call mode to ${newCallMode}`)
       return newCallMode
     })
   }
 
   const startCallMode = async () => {
-    console.log("Start call mode now...")
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)()
@@ -364,23 +338,23 @@ export default function DiscussionScreen() {
       if (!welcomeMessageRead) {
         const welcomePhrases = [
           {
-            FR: "Bonjour, comment puis‑je vous accompagner dans votre santé sexuelle aujourd’hui ?",            // formel
-            MG: "Salama, ahoana no ahafahako manampy anao momba ny fahasalamana ara-nofo androany ?"
+            FR: "Bonjour, comment puis‑je vous accompagner dans votre santé sexuelle aujourd'hui ?",
+            MG: "Salama, ahoana no ahafahako manampy anao momba ny fahasalamana ara-nofo androany ?"
           },
           {
-            FR: "Salut ! Prêt·e pour un petit bilan intime sérieux ?",                                       // sérieux
-            MG: "Manao ahoana! Vonona hanao fanadihadiana momba ny fahasalamana ara-nofo ianao androany ?"
+            FR: "Salut ! Prêt·e pour un petit bilan intime sérieux ?",
+            MG: "Manao ahoana! Vonona hanao fanadihadiana momba ny fahasalamana ara-nofo ianao androany ?"
           },
           {
-            FR: "Allons-y sans tabou : comment va votre vie sexuelle ?",                                      // direct
-            MG: "Andao tsy ho kivy: manao ahoana ny fiainana ara-nofo misy anao ?"
+            FR: "Allons-y sans tabou : comment va votre vie sexuelle ?",
+            MG: "Andao tsy ho kivy: manao ahoana ny fiainana ara-nofo misy anao ?"
           },
           {
-            FR: "Bonjour, dis‑moi tout pour garder ta santé sexuelle au top !",                               // chaleureux
-            MG: "Salama, lazao ahy daholo mba hitazonana ny fahasalamana ara-nofonao ho tsara foana !"
+            FR: "Bonjour, dis‑moi tout pour garder ta santé sexuelle au top !",
+            MG: "Salama, lazao ahy daholo mba hitazonana ny fahasalamana ara-nofonao ho tsara foana !"
           },
           {
-            FR: "Hey, prêt·e à booster ton bien‑être sexy ? Je suis là pour ça !",                             // humouriste
+            FR: "Hey, prêt·e à booster ton bien‑être sexy ? Je suis là pour ça !",
             MG: "Hey, vonona hanome hery ny fahasalamana ara-nofonao ve ianao? Eto aho hanampy izany!"
           }
         ];
@@ -388,10 +362,7 @@ export default function DiscussionScreen() {
         const randomIndex = Math.floor(Math.random() * welcomePhrases.length);
         const { FR, MG } = welcomePhrases[randomIndex];
 
-        const welcomeText =
-          selectedLanguage === "FR"
-            ? FR
-            : MG;
+        const welcomeText = selectedLanguage === "FR" ? FR : MG;
         await speakText(welcomeText, "welcome")
         setWelcomeMessageRead(true)
       }
@@ -420,25 +391,16 @@ export default function DiscussionScreen() {
 
   const startRecording = () => {
     if (recognitionRef.current && !isRecognitionActive && !isAISpeaking) {
-      console.log("Tentative de démarrage de l'enregistrement...");
       try {
         recognitionRef.current.start();
         setIsRecognitionActive(true);
         setIsRecording(true);
-        updateMicIcon(true);
-        console.log("Enregistrement démarré avec succès.");
       } catch (error) {
         console.error("Erreur enregistrement:", error);
         addToast(selectedLanguage === "FR" ? "Micro éteint" : "Mikrô maty", "error");
         setIsRecognitionActive(false);
         setIsRecording(false);
-        updateMicIcon(false);
       }
-    } else {
-      console.log("Enregistrement non démarré : reconnaissance active ou IA en train de parler", {
-        isRecognitionActive,
-        isAISpeaking,
-      });
     }
   };
 
@@ -449,15 +411,14 @@ export default function DiscussionScreen() {
   }
 
   const fetchConversations = async () => {
+    if (!isLoggedIn) return
     try {
       const token = getCookie("auth_token")
-      if (token) {
-        const response = await axios.get(`${config.apiUrl}/conversation/list/`, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        setConversations(response.data || [])
-        setIsLoading(false)
-      }
+      const response = await axios.get(`${config.apiUrl}/conversation/list/`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      setConversations(response.data || [])
+      setIsLoading(false)
     } catch (error) {
       console.error("Erreur lors de la récupération des conversations:", error)
       addToast(
@@ -473,19 +434,18 @@ export default function DiscussionScreen() {
   const handleCreateDiscussion = async () => {
     try {
       const token = getCookie("auth_token")
-      if (token) {
-        const responseConversation = await axios.post(
-          `${config.apiUrl}/conversation/new/`,
-          {},
-          { headers: { Authorization: `Bearer ${token}` } }
-        )
+      const headers = token ? { Authorization: `Bearer ${token}` } : {}
+      const responseConversation = await axios.post(
+        `${config.apiUrl}/conversation/new/`,
+        {},
+        { headers }
+      )
 
-        const id_conversation = responseConversation.data.id_conversation
-        setId_conversation(id_conversation)
-        setDiscussionCreated(true)
-        setCurrentTitle("")
-        setResponses([])
-      }
+      const id_conversation = responseConversation.data.id_conversation
+      setId_conversation(id_conversation)
+      setDiscussionCreated(true)
+      setCurrentTitle("")
+      setResponses([])
     } catch (error) {
       console.error("Erreur lors de la création de la discussion:", error)
       addToast(
@@ -514,28 +474,27 @@ export default function DiscussionScreen() {
 
       try {
         const token = getCookie("auth_token")
-        if (token) {
-          const responseMessage = await axios.post(
-            `${config.apiUrl}/messagechat/new/`,
-            { contenu: questionWithLang, conversation: id_conversation },
-            { headers: { Authorization: `Bearer ${token}` } }
-          )
+        const headers = token ? { Authorization: `Bearer ${token}` } : {}
+        const responseMessage = await axios.post(
+          `${config.apiUrl}/messagechat/new/`,
+          { contenu: questionWithLang, conversation: id_conversation },
+          { headers }
+        )
 
-          const aiResponseId = Date.now().toString() + "1"
-          const aiResponse = {
-            type: "ai",
-            text: responseMessage.data.bot_response,
-            id: aiResponseId,
-            timestamp: new Date(),
-          }
+        const aiResponseId = Date.now().toString() + "1"
+        const aiResponse = {
+          type: "ai",
+          text: responseMessage.data.bot_response,
+          id: aiResponseId,
+          timestamp: new Date(),
+        }
 
-          setResponses((prevResponses) => [...prevResponses, aiResponse])
+        setResponses((prevResponses) => [...prevResponses, aiResponse])
 
-          if (isCallMode) {
-            setTimeout(() => {
-              if (!isSpeaking) speakText(responseMessage.data.bot_response, aiResponseId)
-            }, 1000)
-          }
+        if (isCallMode) {
+          setTimeout(() => {
+            if (!isSpeaking) speakText(responseMessage.data.bot_response, aiResponseId)
+          }, 1000)
         }
       } catch (error) {
         console.error("Erreur lors de l'envoi de la question:", error)
@@ -564,26 +523,25 @@ export default function DiscussionScreen() {
   }
 
   const handleSelectConversation = async (conversationId, title) => {
+    if (!isLoggedIn) return
     setId_conversation(conversationId)
     setCurrentTitle(title || `Discussion ${conversationId}`)
     setMenuVisible(false)
 
     try {
       const token = getCookie("auth_token")
-      if (token) {
-        const response = await axios.get(`${config.apiUrl}/conversation/${conversationId}/details/`, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
+      const response = await axios.get(`${config.apiUrl}/conversation/${conversationId}/details/`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
 
-        const formattedMessages = response.data.messages.map((msg) => ({
-          type: msg.from_user ? "ai" : "user",
-          text: msg.contenu,
-          id: msg.id || Date.now().toString() + Math.random().toString(36).substring(7),
-          timestamp: new Date(msg.created_at),
-        }))
+      const formattedMessages = response.data.messages.map((msg) => ({
+        type: msg.from_user ? "ai" : "user",
+        text: msg.contenu,
+        id: msg.id || Date.now().toString() + Math.random().toString(36).substring(7),
+        timestamp: new Date(msg.created_at),
+      }))
 
-        setResponses(formattedMessages)
-      }
+      setResponses(formattedMessages)
     } catch (error) {
       console.error("Erreur lors de la récupération des messages:", error)
       addToast(
@@ -626,7 +584,6 @@ export default function DiscussionScreen() {
       setIsAISpeaking(true);
 
       if ("speechSynthesis" in window) {
-        console.log("Speak text...");
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = selectedLanguage === "FR" ? "fr-FR" : "mg-MG";
         utterance.pitch = 1.0;
@@ -637,15 +594,11 @@ export default function DiscussionScreen() {
           setSpeakingMessageId(null);
           setIsAISpeaking(false);
           resolve();
-          // Forcer le redémarrage de l'écoute après un délai pour éviter les conflits
           setTimeout(() => {
             if (callModeRef.current) {
-              console.log("Fin de la parole de l'IA, forçage du redémarrage de l'enregistrement...");
               forceStartRecording();
-            } else {
-              console.log("Mode appel désactivé, pas de redémarrage de l'enregistrement.");
             }
-          }, 500); // Délai de 500ms pour s'assurer que tout est bien arrêté
+          }, 500);
         };
 
         utterance.onerror = (error) => {
@@ -676,8 +629,6 @@ export default function DiscussionScreen() {
 
   const forceStartRecording = () => {
     if (recognitionRef.current) {
-      console.log("Forçage du redémarrage de l'enregistrement...");
-
       const restartRecognition = () => {
         setTimeout(() => {
           try {
@@ -685,41 +636,24 @@ export default function DiscussionScreen() {
               recognitionRef.current.start();
               setIsRecognitionActive(true);
               setIsRecording(true);
-              console.log("Enregistrement redémarré avec succès.");
-              updateMicIcon(true);
-            } else {
-              console.log("Reconnaissance déjà active, pas de redémarrage nécessaire.");
             }
           } catch (error) {
             console.error("Erreur lors du forçage de l'enregistrement:", error);
             addToast(selectedLanguage === "FR" ? "Erreur micro" : "Fahadisoana mikrô", "error");
             setIsRecognitionActive(false);
             setIsRecording(false);
-            updateMicIcon(false);
           }
-        }, 600); // Légère augmentation à 600ms pour plus de sécurité
+        }, 600);
       };
 
       if (isRecognitionActiveRef.current) {
         recognitionRef.current.stop();
         setIsRecognitionActive(false);
         setIsRecording(false);
-        console.log("Reconnaissance vocale arrêtée avant redémarrage.");
         restartRecognition();
       } else {
-        console.log("Reconnaissance inactive, démarrage direct.");
         restartRecognition();
       }
-    } else {
-      console.log("Erreur : reconnaissance vocale non initialisée.");
-    }
-  };
-
-  const updateMicIcon = (isListening) => {
-    const micIcon = document.getElementById("mic-icon");
-    if (micIcon) {
-      micIcon.className = isListening ? "mic-on" : "mic-off";
-      console.log(`Icône microphone mise à jour : ${isListening ? "en écoute" : "éteint"}`);
     }
   };
 
@@ -743,34 +677,31 @@ export default function DiscussionScreen() {
     navigate("/login")
   }
 
-  const handleSelectPlan = (plan) => {
-    setSelectedPlan(plan)
-    setShowPricing(false)
+  const handleDonation = () => {
+    navigate("/donation")
   }
 
-  const handleShowPlan = () => {
-    navigate("/pricing")
-  }
+  // Fermer les dropdowns quand on clique ailleurs
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!event.target.closest('.discussion-header-profile')) {
+        setIsProfileDropdownOpen(false)
+      }
+      if (!event.target.closest('.discussion-settings-menu')) {
+        setIsSettingsDropdownOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [])
 
   return (
     <div className="discussion-safe-area">
       <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
       {menuVisible && <div className="discussion-overlay" onClick={toggleMenu}></div>}
-      {selectedPlan && (
-        <PaymentModal
-          plan={selectedPlan}
-          language={selectedLanguage}
-          theme={theme}
-          onClose={() => setSelectedPlan(null)}
-          planDetails={translations[selectedLanguage].plans ? translations[selectedLanguage].plans[selectedPlan] : {}}
-        />
-      )}
-
-      {isCallMode && !isRecording && (
-        <div className="mic-notification">
-          <span>{t("micOff")}</span>
-        </div>
-      )}
 
       {menuVisible && (
         <div className="discussion-menu-container">
@@ -779,7 +710,7 @@ export default function DiscussionScreen() {
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
               </svg>
-              {t("myDiscussions")}
+              {isLoggedIn ? t("myDiscussions") : t("newDiscussion")}
             </h3>
             <button className="discussion-close-button" onClick={toggleMenu}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -806,12 +737,12 @@ export default function DiscussionScreen() {
               <span className="discussion-new-chat-text">{t("newDiscussion")}</span>
             </button>
 
-            {isLoading ? (
+            {isLoggedIn && isLoading ? (
               <div className="discussion-loading-container">
                 <div className="discussion-loading-spinner"></div>
                 <p className="discussion-loading-text">{t("loading")}</p>
               </div>
-            ) : (
+            ) : isLoggedIn ? (
               <div className="discussion-conversations-list">
                 {conversations.map((item) => (
                   <button
@@ -820,7 +751,7 @@ export default function DiscussionScreen() {
                     onClick={() => handleSelectConversation(item.id_conversation, item.titre)}
                   >
                     <div className="discussion-conversation-icon">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                       </svg>
                     </div>
@@ -830,8 +761,7 @@ export default function DiscussionScreen() {
                     </div>
                     <svg
                       className="discussion-conversation-arrow"
-                      width="14"
-                      height="14"
+                      width="12" height="12"
                       viewBox="0 0 24 24"
                       fill="none"
                       stroke="currentColor"
@@ -842,7 +772,7 @@ export default function DiscussionScreen() {
                   </button>
                 ))}
               </div>
-            )}
+            ) : null}
           </div>
         </div>
       )}
@@ -859,21 +789,12 @@ export default function DiscussionScreen() {
 
           <div className="discussion-title-container">
             <h1 className="discussion-title">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M 19 14 c 1.49 -1.46 3 -3.21 3 -5.5 A 5.5 5.5 0 0 0 16.5 3 c -1.76 0 -3 .5 -4.5 2 -1.5 -1.5 -2.74 -2 -4.5 -2 A 5.5 5.5 0 0 0 2 8.5 c 0 2.29 1.51 4.04 3 5.5 l 7 7 z"></path>
-              </svg>
               {t("title")}
             </h1>
             {callModeRef.current && (
               <div className="discussion-call-indicator">
                 <div className="discussion-call-dot"></div>
                 <span className="discussion-call-duration">{formatCallDuration(callDuration)}</span>
-              </div>
-            )}
-            {!callModeRef.current && (
-              <div className="discussion-status-indicator">
-                <div className="discussion-online-dot"></div>
-                <span className="discussion-status-text">{t("online")}</span>
               </div>
             )}
           </div>
@@ -897,37 +818,13 @@ export default function DiscussionScreen() {
               )}
             </button>
 
-            <button className="discussion-menstruation-button" onClick={() => navigate("/cycle")}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                <line x1="16" y1="2" x2="16" y2="6"></line>
-                <line x1="8" y1="2" x2="8" y2="6"></line>
-                <line x1="3" y1="10" x2="21" y2="10"></line>
-              </svg>
-            </button>
-
-            <div className="discussion-language-selector">
-              {selectedLanguage === "FR" ? (
-                <button
-                  className={`discussion-language-button ${selectedLanguage === "MG" ? "active" : ""}`}
-                  onClick={() => setSelectedLanguage("MG")}
-                >
-                  MG
-                </button>
-              ) : (
-                <button
-                  className={`discussion-language-button ${selectedLanguage === "FR" ? "active" : ""}`}
-                  onClick={() => setSelectedLanguage("FR")}
-                >
-                  FR
-                </button>
-              )}
-            </div>
-
             <div className="discussion-header-profile">
-              <button className="discussion-profile-btn" onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
+              <button 
+                className="discussion-profile-btn" 
+                onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
+              >
                 <div className="discussion-header-profile-avatar">
-                  {profile.profile_url ? (
+                  {isLoggedIn && profile.profile_url ? (
                     <img
                       src={profile.profile_url || "/placeholder.svg"}
                       alt="Profile"
@@ -941,15 +838,108 @@ export default function DiscussionScreen() {
                     </svg>
                   )}
                 </div>
-                <div className="discussion-profile-active-dot"></div>
+                {isLoggedIn && <div className="discussion-profile-active-dot"></div>}
               </button>
-              {isDropdownOpen && (
+              
+              {isProfileDropdownOpen && (
                 <div className="discussion-profile-dropdown">
+                  {!isLoggedIn ? (
+                    <>
+                      <button onClick={() => navigate("/login")}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+                          <polyline points="10,17 15,12 10,7"></polyline>
+                          <line x1="15" y1="12" x2="3" y2="12"></line>
+                        </svg>
+                        {t("login")}
+                      </button>
+                      <button onClick={() => navigate("/privacy-policy")}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                        </svg>
+                        {t("privacyPolicy")}
+                      </button>
+                      <button onClick={() => navigate("/terms-of-service")}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                          <polyline points="14,2 14,8 20,8"></polyline>
+                          <line x1="16" y1="13" x2="8" y2="13"></line>
+                          <line x1="16" y1="17" x2="8" y2="17"></line>
+                          <polyline points="10,9 9,9 8,9"></polyline>
+                        </svg>
+                        {t("termsOfService")}
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button onClick={() => navigate("/profile")}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                          <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                        Profil
+                      </button>
+                      <button onClick={() => navigate("/privacy-policy")}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                        </svg>
+                        {t("privacyPolicy")}
+                      </button>
+                      <button onClick={() => navigate("/terms-of-service")}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                          <polyline points="14,2 14,8 20,8"></polyline>
+                          <line x1="16" y1="13" x2="8" y2="13"></line>
+                          <line x1="16" y1="17" x2="8" y2="17"></line>
+                          <polyline points="10,9 9,9 8,9"></polyline>
+                        </svg>
+                        {t("termsOfService")}
+                      </button>
+                      <button onClick={handleLogout}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                          <polyline points="16,17 21,12 16,7"></polyline>
+                          <line x1="21" y1="12" x2="9" y2="12"></line>
+                        </svg>
+                        {t("logout")}
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="discussion-settings-menu">
+              <button 
+                className="discussion-settings-button" 
+                onClick={() => setIsSettingsDropdownOpen(!isSettingsDropdownOpen)}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="12" r="3"></circle>
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                </svg>
+              </button>
+              
+              {isSettingsDropdownOpen && (
+                <div className="discussion-settings-dropdown">
                   <button onClick={toggleThemeHandler}>
-                    {theme === "light" ? "🌙 Mode sombre" : "☀️ Mode clair"}
+                    <div className="discussion-settings-icon">
+                      {theme === "light" ? "🌙" : "☀️"}
+                    </div>
+                    {theme === "light" ? t("darkMode") : t("lightMode")}
                   </button>
-                  <button onClick={handleShowPlan}>{t("donation")}</button>
-                  <button onClick={handleLogout}>{t("logout")}</button>
+                  <button onClick={toggleLanguage}>
+                    <div className="discussion-settings-icon">
+                      🌐
+                    </div>
+                    {selectedLanguage === "FR" ? "MG" : "FR"}
+                  </button>
+                  <button onClick={handleDonation}>
+                    <div className="discussion-settings-icon">
+                      💝
+                    </div>
+                    {t("donation")}
+                  </button>
                 </div>
               )}
             </div>
@@ -958,115 +948,90 @@ export default function DiscussionScreen() {
 
         {callModeRef.current && (
           <div className="discussion-call-interface">
-            <div className="discussion-call-header">
-              <div className="discussion-call-status-bar">
-                <div className="discussion-call-signal">
-                  <div className="discussion-signal-bar"></div>
-                  <div className="discussion-signal-bar"></div>
-                  <div className="discussion-signal-bar"></div>
-                  <div className="discussion-signal-bar"></div>
-                </div>
-                <span className="discussion-call-carrier">Sexual AI</span>
-                <div className="discussion-call-time">{formatCallDuration(callDuration)}</div>
-              </div>
-            </div>
-
             <div className="discussion-call-main">
               <div className="discussion-call-avatar-section">
                 <div className="discussion-call-avatar-container">
                   <div className="discussion-call-avatar-image">
-                    <div className="discussion-avatar-icon">🩺</div>
-                    {isRecognitionActive && !isAISpeaking && (
-                      <div className="discussion-call-listening-indicator">
-                        <div className="discussion-listening-wave">
-                          {[...Array(4)].map((_, i) => (
-                            <div
-                              key={i}
-                              className="discussion-wave-bar"
-                              style={{
-                                animationDelay: `${i * 0.1}s`,
-                                height: `${10 + audioLevel * 20}px`,
-                              }}
-                            ></div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    {isAISpeaking && (
-                      <div className="discussion-call-speaking-indicator">
-                        <div className="discussion-speaking-rings">
-                          <div className="discussion-speaking-ring"></div>
-                          <div className="discussion-speaking-ring"></div>
-                          <div className="discussion-speaking-ring"></div>
-                        </div>
-                      </div>
-                    )}
+                    <svg className="discussion-avatar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="3" y="11" width="18" height="10" rx="2" ry="2"></rect>
+                      <circle cx="12" cy="5" r="2"></circle>
+                      <path d="M12 7v4"></path>
+                      <line x1="8" y1="16" x2="8" y2="16"></line>
+                      <line x1="16" y1="16" x2="16" y2="16"></line>
+                    </svg>
                   </div>
+                  
+                  {isRecording && (
+                    <div className="discussion-call-listening-indicator">
+                      <div className="discussion-listening-wave">
+                        {[...Array(5)].map((_, i) => (
+                          <div
+                            key={i}
+                            className="discussion-wave-bar"
+                            style={{
+                              animationDelay: `${i * 0.1}s`,
+                              height: `${8 + audioLevel * 20}px`
+                            }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {isAISpeaking && (
+                    <div className="discussion-call-speaking-indicator">
+                      <div className="discussion-speaking-rings">
+                        <div className="discussion-speaking-ring"></div>
+                        <div className="discussion-speaking-ring"></div>
+                        <div className="discussion-speaking-ring"></div>
+                      </div>
+                    </div>
+                  )}
                 </div>
-
+                
                 <div className="discussion-call-info">
-                  <h2 className="discussion-call-contact-name">{t("aiAssistant")}</h2>
+                  <h3 className="discussion-call-contact-name">{t("aiAssistant")}</h3>
                   <p className="discussion-call-status-text">
-                    {isAISpeaking
-                      ? t("aiSpeaking")
-                      : isRecognitionActive
-                      ? t("listening")
-                      : t("callActive")}
+                    {isAISpeaking ? t("aiSpeaking") : isRecording ? t("listening") : t("online")}
                   </p>
                 </div>
               </div>
 
-              <div className="discussion-call-transcript">
-                {callQuestion && (
+              {callQuestion && (
+                <div className="discussion-call-transcript">
+                  <span className="discussion-transcript-label">Transcription</span>
                   <div className="discussion-call-transcript-text">
-                    <span className="discussion-transcript-label">Vous:</span>
-                    <p>{callQuestion}</p>
+                    {callQuestion}
                   </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
 
             <div className="discussion-call-controls">
-              <button
-                className="discussion-call-control-btn discussion-mute-btn"
-                onClick={() => {
-                  if (isRecording) {
-                    setIsRecording(false)
-                    stopRecording()
-                  } else {
-                    setIsRecording(true)
-                    startRecording()
-                  }
-                }}
-              >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  {isRecording ? (
-                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z M19 10v2a7 7 0 0 1-14 0v-2 M12 19v4 M8 23h8" />
-                  ) : (
-                    <>
-                      <line x1="1" y1="1" x2="23" y2="23"></line>
-                      <path d="M9 9v3a3 3 0 0 0 5.12 2.12l1.27-1.27A7 7 0 0 1 5 12v-2"></path>
-                      <path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"></path>
-                      <line x1="12" y1="19" x2="12" y2="23"></line>
-                      <line x1="8" y1="23" x2="16" y2="23"></line>
-                    </>
-                  )}
+              <button className="discussion-call-control-btn discussion-mute-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                  <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                  <line x1="12" y1="19" x2="12" y2="23"></line>
+                  <line x1="8" y1="23" x2="16" y2="23"></line>
                 </svg>
+                <span>Muet</span>
               </button>
-
+              
               <button className="discussion-call-control-btn discussion-end-call-btn" onClick={toggleCallMode}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
                   <line x1="18" y1="2" x2="6" y2="14"></line>
                   <line x1="6" y1="2" x2="18" y2="14"></line>
                 </svg>
               </button>
-
+              
               <button className="discussion-call-control-btn discussion-speaker-btn">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <polygon points="11,5 6,9 2,9 2,15 6,15 11,19"></polygon>
                   <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
                 </svg>
+                <span>Haut-parleur</span>
               </button>
             </div>
           </div>
@@ -1101,7 +1066,7 @@ export default function DiscussionScreen() {
                         <p className="discussion-message-text">{item.text}</p>
                       </div>
                       <div className="discussion-message-avatar user">
-                        {profile.profile_url ? (
+                        {isLoggedIn && profile.profile_url ? (
                           <img
                             src={profile.profile_url || "/placeholder.svg"}
                             alt="User profile"
@@ -1189,7 +1154,14 @@ export default function DiscussionScreen() {
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
                 onKeyPress={handleKeyPress}
-                rows="1"
+                style={{
+                  height: 'auto',
+                  minHeight: '24px'
+                }}
+                onInput={(e) => {
+                  e.target.style.height = 'auto';
+                  e.target.style.height = Math.min(e.target.scrollHeight, 200) + 'px';
+                }}
               />
 
               <div className="discussion-voice-controls">

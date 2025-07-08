@@ -6,6 +6,7 @@ import Signup from "./components/Signup"
 import DiscussionScreen from "./components/DiscussionScreen"
 import CycleManagementScreen from "./components/CycleManagementScreen"
 import PrivacyPolicy from "./components/PrivacyPolicy"
+import TermsOfServices from "./components/TermsOfService"
 import Donation from "./components/Donation"
 import NotFound from "./components/NotFound"
 
@@ -30,23 +31,15 @@ function App() {
     <Router>
       <div className="App">
         <Routes>
-          <Route path="/" element={<HomeScreen />} />
+          <Route path="/" element={<DiscussionScreen />} />
+          <Route path="/home" element={<HomeScreen />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-          <Route path="/pricing" element={
-              <PrivateRoute>
+          <Route path="/terms-of-services" element={<TermsOfServices />} />
+          <Route path="/donation" element={
                 <Donation />
-              </PrivateRoute>
             } />
-          <Route
-            path="/discussion"
-            element={
-              <PrivateRoute>
-                <DiscussionScreen />
-              </PrivateRoute>
-            }
-          />
           <Route
             path="/cycle"
             element={

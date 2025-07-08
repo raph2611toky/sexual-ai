@@ -1,12 +1,14 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useNavigate } from "react-router-dom"
 import PaymentModal from "./PaymentModal"
 import "./Donation.css"
 
 const Donation = () => {
   const [selectedAmount, setSelectedAmount] = useState(null)
   const [customAmount, setCustomAmount] = useState("")
+  const navigate = useNavigate()
   const [showPayment, setShowPayment] = useState(false)
   const [language, setLanguage] = useState("FR")
   const [theme, setTheme] = useState("light")
@@ -122,8 +124,7 @@ const Donation = () => {
   }
 
   const handleBackToApp = () => {
-    // Navigation logic here
-    console.log("Retour à l'application")
+    navigate("/home")
   }
 
   return (

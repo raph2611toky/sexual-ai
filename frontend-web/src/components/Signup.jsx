@@ -60,6 +60,7 @@ const Signup = () => {
       phone: "Numéro de téléphone",
       acceptTerms: "J'accepte les ",
       termsLink: "conditions et politiques",
+      termsOfServiceLink: "termes des services",
       signup: "Inscription",
       haveAccount: "J'ai déjà un compte",
       signIn: "Se connecter",
@@ -68,8 +69,10 @@ const Signup = () => {
       signupSuccess: "Inscription réussie ! Redirection vers la connexion...",
       unexpectedError: "Une erreur inattendue est survenue.",
       signupError: "Erreur lors de l'inscription.",
+      and: "et",
     },
     mg: {
+      and: "ary ny",
       createAccount: "Mamorona ny kaontinao! 👋",
       subtitle: "Mifandray amin'izao tontolo izao!",
       name: "Anarana",
@@ -78,6 +81,7 @@ const Signup = () => {
       phone: "Nomeraon-telefaona",
       acceptTerms: "Ekeko ny ",
       termsLink: "fepetra sy politika",
+      termsOfServiceLink: "fepetra fampiasana ny tolotra",
       signup: "Hisoratra anarana",
       haveAccount: "Efa manana kaonty aho",
       signIn: "Hiditra",
@@ -267,7 +271,7 @@ const Signup = () => {
           />
           <label htmlFor="terms">
             {t("acceptTerms")}
-            <a href="/privacy-policy" className="signup-terms-link">{t("termsLink")}</a>
+            <a href="/terms-of-services" className="signup-terms-link">{t("termsOfServiceLink")}</a> {t("and")} <a href="/privacy-policy" className="signup-terms-link">{t("termsLink")}</a>
           </label>
         </div>
 
