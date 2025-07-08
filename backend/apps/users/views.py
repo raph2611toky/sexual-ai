@@ -6,12 +6,19 @@ from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework.views import APIView
 
+from django.contrib.auth.hashers import make_password
+
 from apps.users.serializers import UserSerializer, LoginSerializer, RegisterSerializer, UpdateProfileSerializer
-from apps.users.models import User
+from apps.users.models import User, UserOtp, default_created_at
 
 from dotenv import load_dotenv
 from helpers.swagger.user import *
-import traceback
+from helpers.services.emails import envoyer_email
+from helpers.helper import generate_jwt_token, enc_dec, decode_jwt_token
+import random, string
+from datetime import timezone, timedelta
+
+import os
 
 load_dotenv()
 
@@ -114,27 +121,20 @@ class RegisterView(APIView):
                 return False
             return True
         except Exception:
-            return False
+            False
 
-    @swagger_auto_schema(
-        tags=['Users'],
-        request_body=register_request_schema, 
-        responses={
-            201: register_response_schema,
-            400: error_schema,
-        },
-        operation_description="Enregistre un nouvel utilisateur et renvoie son email."
-    )
     def post(self, request):
         try:
             user_data = request.data
-            print(user_data)
             if not self.validate_data(user_data):
                 return Response({'erreur': 'Tous les attributs sont requis'}, status=status.HTTP_400_BAD_REQUEST)
+
             birth_date = request.data['birth_date'].replace('/', '-')
             user_data['birth_date'] = birth_date
+
             if self.check_if_user_exist(request.data['email']):
-                return Response({'erreur': 'email existant'}, status=400)
+                return Response({'erreur': 'email existant'}, status=status.HTTP_400_BAD_REQUEST)
+
             if "profession_domaine" not in user_data:
                 user_data["profession_domaine"] = "Inconu"
             if user_data.get('sexe', 'I').lower() not in ['masculin', 'feminin']:
@@ -142,12 +142,189 @@ class RegisterView(APIView):
             else:
                 user_data['sexe'] = user_data['sexe'].strip()[0].upper()
 
+            code_otp = ''.join(random.choices(string.digits, k=8))
+
             serializer = RegisterSerializer(data=user_data)
             if serializer.is_valid(raise_exception=True):
-                return Response({"email": serializer.validated_data["email"]}, status=status.HTTP_201_CREATED)
+                user = serializer.data["user"]
+
+                date_expiration = timezone.now() + timedelta(minutes=30)
+                UserOtp.objects.create(code_otp=code_otp, user=user, expirer_le=date_expiration)
+
+                data = {
+                    'subject': 'Vérification de votre compte Sexual AI',
+                    'prenom': user.name.split()[0],
+                    'nom': ' '.join(user.name.split()[1:]) if len(user.name.split()) > 1 else '',
+                    'code_otp': code_otp,
+                    'user_email': 'tokynandrasana2611@gmail.com',
+                    'type_utilisateur': 'user' if user.is_staff else 'client',
+                }
+
+                envoyer_email([user.email], 'otp_verification', data)
+
+                return Response({"email": serializer.validated_data["email"], 'message':f"Une code Otp de verification a été envoyé à {user.email}"}, status=status.HTTP_201_CREATED)
             else:
-                return Response({'erreur': 'erreur de serialisation'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'erreur': 'erreur de sérialisation'}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
+            import traceback
             print(traceback.format_exc())
             return Response({"erreur": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        
+
+
+class UserVerifyOtpView(APIView):
+    permission_classes = [AllowAny]
+
+    @swagger_auto_schema(
+        operation_description="Vérifier le code OTP pour activer le compte utilisateur",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=["email", "code_otp"],
+            properties={
+                "email": openapi.Schema(type=openapi.TYPE_STRING, example="utilisateur@exemple.com"),
+                "code_otp": openapi.Schema(type=openapi.TYPE_STRING, example="1234567890")
+            }
+        ),
+        responses={
+            200: openapi.Response(description="Vérification réussie", schema=openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={"message": openapi.Schema(type=openapi.TYPE_STRING)}
+            )),
+            400: openapi.Response(description="Données invalides", schema=openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={"erreur": openapi.Schema(type=openapi.TYPE_STRING)}
+            )),
+            404: openapi.Response(description="User ou OTP non trouvé", schema=openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={"erreur": openapi.Schema(type=openapi.TYPE_STRING)}
+            )),
+            410: openapi.Response(description="OTP expiré", schema=openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={"erreur": openapi.Schema(type=openapi.TYPE_STRING)}
+            ))
+        },
+        tags=["Users"]
+    )
+    def post(self, request):
+        try:
+            email = request.data.get('email')
+            code_otp = request.data.get('code_otp')
+            
+            if not email or not code_otp:
+                return Response({"erreur": "Email et code OTP sont requis"}, status=status.HTTP_400_BAD_REQUEST)
+            
+            try:
+                user = User.objects.get(email=email)
+            except User.DoesNotExist:
+                return Response({"erreur": "User non trouvé"}, status=status.HTTP_404_NOT_FOUND)
+            
+            try:
+                otp = UserOtp.objects.filter(user=user, code_otp=code_otp).last()
+            except UserOtp.DoesNotExist:
+                return Response({"erreur": "Code OTP invalide"}, status=status.HTTP_400_BAD_REQUEST)
+            
+            if otp.expirer_le < default_created_at():
+                otp.delete()
+                return Response({"erreur": "Code OTP expiré"}, status=status.HTTP_410_GONE)
+            
+            user.is_verified = True
+            user.save()
+            UserOtp.objects.filter(user=user).delete()
+                        
+            return Response({"message": "Compte vérifié avec succès"}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"erreur": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class UserMotDePasseOublieView(APIView):
+    permission_classes = [AllowAny]
+
+    @swagger_auto_schema(
+        operation_description="Envoyer un email de réinitialisation du mot de passe user",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=["email"],
+            properties={
+                "email": openapi.Schema(type=openapi.TYPE_STRING, example="user@exemple.com")
+            }
+        ),
+        responses={
+            200: openapi.Response(description="Email envoyé", schema=openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={"message": openapi.Schema(type=openapi.TYPE_STRING)}
+            )),
+            400: openapi.Response(description="Erreur", schema=openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={"erreur": openapi.Schema(type=openapi.TYPE_STRING)}
+            ))
+        },
+        tags=["Users"]
+    )
+    def post(self, request):
+        try:
+            email = request.data.get('email')
+            if not email:
+                return Response({"erreur": "Email requis"}, status=400)
+
+            user = User.objects.filter(email=email).first()
+            if not user:
+                return Response({"erreur": "User introuvable"}, status=400)
+
+            token = generate_jwt_token({enc_dec("user_id"): enc_dec(str(user.id))})
+            lien = os.getenv('SITE_URL') + f"/user/reset-password?token={token}"
+
+            envoyer_email([email], "reinitialiser_mot_de_passe", {
+                "subject": "Réinitialisation de votre mot de passe",
+                "nom_utilisateur": f"{user.nom.upper()} {user.prenom.capitalize()}",
+                "lien_reinitialisation": lien
+            })
+
+            return Response({"message": "Email de réinitialisation envoyé"}, status=200)
+        except Exception as e:
+            return Response({"erreur": str(e)}, status=400)
+
+class UserResetPasswordView(APIView):
+    permission_classes = [AllowAny]
+
+    @swagger_auto_schema(
+        operation_description="Réinitialiser le mot de passe avec le token",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=["token", "nouveau_mot_de_passe"],
+            properties={
+                "token": openapi.Schema(type=openapi.TYPE_STRING),
+                "nouveau_mot_de_passe": openapi.Schema(type=openapi.TYPE_STRING, example="nouveaumotdepasse123")
+            }
+        ),
+        responses={
+            200: openapi.Response(description="Mot de passe réinitialisé", schema=openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={"message": openapi.Schema(type=openapi.TYPE_STRING)}
+            )),
+            400: openapi.Response(description="Erreur", schema=openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={"erreur": openapi.Schema(type=openapi.TYPE_STRING)}
+            )),
+            404: openapi.Response(description="User introuvable", schema=openapi.Schema(
+                type=openapi.TYPE_OBJECT,
+                properties={"erreur": openapi.Schema(type=openapi.TYPE_STRING)}
+            ))
+        },
+        tags=["Users"]
+    )
+    def post(self, request):
+        try:
+            token = request.data.get("token")
+            nouveau_mot_de_passe = request.data.get("nouveau_mot_de_passe")
+            payload = decode_jwt_token(token)
+            user_id = int(enc_dec(payload.get(enc_dec("user_id","d")), 'd'))
+
+            user = User.objects.get(id=user_id)
+            user.password = make_password(nouveau_mot_de_passe)
+            user.save()
+
+            return Response({"message": "Mot de passe réinitialisé avec succès"}, status=200)
+
+        except User.DoesNotExist:
+            return Response({"erreur": "User introuvable"}, status=404)
+        except Exception as e:
+            return Response({"erreur": str(e)}, status=400)
+

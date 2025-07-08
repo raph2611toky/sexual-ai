@@ -94,6 +94,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         if validated_data.get('sexe','Inconu').lower()[0]=='f':
             Woman.objects.create(user=user_created)
         data = {
-            'email': user_created.email
+            'email': user_created.email,
+            'user':users
         }
         return data

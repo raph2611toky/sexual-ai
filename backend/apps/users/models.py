@@ -30,6 +30,7 @@ class User(AbstractBaseUser):
     profile = models.ImageField(upload_to='users/profiles', default='users/profiles/default.png')
     code_id = models.CharField(max_length=100)
     is_staff = models.BooleanField(default=False)
+    is_verified = models.BooleanField(default=False)
     is_active = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
     date_joined = models.DateTimeField(default=django_timezone.now)
@@ -59,3 +60,19 @@ class SmsOrangeToken(models.Model):
     
     class Meta:
         db_table = 'smsorangetoken'
+        
+class UserOtp(models.Model):
+    code_otp = models.CharField(max_length=100)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="otps")
+    expirer_le = models.DateTimeField()
+    date_creation = models.DateTimeField(default=default_created_at)
+
+    def __str__(self):
+        return self.code_otp
+    
+    @property
+    def is_authenticated(self):
+        return self.is_active
+    
+    class Meta:
+        db_table = "userotp"

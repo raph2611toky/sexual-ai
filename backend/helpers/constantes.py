@@ -62,3 +62,9 @@ POST_OVULATION_MESSAGES = [
     "C'est une période parfaite pour méditer et prendre du temps pour vous.",
     "Préparez-vous à entrer dans la prochaine phase avec sérénité et confiance."
 ]
+
+TEMPLATES_EMAIL = {
+    "envoie_code_otp":"emails/otp_verification.html",
+    "reinitialiser_mot_de_passe":"emails/reset_password.html",
+    "don_recu":"emails/donation-receipt.html",
+}

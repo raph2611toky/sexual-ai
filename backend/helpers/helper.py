@@ -1,8 +1,13 @@
 from dotenv import load_dotenv
 from datetime import timedelta, datetime
 from django.utils import timezone as django_timezone
+from django.conf import settings
 
-import os
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from base64 import b64decode,b64encode
+from cryptography.hazmat.backends import default_backend
+
+import os, jwt
 import random
 from helpers.constantes import *
 load_dotenv()
@@ -49,3 +54,27 @@ def get_timezone():
     if '-' in tz:
         return django_timezone.now() - timedelta(hours=int(tz.strip()[1:]))
     return django_timezone.now()+timedelta(hours=int(tz))
+
+
+def enc_dec(plaintext, type='e'):
+    cipher = Cipher(algorithms.AES(os.getenv('AES_KEY').encode()), modes.CFB(os.getenv('AES_IV').encode()), backend=default_backend())
+    if type == 'e':
+        encryptor = cipher.encryptor()
+        ciphertext = encryptor.update(plaintext.encode()) + encryptor.finalize()
+        return b64encode(ciphertext).decode()  
+    elif type == 'd':
+        decryptor = cipher.decryptor()
+        ciphertext = b64decode(plaintext)
+        decrypted_plaintext = decryptor.update(ciphertext) + decryptor.finalize()
+        return decrypted_plaintext.decode()
+    else:
+        return 'type de cryptage inconnu' 
+
+def generate_jwt_token(payload: dict, expires_in_minutes: int = 1440) -> str:
+    expiration = datetime.utcnow() + timedelta(minutes=expires_in_minutes)
+    payload.update({"exp": expiration})
+    token = jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.SIMPLE_JWT['ALGORITHM'])
+    return token
+
+def decode_jwt_token(token: str) -> dict:
+    return jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.SIMPLE_JWT['ALGORITHM']])
