@@ -170,14 +170,18 @@ class MessageChatNewView(APIView):
 
             if conversation_id is not None and conversation_id.strip()!='':
                 try:
-                    conversation = Conversation.objects.get(id_conversation=int(conversation_id), user=request.user)
+                    conversation_last = Conversation.objects.filter(user=request.user).last()
+                    if conversation_last.messages.all().count() > 0:
+                        conversation = Conversation.objects.create(user=request.user)
+                    else:
+                        conversation = conversation_last
                 except Conversation.DoesNotExist:
                     return Response(
                         {"error": "Conversation introuvable ou non autorisée."},
                         status=status.HTTP_404_NOT_FOUND
                     )
             else:
-                conversation, created = Conversation.objects.get_or_create(
+                conversation, created = Conversation.objects.create(
                     user=request.user,
                     defaults={'titre': 'Nouvelle discussion'}
                 )
