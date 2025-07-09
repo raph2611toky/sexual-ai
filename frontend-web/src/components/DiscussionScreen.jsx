@@ -412,7 +412,7 @@ export default function DiscussionScreen() {
   }
 
   const fetchConversations = async () => {
-    if (!isLoggedIn) return
+    // if (!isLoggedIn) return
     try {
       const token = getCookie("auth_token")
       const response = await axios.get(`${config.apiUrl}/conversation/list/`, {
@@ -676,7 +676,7 @@ export default function DiscussionScreen() {
     try {
       const token = getCookie('auth_token');
       if (token) {
-        await axios.post(`${config.apiUrl}/logout`, {}, {
+        await axios.put(`${config.apiUrl}/logout/`, {}, {
           headers: { Authorization: `Bearer ${token}` },
         });
       }
@@ -883,7 +883,7 @@ export default function DiscussionScreen() {
                         </svg>
                         {t("privacyPolicy")}
                       </button>
-                      <button onClick={() => navigate("/terms-of-service")}>
+                      <button onClick={() => navigate("/terms-of-services")}>
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                           <polyline points="14,2 14,8 20,8"></polyline>
