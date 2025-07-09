@@ -7,6 +7,7 @@ from drf_yasg import openapi
 
 from apps.chatbot.models import Conversation, MessageChat
 from apps.chatbot.serializers import ConversationSerializer, MessageChatSerializer
+from apps.users.authentication import AnonymousOrAuthenticated
 
 from helpers.ai_models.gemini import simple_chat
 from helpers.helper import LOGGER
@@ -90,7 +91,7 @@ class ConversationFilterView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({'error':str(e)}, status=400)
-        
+
 class ConversationProfileView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -116,6 +117,7 @@ class ConversationProfileView(APIView):
 
 class ConversationNewView(APIView):
     permission_classes = [IsAuthenticated]
+    authentication_classes = [AnonymousOrAuthenticated]
 
     @swagger_auto_schema(
         tags=['Conversations'],
@@ -148,6 +150,7 @@ class ConversationNewView(APIView):
 
 class MessageChatNewView(APIView):
     permission_classes = [IsAuthenticated]
+    authentication_classes = [AnonymousOrAuthenticated]
 
     @swagger_auto_schema(
         tags=['Messages Bot'],
@@ -183,7 +186,7 @@ class MessageChatNewView(APIView):
             else:
                 conversation, created = Conversation.objects.create(
                     user=request.user,
-                    defaults={'titre': 'Nouvelle discussion'}
+                    titre= 'Nouvelle discussion'
                 )
 
             messageChat_response = simple_chat(contenu, lang=request.data.get("lang","fr"))
