@@ -23,7 +23,7 @@ import random, string
 from datetime import timedelta, datetime
 from django.utils import timezone
 
-import os
+import os, traceback
 
 load_dotenv()
 
@@ -275,7 +275,7 @@ class UserVerifyOtpView(APIView):
                 return Response({"erreur": "User non trouvé"}, status=status.HTTP_404_NOT_FOUND)
             
             try:
-                otp = UserOtp.objects.filter(user=user, code_otp=code_otp).last()
+                otp = UserOtp.objects.filter(user=user, code_otp=code_otp).first()
             except UserOtp.DoesNotExist:
                 return Response({"erreur": "Code OTP invalide"}, status=status.HTTP_400_BAD_REQUEST)
             print(otp)
@@ -291,7 +291,7 @@ class UserVerifyOtpView(APIView):
                         
             return Response({"message": "Compte vérifié avec succès", "email":email, "refresh":str(refresh),"access":str(refresh.access_token)}, status=status.HTTP_200_OK)
         except Exception as e:
-            return Response({"erreur": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({"erreur": str(e)+str(traceback.format_exc())}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class UserMotDePasseOublieView(APIView):
     permission_classes = [AllowAny]
