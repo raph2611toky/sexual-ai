@@ -111,7 +111,7 @@ class LogoutView(APIView):
     def put(self, request: Request):
         try:
             user = User.objects.get(id=request.user.id)
-            user.is_active = False
+            user.is_active = user.is_anonymous
             user.save()
             return Response({'message': 'Utilisateur déconnecté avec succès.'}, status=200)
         except User.DoesNotExist:
