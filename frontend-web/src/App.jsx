@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 import HomeScreen from "./components/HomeScreen"
 import Login from "./components/Login"
 import Signup from "./components/Signup"
-import DiscussionScreen from "./components/DiscussionScreen"
+import ProtectedDiscussionScreen from "./components/ProtectedDiscussionScreen"
 import CycleManagementScreen from "./components/CycleManagementScreen"
 import PrivacyPolicy from "./components/PrivacyPolicy"
 import TermsOfServices from "./components/TermsOfService"
@@ -32,7 +32,7 @@ function App() {
     <Router>
       <div className="App">
         <Routes>
-          <Route path="/" element={<DiscussionScreen />} />
+          <Route path="/" element={<ProtectedDiscussionScreen />} />
           <Route path="/home" element={<HomeScreen />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />

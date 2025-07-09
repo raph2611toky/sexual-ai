@@ -65,7 +65,7 @@ class ProfileAnonymousView(APIView):
     )
     def get(self, request: Request):
         try:
-            user, _= User.objects.get_or_create(email='anonymous@anonymous.com',sexe='I',birth_date='1000-01-01',name='anonymous',password=make_password("An0nym0us!@?1000_01/01."),profession_domaine="anonymous",is_anonymous=True, is_statff=False, is_superuser=False, is_verified=True, is_active=True,code_id=str(uuid4()))
+            user, _= User.objects.get_or_create(email='anonymous@anonymous.com',sexe='I',birth_date='1000-01-01',name='anonymous',password=make_password("An0nym0us!@?1000_01/01."),profession_domaine="anonymous",is_anonymous=True, is_staff=False, is_superuser=False, is_verified=True, is_active=True,code_id=str(uuid4()))
             refresh = RefreshToken.for_user(user)
             return Response({"refresh":str(refresh),"access":str(refresh.access_token)}, status=200)
         except Exception as e:
