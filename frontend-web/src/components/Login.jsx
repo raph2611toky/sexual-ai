@@ -113,7 +113,7 @@ const Login = () => {
       setTimeout(() => {
         document.body.classList.add("auth-flip-exit")
         setTimeout(() => {
-          navigate("/discussion")
+          navigate("/")
         }, 400)
       }, 1500)
     } catch (err) {

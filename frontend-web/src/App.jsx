@@ -8,6 +8,7 @@ import CycleManagementScreen from "./components/CycleManagementScreen"
 import PrivacyPolicy from "./components/PrivacyPolicy"
 import TermsOfServices from "./components/TermsOfService"
 import Donation from "./components/Donation"
+import OTPVerification from "./components/OTPVerification"
 import NotFound from "./components/NotFound"
 
 import "./App.css"
@@ -36,6 +37,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/verify-otp" element={<OTPVerification />} />
           <Route path="/terms-of-services" element={<TermsOfServices />} />
           <Route path="/donation" element={
                 <Donation />

@@ -30,7 +30,6 @@ const Signup = () => {
     setTheme(savedTheme)
     document.documentElement.setAttribute("data-theme", savedTheme)
 
-    // Animation flip d'entrée
     document.body.classList.add("auth-flip-enter")
     setTimeout(() => {
       document.body.classList.remove("auth-flip-enter")
@@ -66,7 +65,7 @@ const Signup = () => {
       signIn: "Se connecter",
       acceptTermsError: "Veuillez accepter les conditions et les politiques.",
       fillFields: "Veuillez remplir tous les champs.",
-      signupSuccess: "Inscription réussie ! Redirection vers la connexion...",
+      signupSuccess: "Inscription réussie ! Veuillez vérifier votre email pour le code OTP.",
       unexpectedError: "Une erreur inattendue est survenue.",
       signupError: "Erreur lors de l'inscription.",
       and: "et",
@@ -87,7 +86,7 @@ const Signup = () => {
       signIn: "Hiditra",
       acceptTermsError: "Ekeo ny fepetra sy ny politika azafady.",
       fillFields: "Fenoy ny saha rehetra azafady.",
-      signupSuccess: "Fisoratana anarana nahomby ! Mandehana any amin'ny fidirana...",
+      signupSuccess: "Fisoratana anarana nahomby ! Hamarino ny mailakao ho an'ny kaody OTP.",
       unexpectedError: "Nisy olana tsy nampoizina.",
       signupError: "Nisy olana tamin'ny fisoratana anarana.",
     },
@@ -126,26 +125,11 @@ const Signup = () => {
       })
 
       if (response.status === 201) {
-        // Store token in cookie
-        const token = response.data.access;
-        const expires = isChecked ? 7 : 1; // 7 days if "accept terms" is checked, else 1 day
-        const date = new Date();
-        date.setTime(date.getTime() + (expires * 24 * 60 * 60 * 1000));
-        document.cookie = `auth_token=${token};expires=${date.toUTCString()};path=/;SameSite=Strict`;
-
-        localStorage.setItem(
-          "userData",
-          JSON.stringify({
-            id: token,
-          }),
-        )
-
         success(t("signupSuccess"))
-
         setTimeout(() => {
           document.body.classList.add("auth-flip-exit")
           setTimeout(() => {
-            navigate("/login")
+            navigate("/verify-otp", { state: { email: email } })
           }, 400)
         }, 2000)
       } else {
