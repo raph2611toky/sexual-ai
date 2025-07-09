@@ -28,7 +28,7 @@ class ConversationSerializer(serializers.ModelSerializer):
             if messages.count() == 1 and len(messages.first().contenu.split())>10:
                 texte_a_envoye = f"Resumer ceci et donne moi en une phrase courte pour un titre ce que ca resume, et retourner directement le titre sans bold ni apostrophe, directement un titre brute :  {messages.first().contenu}"
                 nouveau_titre = simple_chat(texte_a_envoye)
-                obj.titre = nouveau_titre
+                obj.titre = nouveau_titre[:90]
                 obj.save()
                 return obj.titre
             elif messages.count() > 1 :
@@ -39,7 +39,7 @@ class ConversationSerializer(serializers.ModelSerializer):
                     m.append(message.contenu)
                 texte_a_envoye = f"Resumer ceci et donne moi en une phrase courte pour un titre ce que ca resume,  et retourner directement le titre sans bold ni apostrophe, directement un titre brute :  {'\n\n'.join(m)}"
                 nouveau_titre = simple_chat(texte_a_envoye)
-                obj.titre = nouveau_titre
+                obj.titre = nouveau_titre[:90]
                 obj.save()
             return "Nouvelle discussion"
         return obj.titre
