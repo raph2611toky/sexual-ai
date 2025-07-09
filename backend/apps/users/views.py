@@ -23,6 +23,7 @@ import random, string
 from datetime import timedelta, datetime
 from django.utils import timezone
 
+from uuid import uuid4
 import os, traceback
 
 load_dotenv()
@@ -49,6 +50,26 @@ class ProfileView(APIView):
                 status=403
             )
         return Response(user, status=200)
+
+class ProfileAnonymousView(APIView):
+    permission_classes = [AllowAny]
+
+    @swagger_auto_schema(
+        tags=['Users'],
+        security=[{'Bearer': []}], 
+        responses={
+            200: UserSerializer(),
+            403: error_schema,
+        },
+        operation_description="Récupère le profil de l'utilisateur authentifié."
+    )
+    def get(self, request: Request):
+        try:
+            user, _= User.objects.get_or_create(email='anonymous@anonymous.com',sexe='I',birth_date='1000-01-01',name='anonymous',password=make_password("An0nym0us!@?1000_01/01."),profession_domaine="anonymous",is_anonymous=True, is_statff=False, is_superuser=False, is_verified=True, is_active=True,code_id=str(uuid4()))
+            refresh = RefreshToken.for_user(user)
+            return Response({"refresh":str(refresh),"access":str(refresh.access_token)}, status=200)
+        except Exception as e:
+            return Response({'erreur':str(e)},status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class ProfileUpdateView(APIView):
     permission_classes = [IsAuthenticated]
@@ -277,6 +298,8 @@ class UserVerifyOtpView(APIView):
                 if not UserOtp.objects.filter(user=user, code_otp=code_otp).exists():
                     Response({"erreur": "Code OTP invalide"}, status=status.HTTP_400_BAD_REQUEST)
                 otp = UserOtp.objects.filter(user=user, code_otp=code_otp).first()
+                if otp is None:
+                    Response({"erreur": "Code OTP invalide"}, status=status.HTTP_400_BAD_REQUEST)
             except UserOtp.DoesNotExist:
                 return Response({"erreur": "Code OTP invalide"}, status=status.HTTP_400_BAD_REQUEST)
             print(otp)

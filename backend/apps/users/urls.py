@@ -1,9 +1,10 @@
 from django.urls import path
 from apps.users.views import (ProfileView, LoginView,LogoutView,RegisterView,ProfileUpdateView, UserVerifyOtpView,
-    UserMotDePasseOublieView, UserResetPasswordView, ContactSupportView, ResendOTPVerificationView)
+    UserMotDePasseOublieView, UserResetPasswordView, ContactSupportView, ResendOTPVerificationView,ProfileAnonymousView)
 
 urlpatterns = [
     path('profile/',ProfileView.as_view(),name="profile"),#GET
+    path('profile/anonymous/',ProfileAnonymousView.as_view(),name="profile-anonymous"),#GET
     path('profile/update/',ProfileUpdateView.as_view(),name="profile-update"),#GET
     path('login/',LoginView.as_view(),name="login"),#POST
     path('register/',RegisterView.as_view(),name="register"),#POST
