@@ -280,7 +280,7 @@ class UserVerifyOtpView(APIView):
             except UserOtp.DoesNotExist:
                 return Response({"erreur": "Code OTP invalide"}, status=status.HTTP_400_BAD_REQUEST)
             print(otp)
-            if otp.expirer_le < default_created_at():
+            if otp.expirer_le < timezone.now():
                 otp.delete()
                 return Response({"erreur": "Code OTP expiré"}, status=status.HTTP_410_GONE)
             
