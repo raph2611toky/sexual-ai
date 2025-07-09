@@ -12,10 +12,11 @@ from cryptography.hazmat.backends import default_backend
 
 from apps.users.models import User
 
-import os, jwt
+import os, jwt, logging
 import random
 from helpers.constantes import *
 load_dotenv()
+LOGGER = logging.getLogger(__name__)
 
 def get_token_from_request(request: Request) -> str:
     authorization_header = request.headers.get('Authorization')

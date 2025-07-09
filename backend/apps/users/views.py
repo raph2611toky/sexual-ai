@@ -29,6 +29,7 @@ import os, traceback
 load_dotenv()
 
 
+
 class ProfileView(APIView):
     permission_classes = [IsAuthenticated]
 

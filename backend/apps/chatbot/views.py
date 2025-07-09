@@ -9,6 +9,7 @@ from apps.chatbot.models import Conversation, MessageChat
 from apps.chatbot.serializers import ConversationSerializer, MessageChatSerializer
 
 from helpers.ai_models.gemini import simple_chat
+from helpers.helper import LOGGER
 from helpers.swagger.chatbot import bot_response_schema, message_request_schema, error_schema, conversation_request_schema
 import random
 import traceback
@@ -142,7 +143,7 @@ class ConversationNewView(APIView):
             return Response(ConversationSerializer(conversation_new).data, status=status.HTTP_201_CREATED)
         except Exception as e:
             print(e)
-            print(traceback.format_exc())
+            LOGGER.error(traceback.format_exc())
             return Response({'error':str(e)},status=400)
 
 class MessageChatNewView(APIView):
@@ -195,5 +196,5 @@ class MessageChatNewView(APIView):
                 return Response({"bot_response": messageChat_response}, status=status.HTTP_201_CREATED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            print(traceback.format_exc())
+            LOGGER.error(traceback.format_exc())
             return Response({'error': str(e)}, status=400)
