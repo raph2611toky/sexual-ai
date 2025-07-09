@@ -147,7 +147,7 @@ class RegisterView(APIView):
             else:
                 user_data['sexe'] = user_data['sexe'].strip()[0].upper()
 
-            code_otp = ''.join(random.choices(string.digits, k=8))
+            code_otp = ''.join(random.choices(string.digits, k=6))
 
             serializer = RegisterSerializer(data=user_data)
             if serializer.is_valid(raise_exception=True):
@@ -200,7 +200,7 @@ class ResendOTPVerificationView(APIView):
             if not self.check_if_user_exist(request.data['email']):
                 return Response({'erreur': 'email existant'}, status=status.HTTP_400_BAD_REQUEST)
 
-            code_otp = ''.join(random.choices(string.digits, k=8))
+            code_otp = ''.join(random.choices(string.digits, k=6))
 
             if not User.objects.filter(email=request.data['email'],is_verified=False).exists():
                 return Response({"erreur": 'Cet utilisateur a dejà un compte'},status=status.HTTP_400_BAD_REQUEST)
@@ -273,8 +273,9 @@ class UserVerifyOtpView(APIView):
                 user = User.objects.get(email=email)
             except User.DoesNotExist:
                 return Response({"erreur": "User non trouvé"}, status=status.HTTP_404_NOT_FOUND)
-            
             try:
+                if not UserOtp.objects.filter(user=user, code_otp=code_otp).exists():
+                    Response({"erreur": "Code OTP invalide"}, status=status.HTTP_400_BAD_REQUEST)
                 otp = UserOtp.objects.filter(user=user, code_otp=code_otp).first()
             except UserOtp.DoesNotExist:
                 return Response({"erreur": "Code OTP invalide"}, status=status.HTTP_400_BAD_REQUEST)
