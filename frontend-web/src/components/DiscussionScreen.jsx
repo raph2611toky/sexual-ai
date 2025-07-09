@@ -2,6 +2,33 @@
 
 import { useState, useEffect, useRef } from "react"
 import { useNavigate } from "react-router-dom"
+import { 
+  Menu, 
+  X, 
+  Plus, 
+  MessageCircle, 
+  Phone, 
+  PhoneOff, 
+  User, 
+  Settings, 
+  Moon, 
+  Sun, 
+  Globe, 
+  Heart, 
+  LogIn, 
+  LogOut, 
+  Shield, 
+  FileText, 
+  ChevronRight, 
+  Mic, 
+  MicOff, 
+  Send, 
+  Volume2, 
+  VolumeX, 
+  Pause, 
+  Play,
+  Bot
+} from "lucide-react"
 import axios from "axios"
 import config from "../config"
 import ToastContainer from "./ToastContainer"
@@ -151,7 +178,6 @@ export default function DiscussionScreen() {
   }
 
   const fetchProfile = async (token) => {
-    console.log(token)
     try {
       const response = await axios.get(`${config.apiUrl}/profile/`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -412,7 +438,7 @@ export default function DiscussionScreen() {
   }
 
   const fetchConversations = async () => {
-    // if (!isLoggedIn) return
+    if (!isLoggedIn) return
     try {
       const token = getCookie("auth_token")
       const response = await axios.get(`${config.apiUrl}/conversation/list/`, {
@@ -672,34 +698,11 @@ export default function DiscussionScreen() {
     document.documentElement.setAttribute("data-theme", newTheme)
   }
 
-  const handleLogout = async () => {
-    try {
-      const token = getCookie('auth_token');
-      if (token) {
-        await axios.put(`${config.apiUrl}/logout/`, {}, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-      }
-    } catch (error) {
-      console.error("Erreur lors de la déconnexion:", error);
-      addToast(
-        selectedLanguage === "FR"
-          ? "Erreur lors de la déconnexion"
-          : "Fahadisoana tamin'ny fivoahana",
-        "error"
-      );
-    } finally {
-      localStorage.clear();
-      
-      document.cookie.split(";").forEach((c) => {
-        document.cookie = c
-          .replace(/^ +/, "")
-          .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
-      });
-      setIsLoggedIn(false);
-      navigate("/home");
-    }
-  };
+  const handleLogout = () => {
+    localStorage.clear()
+    document.cookie = "auth_token=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;"
+    navigate("/login")
+  }
 
   const handleDonation = () => {
     navigate("/donation")
@@ -731,16 +734,11 @@ export default function DiscussionScreen() {
         <div className="discussion-menu-container">
           <div className="discussion-menu-header">
             <h3 className="discussion-menu-title">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-              </svg>
+              <MessageCircle size={20} />
               {isLoggedIn ? t("myDiscussions") : t("newDiscussion")}
             </h3>
             <button className="discussion-close-button" onClick={toggleMenu}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-              </svg>
+              <X size={20} />
             </button>
           </div>
 
@@ -753,10 +751,7 @@ export default function DiscussionScreen() {
               }}
             >
               <div className="discussion-new-chat-icon">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <line x1="12" y1="5" x2="12" y2="19"></line>
-                  <line x1="5" y1="12" x2="19" y2="12"></line>
-                </svg>
+                <Plus size={16} />
               </div>
               <span className="discussion-new-chat-text">{t("newDiscussion")}</span>
             </button>
@@ -775,24 +770,13 @@ export default function DiscussionScreen() {
                     onClick={() => handleSelectConversation(item.id_conversation, item.titre)}
                   >
                     <div className="discussion-conversation-icon">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                      </svg>
+                      <MessageCircle size={16} />
                     </div>
                     <div className="discussion-conversation-details">
                       <p className="discussion-conversation-title">{item.titre}</p>
                       <p className="discussion-conversation-date">{formatDate(item.created_at)}</p>
                     </div>
-                    <svg
-                      className="discussion-conversation-arrow"
-                      width="12" height="12"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    >
-                      <polyline points="9,18 15,12 9,6"></polyline>
-                    </svg>
+                    <ChevronRight size={12} className="discussion-conversation-arrow" />
                   </button>
                 ))}
               </div>
@@ -804,11 +788,7 @@ export default function DiscussionScreen() {
       <div className="discussion-container">
         <div className="discussion-header">
           <button className="discussion-menu-button" onClick={toggleMenu}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <line x1="3" y1="6" x2="21" y2="6"></line>
-              <line x1="3" y1="12" x2="21" y2="12"></line>
-              <line x1="3" y1="18" x2="21" y2="18"></line>
-            </svg>
+            <Menu size={20} />
           </button>
 
           <div className="discussion-title-container">
@@ -830,15 +810,9 @@ export default function DiscussionScreen() {
               title={callModeRef.current ? t("stopCall") : t("startCall")}
             >
               {callModeRef.current ? (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-                  <line x1="18" y1="2" x2="6" y2="14"></line>
-                  <line x1="6" y1="2" x2="18" y2="14"></line>
-                </svg>
+                <PhoneOff size={18} />
               ) : (
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-                </svg>
+                <Phone size={18} />
               )}
             </button>
 
@@ -856,10 +830,7 @@ export default function DiscussionScreen() {
                       onError={() => setProfile((prev) => ({ ...prev, profile_url: null }))}
                     />
                   ) : (
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                      <circle cx="12" cy="7" r="4"></circle>
-                    </svg>
+                    <User size={20} />
                   )}
                 </div>
                 {isLoggedIn && <div className="discussion-profile-active-dot"></div>}
@@ -870,61 +841,34 @@ export default function DiscussionScreen() {
                   {!isLoggedIn ? (
                     <>
                       <button onClick={() => navigate("/login")}>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
-                          <polyline points="10,17 15,12 10,7"></polyline>
-                          <line x1="15" y1="12" x2="3" y2="12"></line>
-                        </svg>
+                        <LogIn size={16} />
                         {t("login")}
                       </button>
                       <button onClick={() => navigate("/privacy-policy")}>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                        </svg>
+                        <Shield size={16} />
                         {t("privacyPolicy")}
                       </button>
-                      <button onClick={() => navigate("/terms-of-services")}>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                          <polyline points="14,2 14,8 20,8"></polyline>
-                          <line x1="16" y1="13" x2="8" y2="13"></line>
-                          <line x1="16" y1="17" x2="8" y2="17"></line>
-                          <polyline points="10,9 9,9 8,9"></polyline>
-                        </svg>
+                      <button onClick={() => navigate("/terms-of-service")}>
+                        <FileText size={16} />
                         {t("termsOfService")}
                       </button>
                     </>
                   ) : (
                     <>
                       <button onClick={() => navigate("/profile")}>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                          <circle cx="12" cy="7" r="4"></circle>
-                        </svg>
+                        <User size={16} />
                         Profil
                       </button>
                       <button onClick={() => navigate("/privacy-policy")}>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                        </svg>
+                        <Shield size={16} />
                         {t("privacyPolicy")}
                       </button>
                       <button onClick={() => navigate("/terms-of-service")}>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                          <polyline points="14,2 14,8 20,8"></polyline>
-                          <line x1="16" y1="13" x2="8" y2="13"></line>
-                          <line x1="16" y1="17" x2="8" y2="17"></line>
-                          <polyline points="10,9 9,9 8,9"></polyline>
-                        </svg>
+                        <FileText size={16} />
                         {t("termsOfService")}
                       </button>
                       <button onClick={handleLogout}>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                          <polyline points="16,17 21,12 16,7"></polyline>
-                          <line x1="21" y1="12" x2="9" y2="12"></line>
-                        </svg>
+                        <LogOut size={16} />
                         {t("logout")}
                       </button>
                     </>
@@ -938,30 +882,21 @@ export default function DiscussionScreen() {
                 className="discussion-settings-button" 
                 onClick={() => setIsSettingsDropdownOpen(!isSettingsDropdownOpen)}
               >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="12" cy="12" r="3"></circle>
-                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-                </svg>
+                <Settings size={18} />
               </button>
               
               {isSettingsDropdownOpen && (
                 <div className="discussion-settings-dropdown">
                   <button onClick={toggleThemeHandler}>
-                    <div className="discussion-settings-icon">
-                      {theme === "light" ? "🌙" : "☀️"}
-                    </div>
+                    {theme === "light" ? <Moon size={16} /> : <Sun size={16} />}
                     {theme === "light" ? t("darkMode") : t("lightMode")}
                   </button>
                   <button onClick={toggleLanguage}>
-                    <div className="discussion-settings-icon">
-                      🌐
-                    </div>
+                    <Globe size={16} />
                     {selectedLanguage === "FR" ? "MG" : "FR"}
                   </button>
                   <button onClick={handleDonation}>
-                    <div className="discussion-settings-icon">
-                      💝
-                    </div>
+                    <Heart size={16} />
                     {t("donation")}
                   </button>
                 </div>
@@ -976,13 +911,7 @@ export default function DiscussionScreen() {
               <div className="discussion-call-avatar-section">
                 <div className="discussion-call-avatar-container">
                   <div className="discussion-call-avatar-image">
-                    <svg className="discussion-avatar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <rect x="3" y="11" width="18" height="10" rx="2" ry="2"></rect>
-                      <circle cx="12" cy="5" r="2"></circle>
-                      <path d="M12 7v4"></path>
-                      <line x1="8" y1="16" x2="8" y2="16"></line>
-                      <line x1="16" y1="16" x2="16" y2="16"></line>
-                    </svg>
+                    <Bot className="discussion-avatar-icon" size={48} />
                   </div>
                   
                   {isRecording && (
@@ -1033,28 +962,16 @@ export default function DiscussionScreen() {
 
             <div className="discussion-call-controls">
               <button className="discussion-call-control-btn discussion-mute-btn">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-                  <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-                  <line x1="12" y1="19" x2="12" y2="23"></line>
-                  <line x1="8" y1="23" x2="16" y2="23"></line>
-                </svg>
+                <Mic size={24} />
                 <span>Muet</span>
               </button>
               
               <button className="discussion-call-control-btn discussion-end-call-btn" onClick={toggleCallMode}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-                  <line x1="18" y1="2" x2="6" y2="14"></line>
-                  <line x1="6" y1="2" x2="18" y2="14"></line>
-                </svg>
+                <PhoneOff size={24} />
               </button>
               
               <button className="discussion-call-control-btn discussion-speaker-btn">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <polygon points="11,5 6,9 2,9 2,15 6,15 11,19"></polygon>
-                  <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-                </svg>
+                <Volume2 size={24} />
                 <span>Haut-parleur</span>
               </button>
             </div>
@@ -1066,9 +983,7 @@ export default function DiscussionScreen() {
             <div className="discussion-welcome-container">
               <div className="discussion-welcome-icon">
                 <div className="discussion-welcome-avatar">
-                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M 19 14 c 1.49 -1.46 3 -3.21 3 -5.5 A 5.5 5.5 0 0 0 16.5 3 c -1.76 0 -3 .5 -4.5 2 -1.5 -1.5 -2.74 -2 -4.5 -2 A 5.5 5.5 0 0 0 2 8.5 c 0 2.29 1.51 4.04 3 5.5 l 7 7 z"></path>
-                  </svg>
+                  <Heart size={48} />
                 </div>
                 <div className="discussion-welcome-pulse"></div>
               </div>
@@ -1098,23 +1013,14 @@ export default function DiscussionScreen() {
                             onError={() => setProfile((prev) => ({ ...prev, profile_url: null }))}
                           />
                         ) : (
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="12" cy="7" r="4"></circle>
-                          </svg>
+                          <User size={16} />
                         )}
                       </div>
                     </div>
                   ) : (
                     <div className="discussion-ai-message-content">
                       <div className="discussion-message-avatar ai">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <rect x="3" y="11" width="18" height="10" rx="2" ry="2"></rect>
-                          <circle cx="12" cy="5" r="2"></circle>
-                          <path d="M12 7v4"></path>
-                          <line x1="8" y1="16" x2="8" y2="16"></line>
-                          <line x1="16" y1="16" x2="16" y2="16"></line>
-                        </svg>
+                        <Bot size={16} />
                       </div>
                       <div className="discussion-message-bubble ai">
                         <p className="discussion-message-text">{item.text}</p>
@@ -1125,15 +1031,9 @@ export default function DiscussionScreen() {
                             title={speakingMessageId === item.id ? t("stopReading") : t("readMessage")}
                           >
                             {speakingMessageId === item.id ? (
-                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <rect x="6" y="4" width="4" height="16"></rect>
-                                <rect x="14" y="4" width="4" height="16"></rect>
-                              </svg>
+                              <Pause size={16} />
                             ) : (
-                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <polygon points="11,5 6,9 2,9 2,15 6,15 11,19"></polygon>
-                                <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-                              </svg>
+                              <Volume2 size={16} />
                             )}
                           </button>
                         </div>
@@ -1147,13 +1047,7 @@ export default function DiscussionScreen() {
               {isWaitingResponse && (
                 <div className="discussion-loading-response-container">
                   <div className="discussion-message-avatar ai">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <rect x="3" y="11" width="18" height="10" rx="2" ry="2"></rect>
-                      <circle cx="12" cy="5" r="2"></circle>
-                      <path d="M12 7v4"></path>
-                      <line x1="8" y1="16" x2="8" y2="16"></line>
-                      <line x1="16" y1="16" x2="16" y2="16"></line>
-                    </svg>
+                    <Bot size={16} />
                   </div>
                   <div className="discussion-typing-indicator">
                     <div className="discussion-typing-dots">
@@ -1203,16 +1097,9 @@ export default function DiscussionScreen() {
                   title={isRecording ? t("stopRecording") : t("startRecording")}
                 >
                   {isRecording ? (
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <rect x="6" y="6" width="12" height="12" rx="2"></rect>
-                    </svg>
+                    <MicOff size={20} />
                   ) : (
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-                      <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-                      <line x1="12" y1="19" x2="12" y2="23"></line>
-                      <line x1="8" y1="23" x2="16" y2="23"></line>
-                    </svg>
+                    <Mic size={20} />
                   )}
                 </button>
               </div>
@@ -1226,10 +1113,7 @@ export default function DiscussionScreen() {
                 {isWaitingResponse ? (
                   <div className="discussion-send-spinner"></div>
                 ) : (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <line x1="22" y1="2" x2="11" y2="13"></line>
-                    <polygon points="22,2 15,22 11,13 2,9"></polygon>
-                  </svg>
+                  <Send size={18} />
                 )}
               </button>
             </div>
