@@ -151,6 +151,7 @@ export default function DiscussionScreen() {
   }
 
   const fetchProfile = async (token) => {
+    console.log(token)
     try {
       const response = await axios.get(`${config.apiUrl}/profile/`, {
         headers: { Authorization: `Bearer ${token}` },

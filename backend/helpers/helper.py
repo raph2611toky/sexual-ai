@@ -3,15 +3,25 @@ from datetime import timedelta, datetime
 from django.utils import timezone as django_timezone
 from django.conf import settings
 
+from rest_framework.request import Request
+from rest_framework_simplejwt.tokens import AccessToken, TokenError
+
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from base64 import b64decode,b64encode
 from cryptography.hazmat.backends import default_backend
+
+from apps.users.models import User
 
 import os, jwt
 import random
 from helpers.constantes import *
 load_dotenv()
 
+def get_token_from_request(request: Request) -> str:
+    authorization_header = request.headers.get('Authorization')
+    if authorization_header and authorization_header.startswith('Bearer '):
+        return authorization_header.split()[1]
+    return None
 
 def get_notification(woman):
     menstruations = woman.menstruations.all().order_by('-start_date')
@@ -78,3 +88,14 @@ def generate_jwt_token(payload: dict, expires_in_minutes: int = 1440) -> str:
 
 def decode_jwt_token(token: str) -> dict:
     return jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.SIMPLE_JWT['ALGORITHM']])
+
+
+def get_user(token):
+    try:
+        access_token = AccessToken(token)
+        if "user_id" in access_token:
+            user_id = access_token['user_id']
+            return User.objects.get(id=user_id)
+        return None
+    except (TokenError, User.DoesNotExist):
+        return None
