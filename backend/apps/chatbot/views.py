@@ -86,6 +86,8 @@ class ConversationFilterView(APIView):
     )
     def get(self, request):
         try:
+            if request.user.is_anonymous:
+                return Response([])
             conversations = Conversation.objects.filter(user=request.user).order_by("-created_at")
             serializer = ConversationSerializer(conversations, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
