@@ -220,7 +220,7 @@ class ResendOTPVerificationView(APIView):
 
             envoyer_email([user.email], 'envoie_code_otp', data)
 
-            return Response({"email": user.email, 'message':f"Une code Otp de verification a été envoyé à {user.email}"}, status=status.HTTP_201_CREATED)
+            return Response({"email": user.email, 'message':f"Une code Otp de verification a été envoyé à {user.email}"}, status=status.HTTP_200_OK)
             
         except Exception as e:
             import traceback
@@ -278,7 +278,7 @@ class UserVerifyOtpView(APIView):
                 otp = UserOtp.objects.filter(user=user, code_otp=code_otp).last()
             except UserOtp.DoesNotExist:
                 return Response({"erreur": "Code OTP invalide"}, status=status.HTTP_400_BAD_REQUEST)
-            
+            print(otp)
             if otp.expirer_le < default_created_at():
                 otp.delete()
                 return Response({"erreur": "Code OTP expiré"}, status=status.HTTP_410_GONE)
