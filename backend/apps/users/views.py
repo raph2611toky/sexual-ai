@@ -163,8 +163,8 @@ class RegisterView(APIView):
 
             if "profession_domaine" not in user_data:
                 user_data["profession_domaine"] = "Inconu"
-            if user_data.get('sexe', 'I').lower() not in ['masculin', 'feminin']:
-                user_data['sexe'] = 'F'
+            if user_data.get('sexe', 'I').lower() not in ['masculin', 'feminin','f','m']:
+                user_data['sexe'] = 'I'
             else:
                 user_data['sexe'] = user_data['sexe'].strip()[0].upper()
 
