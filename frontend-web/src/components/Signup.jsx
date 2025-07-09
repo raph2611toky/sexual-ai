@@ -10,7 +10,7 @@ import "./Signup.css"
 
 const Signup = () => {
   const navigate = useNavigate()
-  const genre = "feminin"
+  const [genre, setGenre] = useState("F")
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [email, setEmail] = useState("")
@@ -54,6 +54,9 @@ const Signup = () => {
       createAccount: "Créer votre compte! 👋",
       subtitle: "Connectez-vous au monde!",
       name: "Nom",
+      gender: "Genre",
+      male: "Homme",
+      female: "Femme",
       email: "Adresse Email",
       password: "Mot de passe",
       phone: "Numéro de téléphone",
@@ -75,6 +78,9 @@ const Signup = () => {
       createAccount: "Mamorona ny kaontinao! 👋",
       subtitle: "Mifandray amin'izao tontolo izao!",
       name: "Anarana",
+      gender: "Lahy na vavy",
+      male: "Lehilahy",
+      female: "Vehivavy",
       email: "Adiresy Email",
       password: "Teny miafina",
       phone: "Nomeraon-telefaona",
@@ -172,6 +178,40 @@ const Signup = () => {
             onChange={(e) => setUsername(e.target.value)}
             className="signup-input"
           />
+        </div>
+
+        <div className="signup-input-container">
+          <svg className="signup-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <div className="signup-gender-container">
+            <span className="signup-gender-label">{t("gender")}:</span>
+            <div className="signup-gender-options">
+              <label className="signup-gender-option">
+                <input
+                  type="radio"
+                  name="gender"
+                  value="M"
+                  checked={genre === "M"}
+                  onChange={(e) => setGenre(e.target.value)}
+                  className="signup-gender-radio"
+                />
+                <span className="signup-gender-text">{t("male")}</span>
+              </label>
+              <label className="signup-gender-option">
+                <input
+                  type="radio"
+                  name="gender"
+                  value="F"
+                  checked={genre === "F"}
+                  onChange={(e) => setGenre(e.target.value)}
+                  className="signup-gender-radio"
+                />
+                <span className="signup-gender-text">{t("female")}</span>
+              </label>
+            </div>
+          </div>
         </div>
 
         <div className="signup-input-container">
