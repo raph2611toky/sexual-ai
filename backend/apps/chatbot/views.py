@@ -168,7 +168,7 @@ class MessageChatNewView(APIView):
             print(data)
             conversation_id = data.get('conversation',None)
 
-            if conversation_id is not None:
+            if conversation_id is not None and conversation_id.strip()!='':
                 try:
                     conversation = Conversation.objects.get(id_conversation=int(conversation_id), user=request.user)
                 except Conversation.DoesNotExist:
