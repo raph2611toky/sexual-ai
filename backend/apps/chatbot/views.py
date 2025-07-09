@@ -171,7 +171,7 @@ class MessageChatNewView(APIView):
             print(data)
             conversation_id = data.get('conversation',None)
 
-            if conversation_id is not None and conversation_id.strip()!='':
+            if conversation_id is not None and str(conversation_id).strip()!='':
                 try:
                     conversation_last = Conversation.objects.filter(user=request.user).last()
                     if conversation_last.messages.all().count() > 0:
