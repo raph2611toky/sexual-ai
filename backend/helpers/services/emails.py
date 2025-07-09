@@ -8,8 +8,8 @@ from dotenv import load_dotenv
 import os, logging, traceback
 import django
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
-django.setup()
+# os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
+# django.setup()
 
 load_dotenv()
 LOGGER = logging.getLogger(__name__)
