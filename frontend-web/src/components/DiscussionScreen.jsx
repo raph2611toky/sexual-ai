@@ -672,11 +672,34 @@ export default function DiscussionScreen() {
     document.documentElement.setAttribute("data-theme", newTheme)
   }
 
-  const handleLogout = () => {
-    localStorage.clear()
-    document.cookie = "auth_token=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;"
-    navigate("/login")
-  }
+  const handleLogout = async () => {
+    try {
+      const token = getCookie('auth_token');
+      if (token) {
+        await axios.post(`${config.apiUrl}/logout`, {}, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      }
+    } catch (error) {
+      console.error("Erreur lors de la déconnexion:", error);
+      addToast(
+        selectedLanguage === "FR"
+          ? "Erreur lors de la déconnexion"
+          : "Fahadisoana tamin'ny fivoahana",
+        "error"
+      );
+    } finally {
+      localStorage.clear();
+      
+      document.cookie.split(";").forEach((c) => {
+        document.cookie = c
+          .replace(/^ +/, "")
+          .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+      });
+      setIsLoggedIn(false);
+      navigate("/home");
+    }
+  };
 
   const handleDonation = () => {
     navigate("/donation")
