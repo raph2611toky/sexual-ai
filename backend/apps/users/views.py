@@ -176,6 +176,58 @@ class RegisterView(APIView):
             return Response({"erreur": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
+class ResendOTPVerificationView(APIView):
+    permission_classes = [AllowAny]
+
+    def check_if_user_exist(self, email):
+        return User.objects.filter(email=email).exists()
+
+    def validate_data(self, data):
+        try:
+            keys = ['email']
+            if any(key not in data.keys() for key in keys):
+                return False
+            return True
+        except Exception:
+            False
+
+    def post(self, request):
+        try:
+            user_data = request.data
+            if not self.validate_data(user_data):
+                return Response({'erreur': 'Tous les attributs sont requis'}, status=status.HTTP_400_BAD_REQUEST)
+
+            if not self.check_if_user_exist(request.data['email']):
+                return Response({'erreur': 'email existant'}, status=status.HTTP_400_BAD_REQUEST)
+
+            code_otp = ''.join(random.choices(string.digits, k=8))
+
+            if not User.objects.filter(email=request.data['email'],is_verified=False).exists():
+                return Response({"erreur": 'Cet utilisateur a dejà un compte'},status=status.HTTP_400_BAD_REQUEST)
+            user = User.objects.filter(email=request.data['email'],is_verified=False).first()
+            date_expiration = timezone.now() + timedelta(minutes=30)
+            UserOtp.objects.filter(user=user).delete()
+            UserOtp.objects.create(code_otp=code_otp, user=user, expirer_le=date_expiration)
+
+            data = {
+                'subject': 'Vérification de votre compte Sexual AI',
+                'prenom': user.name.split()[0],
+                'nom': ' '.join(user.name.split()[1:]) if len(user.name.split()) > 1 else '',
+                'code_otp': code_otp,
+                'user_email': 'tokynandrasana2611@gmail.com',
+                'type_utilisateur': 'user' if user.is_staff else 'client',
+            }
+
+            envoyer_email([user.email], 'envoie_code_otp', data)
+
+            return Response({"email": user.email, 'message':f"Une code Otp de verification a été envoyé à {user.email}"}, status=status.HTTP_201_CREATED)
+            
+        except Exception as e:
+            import traceback
+            print(traceback.format_exc())
+            return Response({"erreur": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
 class UserVerifyOtpView(APIView):
     permission_classes = [AllowAny]
 
