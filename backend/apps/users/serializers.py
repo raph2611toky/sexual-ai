@@ -19,9 +19,11 @@ class UserSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = User
-        fields = ['id', 'name', 'email','birth_date', 'profile_url', 'sexe','is_active', 'profession_domaine']
-        
+        fields = ['id', 'name', 'email','birth_date', 'profile_url', 'sexe','is_active']
+    
     def get_profile_url(self, obj):
+        if obj.picture is not None:
+            return obj.picture
         return f'{settings.BASE_URL}{obj.profile.url}' if obj.profile else None
     
     def get_birth_date(self,obj):
@@ -53,7 +55,7 @@ class LoginSerializer(serializers.Serializer):
 class UpdateProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['name', 'sexe', 'profession_domaine', 'birth_date', 'profile']
+        fields = ['name', 'sexe', 'birth_date', 'profile']
 
     def update(self, instance, validated_data):
         for field, value in validated_data.items():
@@ -66,7 +68,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['email', 'password', 'name', 'sexe', 'profession_domaine', 'birth_date']
+        fields = ['email', 'password', 'name', 'sexe', 'birth_date']
 
     def validate(self, attrs):
         self.create(attrs)
@@ -74,14 +76,11 @@ class RegisterSerializer(serializers.ModelSerializer):
     
     def create(self, validated_data):
         is_staff=False
-        if validated_data['profession_domaine'].lower() in ['santé','health']:
-            is_staff=True
         users = User.objects.create(
             name=validated_data['name'].capitalize(),
             email=validated_data['email'],
             sexe=validated_data.get('sexe','I')[0].upper(),
             birth_date=validated_data['birth_date'],
-            profession_domaine=validated_data.get('profession_domaine','Inconu'),
             code_id=str(uuid4()),
             is_superuser=False,
             is_staff=is_staff

@@ -43,3 +43,4 @@ class AnonymousOrAuthenticated(BaseAuthentication):
                 
         except Exception as e:
             raise AuthenticationFailed(f"Échec de l'authentification : {str(e)}")
+    

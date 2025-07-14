@@ -189,14 +189,16 @@ class GoogleCallbackUserView(APIView):
                     "email": user.email,
                     "message": "Connexion user réussie via Google"
                 })
-            else:
-                name = id_info.get('name')
-                code_id = str(uuid4())
-            return Response({"detail": "Aucun compte associé à cet email", 'google_info':id_info}, status=404)
+            name = id_info.get('name')
+            code_id = str(uuid4())
+            picture = id_info.get('picture')
+            User.objects.create(email=email, name=name, code_id=code_id, picture=picture, sexe='I',is_verified=True, is_active=True)
+            refresh = RefreshToken.for_user(user)
+            return Response({"message": "Inscription reussi via Google ✅", 'success':True, 'email':email, 'refresh':str(refresh), 'access':str(refresh.access_token)}, status=404)
 
         except Exception as e:
             print(traceback.format_exc(), e)
-            return Response({"detail": str(e)}, status=getattr(e, 'code', status.HTTP_500_INTERNAL_SERVER_ERROR))
+            return Response({"erreur": str(e)}, status=getattr(e, 'code', status.HTTP_500_INTERNAL_SERVER_ERROR))
 
 class GoogleAuthUrlView(APIView):
     permission_classes = [AllowAny]
