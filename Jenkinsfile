@@ -68,12 +68,35 @@ pipeline {
 
         stage('Deploy Backend') {
             when {
-                branch 'backend'
+                anyOf {
+                    branch 'backend'
+                    branch 'rebuild'
+                }
             }
             steps {
                 script {
                     sh "docker network create ${APP_NETWORK} || true"
                     sh "docker stop ${BACKEND_DOCKER_NAME} || true && docker rm ${BACKEND_DOCKER_NAME} || true"
+
+                    def backendCommands = ""
+                    if (env.BRANCH_NAME == 'rebuild') {
+                        backendCommands = """
+                            python manage.py reset_db --noinput && \
+                            rm -rf apps/*/migrations/0* && \
+                            rm -rf **/__pycache__ && \
+                            python manage.py makemigrations && \
+                            python manage.py migrate && \
+                            python manage.py collectstatic --noinput && \
+                            python manage.py seed_symptom && \
+                            exec gunicorn --bind 0.0.0.0:8569 config.wsgi:application
+                        """
+                    } else {
+                        backendCommands = """
+                            python manage.py collectstatic --noinput && \
+                            python manage.py seed_symptom && \
+                            exec gunicorn --bind 0.0.0.0:8569 config.wsgi:application
+                        """
+                    }
 
                     sh """
                         docker run -d --name ${BACKEND_DOCKER_NAME} \
@@ -85,11 +108,7 @@ pipeline {
                             /bin/bash -c '
                                 ls
                                 pwd
-                                python manage.py makemigrations && \
-                                python manage.py migrate && \
-                                python manage.py collectstatic --noinput && \
-                                python manage.py seed_symptom && \
-                                exec gunicorn --bind 0.0.0.0:8569 config.wsgi:application
+                                ${backendCommands}
                             '
                     """
                     sh "sleep 10 && curl -f http://127.0.0.1:${BACKEND_PORT}/ || echo '⚠️ Le backend ne répond pas encore...'"
