@@ -15,6 +15,8 @@ SECRET_KEY = 'r4ph43l!s3cr3t_.sp(v70*_=3r58j^bpe7gitr7j((!hev&b17h=8ssdm8#$^cv6d
 
 DEBUG = False
 
+handler404 = 'config.views.custom_404'
+
 ALLOWED_HOSTS = [IP_ADDR, '127.0.0.1', 'localhost', 'sa-backend.learnix.school']
 
 LOCAL_APPS = [
@@ -46,6 +48,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
