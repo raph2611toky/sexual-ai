@@ -192,7 +192,7 @@ class GoogleCallbackUserView(APIView):
             name = id_info.get('name')
             code_id = str(uuid4())
             picture = id_info.get('picture')
-            User.objects.create(email=email, name=name, code_id=code_id, picture=picture, sexe='I',is_verified=True, is_active=True)
+            user = User.objects.create(email=email, name=name, code_id=code_id, picture=picture, sexe='I',is_verified=True, is_active=True)
             refresh = RefreshToken.for_user(user)
             return Response({"message": "Inscription reussi via Google ✅", 'success':True, 'email':email, 'refresh':str(refresh), 'access':str(refresh.access_token)}, status=404)
 
