@@ -16,8 +16,8 @@ print(REDIRECT_URI)
 
 def get_google_auth_url():
     try:
-        secret_json_path = os.path.join(settings.BASE_DIR, 'helpers/services/google/client_secrets.json')
-        flow = Flow.from_client_secrets_file(
+        secret_json_path = os.path.join(settings.BASE_DIR, 'helpers/services/google/client_secret.json')
+        flow = Flow.from_client_secret_file(
             secret_json_path,
             scopes=SCOPES,
             redirect_uri=REDIRECT_URI
@@ -37,7 +37,7 @@ def handle_google_callback(code, state):
             raise APIException(detail="Code requis", code=400)
 
         secret_json_path = os.path.join(settings.BASE_DIR, 'helpers/services/google/client_secret.json')
-        flow = Flow.from_client_secrets_file(
+        flow = Flow.from_client_secret_file(
             secret_json_path,
             scopes=SCOPES,
             state=state,
