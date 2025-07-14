@@ -51,8 +51,10 @@ pipeline {
 
         stage('Build Backend Docker Image') {
             when {
-                branch 'backend'
-                branch 'rebuild'
+                anyOf {
+                    branch 'backend'
+                    branch 'rebuild'
+                }
             }
             steps {
                 sh "docker build --build-arg BRANCH_NAME=${env.BRANCH_NAME} -t ${BACKEND_DOCKER_IMAGE}:${DOCKER_TAG} -f backend/Dockerfile ."
