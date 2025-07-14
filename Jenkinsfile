@@ -3,7 +3,10 @@ pipeline {
 
     environment {
         BACKEND_DOCKER_IMAGE = "sexualai_backend"
-        FRONTEND_DOCKER_IMAGE = "sexualai_frontend"
+        BACKEND_DOCKER_NAME = "sexualai-backend"
+        FRONTEND_DOCKER_IMAGE = "sexualai_web"
+        FRONTEND_DOCKER_NAME = "sexualai-web"
+        APP_NETWORK = "sexualai-network"
         DOCKER_TAG = "latest"
         ENV_FILE = ".env"
         BACKEND_PORT = "8569"
@@ -34,7 +37,7 @@ pipeline {
             when {
                 anyOf {
                     branch 'backend'
-                    branch 'frontend'
+                    branch 'web'
                 }
             }
             steps {
@@ -54,9 +57,9 @@ pipeline {
             }
         }
 
-        stage('Build Frontend Docker Image') {
+        stage('Build web Docker Image') {
             when {
-                branch 'frontend'
+                branch 'web'
             }
             steps {
                 sh "docker build --build-arg BRANCH_NAME=${env.BRANCH_NAME} -t ${FRONTEND_DOCKER_IMAGE}:${DOCKER_TAG} -f frontend-web/Dockerfile ."
@@ -69,13 +72,13 @@ pipeline {
             }
             steps {
                 script {
-                    sh "docker network create sexualai-network || true"
-                    sh "docker stop sexualai-backend || true && docker rm sexualai-backend || true"
+                    sh "docker network create ${APP_NETWORK} || true"
+                    sh "docker stop ${BACKEND_DOCKER_NAME} || true && docker rm ${BACKEND_DOCKER_NAME} || true"
 
                     sh """
-                        docker run -d --name sexualai-backend \
+                        docker run -d --name ${BACKEND_DOCKER_NAME} \
                             --env-file .env.build \
-                            --network sexualai-network \
+                            --network ${APP_NETWORK} \
                             -v \$WORKSPACE/backend/media:/app/media \
                             -p 127.0.0.1:${BACKEND_PORT}:8569 \
                             ${BACKEND_DOCKER_IMAGE}:${DOCKER_TAG} \
@@ -94,19 +97,19 @@ pipeline {
             }
         }
 
-        stage('Deploy Frontend') {
+        stage('Deploy Frontend web') {
             when {
-                branch 'frontend'
+                branch 'web'
             }
             steps {
                 script {
-                    sh "docker network create sexualai-network || true"
-                    sh "docker stop sexualai-frontend || true && docker rm sexualai-frontend || true"
+                    sh "docker network create ${APP_NETWORK} || true"
+                    sh "docker stop ${FRONTEND_DOCKER_NAME} || true && docker rm ${FRONTEND_DOCKER_NAME} || true"
 
                     sh """
-                        docker run -d --name sexualai-frontend \
+                        docker run -d --name ${FRONTEND_DOCKER_NAME} \
                             --env-file .env.build \
-                            --network sexualai-network \
+                            --network ${APP_NETWORK} \
                             -p 127.0.0.1:${FRONTEND_PORT}:80 \
                             ${FRONTEND_DOCKER_IMAGE}:${DOCKER_TAG}
                     """
