@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { useNavigate } from "react-router-dom" // Using useNavigate for React Router
+import { useNavigate } from "react-router-dom"
 import {
   Menu,
   Phone,
@@ -22,12 +22,15 @@ import {
   Volume2,
   Pause,
   Bot,
+  ThumbsUp,
+  ThumbsDown,
+  RefreshCw,
 } from "lucide-react"
 import axios from "axios"
 import config from "../config"
 import ToastContainer from "./ToastContainer"
 import AuthChoice from "./AuthChoice"
-import Sidebar from "./Sidebar" // Import the original Sidebar component
+import Sidebar from "./Sidebar"
 import "./DiscussionScreen.css"
 import "../styles/variables.css"
 
@@ -40,7 +43,7 @@ export default function DiscussionScreen() {
   const [discussionCreated, setDiscussionCreated] = useState(false)
   const [conversations, setConversations] = useState([])
   const [isLoading, setIsLoading] = useState(true)
-  const [menuVisible, setMenuVisible] = useState(false) // Controls the custom sidebar visibility
+  const [menuVisible, setMenuVisible] = useState(false)
   const [currentTitle, setCurrentTitle] = useState("")
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [speakingMessageId, setSpeakingMessageId] = useState(null)
@@ -51,7 +54,6 @@ export default function DiscussionScreen() {
   const [isCallMode, setIsCallMode] = useState(false)
   const [callDuration, setCallDuration] = useState(0)
   const [audioLevel, setAudioLevel] = useState(0)
-  const [silenceStart, setSilenceStart] = useState(null)
   const [theme, setTheme] = useState("light")
   const [profile, setProfile] = useState({ name: "Utilisateur", profile_url: null })
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false)
@@ -62,6 +64,7 @@ export default function DiscussionScreen() {
   const [welcomeMessageRead, setWelcomeMessageRead] = useState(false)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [showAuthChoice, setShowAuthChoice] = useState(false)
+  const [transcript, setTranscript] = useState("")
 
   const chatContainerRef = useRef()
   const mediaRecorderRef = useRef()
@@ -73,6 +76,7 @@ export default function DiscussionScreen() {
   const callModeRef = useRef(isCallMode)
   const isAISpeakingRef = useRef(isAISpeaking)
   const isRecognitionActiveRef = useRef(isRecognitionActive)
+  const currentTranscriptRef = useRef("")
 
   useEffect(() => {
     callModeRef.current = isCallMode
@@ -144,50 +148,102 @@ export default function DiscussionScreen() {
 
   const initializeSpeechRecognition = () => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
-    if (SpeechRecognition) {
-      recognitionRef.current = new SpeechRecognition()
-      recognitionRef.current.continuous = true
-      recognitionRef.current.interimResults = true
-      recognitionRef.current.lang = selectedLanguage === "FR" ? "fr-FR" : "mg-MG"
-      recognitionRef.current.onresult = (event) => {
-        if (isAISpeakingRef.current) return
-        const transcript = Array.from(event.results)
-          .map((result) => result[0].transcript)
-          .join("")
-        if (callModeRef.current) {
-          setCallQuestion(transcript)
-        } else {
-          setQuestion(transcript)
-        }
-        if (event.results[event.results.length - 1].isFinal && callModeRef.current) {
-          setSilenceStart(null)
-          if (callModeRef.current && transcript.trim()) {
-            handleAskQuestion(transcript)
-          }
-        }
-      }
-      recognitionRef.current.onerror = (event) => {
-        console.error("Speech recognition error:", event.error)
-        addToast(
-          selectedLanguage === "FR"
-            ? "Erreur de reconnaissance vocale : " + event.error
-            : "Fahadisoana amin'ny fahafantarana feo: " + event.error,
-          "error",
-        )
-        setIsRecognitionActive(false)
-      }
-      recognitionRef.current.onend = () => {
-        setIsRecognitionActive(false)
-        if (callModeRef.current && isRecording && !isAISpeakingRef.current) {
-          setTimeout(() => startRecording(), 100)
-        }
-      }
-    } else {
+    if (!SpeechRecognition) {
       addToast(
-        selectedLanguage === "FR" ? "Reconnaissance vocale non prise en charge." : "Fahafantarana feo tsy tohana.",
-        "warning",
+        selectedLanguage === "FR"
+          ? "Reconnaissance vocale non prise en charge."
+          : "Fahafantarana feo tsy tohana.",
+        "warning"
       )
+      return
     }
+
+    const recognition = new SpeechRecognition()
+    recognition.continuous = true
+    recognition.interimResults = true
+    recognition.lang = selectedLanguage === "FR" ? "fr-FR" : "mg-MG"
+
+    let silenceTimer = null
+
+    recognition.onresult = (event) => {
+      if (isAISpeakingRef.current) return
+
+      clearTimeout(silenceTimer)
+
+      const textFragment = Array.from(event.results)
+        .map((r) => r[0].transcript)
+        .join("")
+
+      setTranscript((prev) => {
+        const updated = prev + textFragment
+        currentTranscriptRef.current = textFragment
+        return textFragment
+      })
+
+      if (callModeRef.current) {
+        setCallQuestion(currentTranscriptRef.current)
+      } else {
+        setQuestion(currentTranscriptRef.current)
+      }
+
+      if (callModeRef.current) {
+        silenceTimer = setTimeout(() => {
+          if (currentTranscriptRef.current.trim() !== "" && !isAISpeakingRef.current) {
+            console.log("Silence de 3s détecté → envoi :", currentTranscriptRef.current)
+            handleAskQuestion(currentTranscriptRef.current)
+            setTranscript("")
+            currentTranscriptRef.current = ""
+            setCallQuestion("")
+          }
+        }, 3000)
+      }
+    }
+
+    recognition.onerror = (event) => {
+      console.error("Speech recognition error:", event.error)
+      addToast(
+        selectedLanguage === "FR"
+          ? "Erreur de reconnaissance vocale : " + event.error
+          : "Fahadisoana amin'ny fahafantarana feo: " + event.error,
+        "error"
+      )
+      setIsRecognitionActive(false)
+      if (event.error === "no-speech" && callModeRef.current) {
+        silenceTimer = setTimeout(() => {
+          if (currentTranscriptRef.current.trim() !== "" && !isAISpeakingRef.current) {
+            console.log("Silence de 3s détecté (no-speech) → envoi :", currentTranscriptRef.current)
+            handleAskQuestion(currentTranscriptRef.current)
+            setTranscript("")
+            currentTranscriptRef.current = ""
+            setCallQuestion("")
+          }
+        }, 3000)
+      }
+    }
+
+    recognition.onend = () => {
+      console.log("SpeechRecognition ended…")
+      setIsRecognitionActive(false)
+      if (callModeRef.current && isRecording && !isAISpeakingRef.current) {
+        setTimeout(() => {
+          if (!isRecognitionActiveRef.current) {
+            try {
+              recognition.start()
+              setIsRecognitionActive(true)
+              setIsRecording(true)
+              isRecognitionActiveRef.current = true
+            } catch (error) {
+              console.error("Erreur lors du redémarrage de la reconnaissance:", error)
+              addToast(selectedLanguage === "FR" ? "Erreur micro" : "Fahadisoana mikrô", "error")
+            }
+          } else {
+            console.log("Reconnaissance déjà active, pas de redémarrage nécessaire.")
+          }
+        }, 900)
+      }
+    }
+
+    recognitionRef.current = recognition
   }
 
   const fetchProfile = async (token) => {
@@ -205,7 +261,7 @@ export default function DiscussionScreen() {
         selectedLanguage === "FR"
           ? "Erreur lors de la récupération du profil"
           : "Fahadisoana tamin'ny fakana ny mombamomba",
-        "error",
+        "error"
       )
       setProfile({ name: "Utilisateur", profile_url: null })
     }
@@ -213,7 +269,7 @@ export default function DiscussionScreen() {
 
   useEffect(() => {
     if (chatContainerRef.current && responses.length > 0) {
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeightproduk
     }
   }, [responses])
 
@@ -312,8 +368,8 @@ export default function DiscussionScreen() {
       mute: "Moana",
       speaker: "Fanamafisam-peo",
       darkMode: "Maizina",
-      lightMode: "Mazava",
-    },
+      lightMode: "Mazava"
+    }
   }
   const t = (key) => translations[selectedLanguage][key] || key
 
@@ -339,21 +395,22 @@ export default function DiscussionScreen() {
     }
   }
 
+  useEffect(() => {
+    if (isCallMode) {
+      console.log("Start call mode…")
+      startCallMode()
+    } else {
+      console.log("Stop call mode…")
+      stopCallMode()
+    }
+  }, [isCallMode])
+
   const toggleCallMode = () => {
-    setIsCallMode((prev) => {
-      const newCallMode = !prev
-      if (newCallMode) {
-        setIsRecording(true)
-        startCallMode()
-      } else {
-        setIsRecording(false)
-        stopCallMode()
-      }
-      return newCallMode
-    })
+    setIsCallMode((prev) => !prev)
   }
 
   const startCallMode = async () => {
+    console.log("Start call mode...")
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)()
@@ -376,24 +433,24 @@ export default function DiscussionScreen() {
       if (!welcomeMessageRead) {
         const welcomePhrases = [
           {
-            FR: "Bonjour, comment puis‑je vous accompagner dans votre santé sexuelle aujourd'hui ?",
-            MG: "Salama, ahoana no ahafahako manampy anao momba ny fahasalamana ara-nofo androany ?",
+            FR: "Bonjour, je suis votre assistant en santé sexuelle. Comment puis-je vous accompagner aujourd’hui ?",
+            MG: "Miarahaba, mpanampy anao amin’ny fahasalamana ara-nofo aho. Ahoana no ahafahako manohana anao androany ?",
           },
           {
-            FR: "Salut ! Prêt·e pour un petit bilan intime sérieux ?",
-            MG: "Manao ahoana! Vonona hanao fanadihadiana momba ny fahasalamana ara-nofo ianao androany ?",
+            FR: "Bienvenue ! Parlons de votre bien-être intime en toute confiance.",
+            MG: "Tongasoa ! Andeha hiresaka momba ny fahasalamana ara-nofo am-pahatokiana.",
           },
           {
-            FR: "Allons-y sans tabou : comment va votre vie sexuelle ?",
-            MG: "Andao tsy ho kivy: manao ahoana ny fiainana ara-nofo misy anao ?",
+            FR: "Bonjour, prêt·e à aborder votre santé sexuelle de manière sereine et informée ?",
+            MG: "Miarahaba, vonona hijery ny fahasalamana ara-nofo am-pilaminana sy am-pahalalana ve ianao ?",
           },
           {
-            FR: "Bonjour, dis‑moi tout pour garder ta santé sexuelle au top !",
-            MG: "Salama, lazao ahy daholo mba hitazonana ny fahasalamana ara-nofonao ho tsara foana !",
+            FR: "Salut, je suis là pour répondre à toutes vos questions sur la santé sexuelle, sans jugement.",
+            MG: "Salama, eto aho hamaly ny fanontanianao rehetra momba ny fahasalamana ara-nofo, tsy misy fitsaratsaram-poana.",
           },
           {
-            FR: "Hey, prêt·e à booster ton bien‑être sexy ? Je suis là pour ça !",
-            MG: "Hey, vonona hanome hery ny fahasalamana ara-nofonao ve ianao? Eto aho hanampy izany!",
+            FR: "Bienvenue, discutons de votre santé sexuelle avec bienveillance.",
+            MG: "Tongasoa, andeha hiresaka momba ny fahasalamana ara-nofo am-pitiavana sy matihanina.",
           },
         ]
         const randomIndex = Math.floor(Math.random() * welcomePhrases.length)
@@ -402,7 +459,7 @@ export default function DiscussionScreen() {
         await speakText(welcomeText, "welcome")
         setWelcomeMessageRead(true)
       }
-      if (isRecording && !isRecognitionActive) {
+      if (!isRecognitionActive) {
         startRecording()
       }
     } catch (error) {
@@ -413,24 +470,36 @@ export default function DiscussionScreen() {
   }
 
   const stopCallMode = () => {
-    if (audioContextRef.current) {
+    if (audioContextRef.current && audioContextRef.current.state !== "closed") {
       audioContextRef.current.close()
     }
-    setAudioLevel(0)
+    if (isSpeaking) {
+      window.speechSynthesis.cancel()
+      setIsSpeaking(false)
+      setSpeakingMessageId(null)
+      setIsAISpeaking(false)
+    }
     if (isRecognitionActive) {
       stopRecording()
     }
+    setAudioLevel(0)
     setCallQuestion("")
+    setTranscript("")
+    currentTranscriptRef.current = ""
     setIsAISpeaking(false)
     setWelcomeMessageRead(false)
+    setIsRecording(false)
+    setIsRecognitionActive(false)
   }
 
   const startRecording = () => {
+    console.log("Attempting to start recording...")
     if (recognitionRef.current && !isRecognitionActiveRef.current && !isAISpeakingRef.current) {
       try {
         recognitionRef.current.start()
         setIsRecognitionActive(true)
         setIsRecording(true)
+        console.log("Recording started.")
       } catch (error) {
         console.error("Erreur enregistrement:", error)
         addToast(selectedLanguage === "FR" ? "Micro éteint" : "Mikrô maty", "error")
@@ -441,8 +510,10 @@ export default function DiscussionScreen() {
   }
 
   const stopRecording = () => {
+    console.log("Attempting to stop recording...")
     if (recognitionRef.current && isRecognitionActiveRef.current) {
       recognitionRef.current.stop()
+      console.log("Recording stopped.")
     }
   }
 
@@ -460,7 +531,7 @@ export default function DiscussionScreen() {
         selectedLanguage === "FR"
           ? "Erreur lors de la récupération des conversations"
           : "Fahadisoana tamin'ny fakana ny resaka",
-        "error",
+        "error"
       )
       setIsLoading(false)
     }
@@ -482,7 +553,7 @@ export default function DiscussionScreen() {
         selectedLanguage === "FR"
           ? "Erreur lors de la création de la discussion"
           : "Fahadisoana tamin'ny famoronana resaka",
-        "error",
+        "error"
       )
     }
   }
@@ -496,8 +567,12 @@ export default function DiscussionScreen() {
       setResponses((prevResponses) => [...prevResponses, ...newResponses])
       if (callModeRef.current) {
         setCallQuestion("")
+        setTranscript("")
+        currentTranscriptRef.current = ""
       } else {
         setQuestion("")
+        setTranscript("")
+        currentTranscriptRef.current = ""
       }
       setIsWaitingResponse(true)
       try {
@@ -506,7 +581,7 @@ export default function DiscussionScreen() {
         const responseMessage = await axios.post(
           `${config.apiUrl}/messagechat/new/`,
           { contenu: questionWithLang, conversation: id_conversation },
-          { headers },
+          { headers }
         )
         const aiResponseId = Date.now().toString() + "1"
         const aiResponse = {
@@ -514,9 +589,11 @@ export default function DiscussionScreen() {
           text: responseMessage.data.bot_response,
           id: aiResponseId,
           timestamp: new Date(),
+          liked: false,
+          disliked: false,
         }
         setResponses((prevResponses) => [...prevResponses, aiResponse])
-        if (isCallMode) {
+        if (callModeRef.current) {
           setTimeout(() => {
             if (!isSpeaking) speakText(responseMessage.data.bot_response, aiResponseId)
           }, 1000)
@@ -530,13 +607,15 @@ export default function DiscussionScreen() {
             text: selectedLanguage === "FR" ? "Désolé, une erreur s'est produite." : "Miala tsiny, nisy olana.",
             id: Date.now().toString() + "error",
             timestamp: new Date(),
+            liked: false,
+            disliked: false,
           },
         ])
         addToast(
           selectedLanguage === "FR"
             ? "Erreur lors de l'envoi de la question"
             : "Fahadisoana tamin'ny fandefasana fanontaniana",
-          "error",
+          "error"
         )
       } finally {
         setIsWaitingResponse(false)
@@ -559,6 +638,8 @@ export default function DiscussionScreen() {
         text: msg.contenu,
         id: msg.id || Date.now().toString() + Math.random().toString(36).substring(7),
         timestamp: new Date(msg.created_at),
+        liked: false,
+        disliked: false,
       }))
       setResponses(formattedMessages)
     } catch (error) {
@@ -567,7 +648,7 @@ export default function DiscussionScreen() {
         selectedLanguage === "FR"
           ? "Erreur lors de la récupération des messages"
           : "Fahadisoana tamin'ny fakana ny hafatra",
-        "error",
+        "error"
       )
     }
   }
@@ -591,6 +672,14 @@ export default function DiscussionScreen() {
         setSpeakingMessageId(null)
         setIsAISpeaking(false)
         resolve()
+        setTimeout(() => {
+          if (callModeRef.current) {
+            setTranscript("")
+            currentTranscriptRef.current = ""
+            setCallQuestion("")
+            forceStartRecording()
+          }
+        }, 500)
         return
       }
       if (isSpeaking) {
@@ -611,6 +700,9 @@ export default function DiscussionScreen() {
           resolve()
           setTimeout(() => {
             if (callModeRef.current) {
+              setTranscript("")
+              currentTranscriptRef.current = ""
+              setCallQuestion("")
               forceStartRecording()
             }
           }, 500)
@@ -623,9 +715,17 @@ export default function DiscussionScreen() {
             selectedLanguage === "FR"
               ? "Erreur lors de la lecture du texte"
               : "Fahadisoana tamin'ny famakiana ny lahatsoratra",
-            "error",
+            "error"
           )
           reject(error)
+          setTimeout(() => {
+            if (callModeRef.current) {
+              setTranscript("")
+              currentTranscriptRef.current = ""
+              setCallQuestion("")
+              forceStartRecording()
+            }
+          }, 500)
         }
         window.speechSynthesis.speak(utterance)
       } else {
@@ -633,7 +733,7 @@ export default function DiscussionScreen() {
           selectedLanguage === "FR"
             ? "Erreur lors de la lecture du texte"
             : "Fahadisoana tamin'ny famakiana ny lahatsoratra",
-          "error",
+          "error"
         )
         reject(new Error("Speech synthesis not supported"))
       }
@@ -651,12 +751,11 @@ export default function DiscussionScreen() {
               setIsRecording(true)
             }
           } catch (error) {
-            console.error("Erreur lors du forçage de l'enregistrement:", error)
             addToast(selectedLanguage === "FR" ? "Erreur micro" : "Fahadisoana mikrô", "error")
             setIsRecognitionActive(false)
             setIsRecording(false)
           }
-        }, 600)
+        }, 900)
       }
       if (isRecognitionActiveRef.current) {
         recognitionRef.current.stop()
@@ -722,6 +821,29 @@ export default function DiscussionScreen() {
     console.log("Menstrual option selected:", option)
   }
 
+  const handleLike = (id) => {
+    setResponses((prevResponses) =>
+      prevResponses.map((msg) =>
+        msg.id === id ? { ...msg, liked: !msg.liked, disliked: false } : msg
+      )
+    )
+  }
+
+  const handleDislike = (id) => {
+    setResponses((prevResponses) =>
+      prevResponses.map((msg) =>
+        msg.id === id ? { ...msg, disliked: !msg.disliked, liked: false } : msg
+      )
+    )
+  }
+
+  const handleRegenerate = (id) => {
+    const userMessage = responses.find((msg) => msg.type === "user" && msg.id < id)
+    if (userMessage) {
+      handleAskQuestion(userMessage.text)
+    }
+  }
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (!event.target.closest(".discussion-header-profile")) {
@@ -740,7 +862,6 @@ export default function DiscussionScreen() {
   return (
     <div className="discussion-safe-area">
       <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
-      {/* Sidebar for desktop and mobile */}
       <Sidebar
         isOpen={menuVisible}
         onClose={toggleMenu}
@@ -755,7 +876,6 @@ export default function DiscussionScreen() {
 
       <div className="discussion-container">
         <div className="discussion-header">
-           
           <div className="discussion-title-container">
             <h1 className="discussion-title">SEXUAL AI</h1>
             {callModeRef.current && (
@@ -910,7 +1030,13 @@ export default function DiscussionScreen() {
                 <span>{t("mute")}</span>
               </button>
 
-              <button className="discussion-call-control-btn discussion-end-call-btn" onClick={toggleCallMode}>
+              <button
+                className="discussion-call-control-btn discussion-end-call-btn"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  toggleCallMode()
+                }}
+              >
                 <PhoneOff size={24} />
               </button>
 
@@ -948,16 +1074,7 @@ export default function DiscussionScreen() {
                         <p className="discussion-message-text">{item.text}</p>
                       </div>
                       <div className="discussion-message-avatar user">
-                        {isLoggedIn && profile.profile_url ? (
-                          <img
-                            src={profile.profile_url || "/placeholder.svg"}
-                            alt="User profile"
-                            className="discussion-profile-image"
-                            onError={() => setProfile((prev) => ({ ...prev, profile_url: null }))}
-                          />
-                        ) : (
-                          <User size={16} />
-                        )}
+                        {/* Avatar utilisateur ici si nécessaire */}
                       </div>
                     </>
                   ) : (
@@ -975,11 +1092,32 @@ export default function DiscussionScreen() {
                           >
                             {speakingMessageId === item.id ? <Pause size={16} /> : <Volume2 size={16} />}
                           </button>
+                          <button
+                            className={`discussion-like-button ${item.liked ? "liked" : ""}`}
+                            onClick={() => handleLike(item.id)}
+                            title="Like"
+                          >
+                            <ThumbsUp size={16} />
+                          </button>
+                          <button
+                            className={`discussion-dislike-button ${item.disliked ? "disliked" : ""}`}
+                            onClick={() => handleDislike(item.id)}
+                            title="Dislike"
+                          >
+                            <ThumbsDown size={16} />
+                          </button>
+                          <button
+                            className="discussion-regenerate-button"
+                            onClick={() => handleRegenerate(item.id)}
+                            title="Régénérer"
+                          >
+                            <RefreshCw size={16} />
+                          </button>
                         </div>
                       </div>
                     </>
                   )}
-                  <div className="discussion-message-timestamp">{formatMessageTime(item.timestamp)}</div>
+                  {/* <div className="discussion-message-timestamp">{formatMessageTime(item.timestamp)}</div> */}
                 </div>
               ))}
               {isWaitingResponse && (
@@ -1021,7 +1159,10 @@ export default function DiscussionScreen() {
               <div className="discussion-voice-controls">
                 <button
                   className={`discussion-call-button ${callModeRef.current ? "active" : ""}`}
-                  onClick={toggleCallMode}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    toggleCallMode()
+                  }}
                   title={callModeRef.current ? t("stopCall") : t("startCall")}
                 >
                   {callModeRef.current ? <PhoneOff size={20} /> : <Phone size={20} />}

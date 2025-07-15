@@ -608,13 +608,13 @@
 }
 
 .discussion-user-message {
-  flex-direction: row-reverse; /* Avatar on right, content on left */
-  justify-content: flex-end; /* Push message to the right */
+  flex-direction: row-reverse;
+  justify-content: flex-end;
 }
 
 .discussion-ai-message {
-  flex-direction: row; /* Avatar on left, content on left */
-  justify-content: flex-start; /* Push message to the left */
+  flex-direction: row; 
+  justify-content: flex-start;
 }
 
 .discussion-message-avatar {
@@ -634,39 +634,39 @@
 }
 
 .discussion-user-message .discussion-message-avatar {
-  background: var(--bg-tertiary);
   color: var(--text-secondary);
    margin-left: 39%;   
 }
 
 .discussion-user-message-content {
   flex: 1;
-  max-width: 50%; /* Limiter la largeur du message */
+  max-width: 50%;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start; /* Aligner le contenu en haut */
-  align-items: flex-start;     /* Aligner tout à gauche */
-  text-align: left;            /* Texte aligné à gauche */
-  color: var(--text-primary);  /* Couleur du texte */
-  background: #fbd9c0;         /* Couleur de fond de la bulle */
-  padding: 12px 16px;          /* Padding intérieur */
-  border-radius: var(--radius-lg); /* Coins arrondis */
+  justify-content: flex-start;
+  align-items: flex-start;    
+  text-align: left;      
+  color: var(--text-primary); 
+  background: #fbd9c0;     
+  padding: 12px 16px;  
+  border-radius: var(--radius-lg);
         
 }
 
 [data-theme="dark"] .discussion-user-message-content {
-  color: var(--text-primary); /* White text in dark mode */
-  background: var(--secondary-700); /* Darker background for user message bubble in dark mode */
+  color: #1f2937;
+  font-weight: 600;
+  background: #f4a261; 
 }
 
 .discussion-ai-message-content {
   flex: 1;
-  max-width: 70%; /* Limit content width */
+  max-width: 88%; /* Limit content width */
   display: flex;
   flex-direction: column;
   text-align: left; /* Text inside AI message aligned left */
-  border: 1px solid #000; /* Explicitly black border for AI message */
-  background: var(--bg-primary); /* AI message background */
+  /* border: 1px solid #000; */
+  /* background: var(--bg-primary);  */
   padding: 12px 16px;
   border-radius: var(--radius-lg);
   color: var(--text-primary); /* Black text in light mode */
@@ -689,7 +689,7 @@
   align-items: center;
   gap: 4px;
   margin-top: 8px;
-  justify-content: flex-end; /* Align actions to the right for AI messages */
+  justify-content: flex-start;
 }
 
 .discussion-audio-button {
@@ -708,6 +708,48 @@
 .discussion-audio-button:hover {
   background: var(--bg-secondary);
   color: var(--text-primary);
+}
+
+.discussion-message-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  justify-content: flex-start;
+}
+
+.discussion-audio-button,
+.discussion-like-button,
+.discussion-dislike-button,
+.discussion-regenerate-button {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 4px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.discussion-audio-button:hover,
+.discussion-like-button:hover,
+.discussion-dislike-button:hover,
+.discussion-regenerate-button:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.discussion-like-button.liked {
+  color: #28a745; /* Vert pour like */
+  border-color: #28a745;
+}
+
+.discussion-dislike-button.disliked {
+  color: #dc3545; /* Rouge pour dislike */
+  border-color: #dc3545;
 }
 
 .discussion-message-timestamp {
