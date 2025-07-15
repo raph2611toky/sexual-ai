@@ -1,38 +1,35 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { useNavigate } from "react-router-dom"
-import { 
-  Menu, 
-  X, 
-  Plus, 
-  MessageCircle, 
-  Phone, 
-  PhoneOff, 
-  User, 
-  Settings, 
-  Moon, 
-  Sun, 
-  Globe, 
-  Heart, 
-  LogIn, 
-  LogOut, 
-  Shield, 
-  FileText, 
-  ChevronRight, 
-  Mic, 
-  MicOff, 
-  Send, 
-  Volume2, 
-  VolumeX, 
-  Pause, 
-  Play,
-  Bot
+import { useNavigate } from "react-router-dom" // Using useNavigate for React Router
+import {
+  Menu,
+  Phone,
+  PhoneOff,
+  User,
+  Settings,
+  Moon,
+  Sun,
+  Globe,
+  Heart,
+  LogIn,
+  LogOut,
+  Shield,
+  FileText,
+  Mic,
+  MicOff,
+  Send,
+  Volume2,
+  Pause,
+  Bot,
 } from "lucide-react"
 import axios from "axios"
 import config from "../config"
 import ToastContainer from "./ToastContainer"
+import AuthChoice from "./AuthChoice"
+import Sidebar from "./Sidebar" // Import the original Sidebar component
 import "./DiscussionScreen.css"
+import "../styles/variables.css"
 
 export default function DiscussionScreen() {
   const navigate = useNavigate()
@@ -43,7 +40,7 @@ export default function DiscussionScreen() {
   const [discussionCreated, setDiscussionCreated] = useState(false)
   const [conversations, setConversations] = useState([])
   const [isLoading, setIsLoading] = useState(true)
-  const [menuVisible, setMenuVisible] = useState(false)
+  const [menuVisible, setMenuVisible] = useState(false) // Controls the custom sidebar visibility
   const [currentTitle, setCurrentTitle] = useState("")
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [speakingMessageId, setSpeakingMessageId] = useState(null)
@@ -64,6 +61,7 @@ export default function DiscussionScreen() {
   const [isRecognitionActive, setIsRecognitionActive] = useState(false)
   const [welcomeMessageRead, setWelcomeMessageRead] = useState(false)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [showAuthChoice, setShowAuthChoice] = useState(false)
 
   const chatContainerRef = useRef()
   const mediaRecorderRef = useRef()
@@ -79,9 +77,11 @@ export default function DiscussionScreen() {
   useEffect(() => {
     callModeRef.current = isCallMode
   }, [isCallMode])
+
   useEffect(() => {
     isAISpeakingRef.current = isAISpeaking
   }, [isAISpeaking])
+
   useEffect(() => {
     isRecognitionActiveRef.current = isRecognitionActive
   }, [isRecognitionActive])
@@ -89,11 +89,11 @@ export default function DiscussionScreen() {
   const getCookie = (name) => {
     const value = `; ${document.cookie}`
     const parts = value.split(`; ${name}=`)
-    if (parts.length === 2) return parts.pop().split(';').shift()
+    if (parts.length === 2) return parts.pop().split(";").shift()
     return null
   }
 
-  const addToast = (message, type = 'error', duration = 3000) => {
+  const addToast = (message, type = "error", duration = 3000) => {
     const id = Date.now().toString() + Math.random().toString(36).substring(7)
     setToasts((prev) => [...prev, { id, message, type, duration }])
   }
@@ -109,10 +109,11 @@ export default function DiscussionScreen() {
     setSelectedLanguage(savedLanguage === "fr" ? "FR" : "MG")
     document.documentElement.setAttribute("data-theme", savedTheme)
 
-    const token = getCookie('auth_token')
+    const token = getCookie("auth_token")
     if (token) {
       setIsLoggedIn(true)
       fetchProfile(token)
+      fetchConversations(token)
     } else {
       setIsLoggedIn(false)
     }
@@ -127,8 +128,19 @@ export default function DiscussionScreen() {
       if (callTimerRef.current) {
         clearInterval(callTimerRef.current)
       }
+      if (recognitionRef.current) {
+        recognitionRef.current.stop()
+      }
     }
-  }, [discussionCreated, navigate])
+  }, [discussionCreated])
+
+  const textareaRef = useRef(null)
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto"
+      textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 120) + "px"
+    }
+  }, [question])
 
   const initializeSpeechRecognition = () => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
@@ -138,7 +150,7 @@ export default function DiscussionScreen() {
       recognitionRef.current.interimResults = true
       recognitionRef.current.lang = selectedLanguage === "FR" ? "fr-FR" : "mg-MG"
       recognitionRef.current.onresult = (event) => {
-        if (isAISpeaking) return
+        if (isAISpeakingRef.current) return
         const transcript = Array.from(event.results)
           .map((result) => result[0].transcript)
           .join("")
@@ -149,6 +161,9 @@ export default function DiscussionScreen() {
         }
         if (event.results[event.results.length - 1].isFinal && callModeRef.current) {
           setSilenceStart(null)
+          if (callModeRef.current && transcript.trim()) {
+            handleAskQuestion(transcript)
+          }
         }
       }
       recognitionRef.current.onerror = (event) => {
@@ -157,22 +172,20 @@ export default function DiscussionScreen() {
           selectedLanguage === "FR"
             ? "Erreur de reconnaissance vocale : " + event.error
             : "Fahadisoana amin'ny fahafantarana feo: " + event.error,
-          "error"
+          "error",
         )
         setIsRecognitionActive(false)
       }
       recognitionRef.current.onend = () => {
         setIsRecognitionActive(false)
-        if (isCallMode && isRecording && !isAISpeaking) {
+        if (callModeRef.current && isRecording && !isAISpeakingRef.current) {
           setTimeout(() => startRecording(), 100)
         }
       }
     } else {
       addToast(
-        selectedLanguage === "FR"
-          ? "Reconnaissance vocale non prise en charge."
-          : "Fahafantarana feo tsy tohana.",
-        "warning"
+        selectedLanguage === "FR" ? "Reconnaissance vocale non prise en charge." : "Fahafantarana feo tsy tohana.",
+        "warning",
       )
     }
   }
@@ -192,7 +205,7 @@ export default function DiscussionScreen() {
         selectedLanguage === "FR"
           ? "Erreur lors de la récupération du profil"
           : "Fahadisoana tamin'ny fakana ny mombamomba",
-        "error"
+        "error",
       )
       setProfile({ name: "Utilisateur", profile_url: null })
     }
@@ -215,7 +228,6 @@ export default function DiscussionScreen() {
       }
       setCallDuration(0)
     }
-
     return () => {
       if (callTimerRef.current) {
         clearInterval(callTimerRef.current)
@@ -257,6 +269,9 @@ export default function DiscussionScreen() {
       login: "Se connecter",
       privacyPolicy: "Politique de confidentialité",
       termsOfService: "Conditions d'utilisation",
+      profile: "Profil",
+      mute: "Muet",
+      speaker: "Haut-parleur",
       darkMode: "Mode sombre",
       lightMode: "Mode clair",
     },
@@ -293,11 +308,13 @@ export default function DiscussionScreen() {
       login: "Hiditra",
       privacyPolicy: "Politikan'ny tsiambaratelo",
       termsOfService: "Fepetra fampiasana",
+      profile: "Mombamomba",
+      mute: "Moana",
+      speaker: "Fanamafisam-peo",
       darkMode: "Maizina",
       lightMode: "Mazava",
     },
   }
-
   const t = (key) => translations[selectedLanguage][key] || key
 
   const formatCallDuration = (seconds) => {
@@ -307,13 +324,9 @@ export default function DiscussionScreen() {
   }
 
   const toggleMenu = () => {
-    if (menuVisible) {
-      setMenuVisible(false)
-    } else {
-      if (isLoggedIn) {
-        fetchConversations()
-      }
-      setMenuVisible(true)
+    setMenuVisible((prev) => !prev)
+    if (!menuVisible && isLoggedIn) {
+      fetchConversations()
     }
   }
 
@@ -347,13 +360,11 @@ export default function DiscussionScreen() {
       analyserRef.current = audioContextRef.current.createAnalyser()
       const source = audioContextRef.current.createMediaStreamSource(stream)
       source.connect(analyserRef.current)
-
       analyserRef.current.fftSize = 256
       const bufferLength = analyserRef.current.frequencyBinCount
       const dataArray = new Uint8Array(bufferLength)
-
       const updateAudioLevel = () => {
-        if (isCallMode) {
+        if (callModeRef.current) {
           analyserRef.current.getByteFrequencyData(dataArray)
           const average = dataArray.reduce((a, b) => a + b) / bufferLength
           setAudioLevel(average / 255)
@@ -366,30 +377,28 @@ export default function DiscussionScreen() {
         const welcomePhrases = [
           {
             FR: "Bonjour, comment puis‑je vous accompagner dans votre santé sexuelle aujourd'hui ?",
-            MG: "Salama, ahoana no ahafahako manampy anao momba ny fahasalamana ara-nofo androany ?"
+            MG: "Salama, ahoana no ahafahako manampy anao momba ny fahasalamana ara-nofo androany ?",
           },
           {
             FR: "Salut ! Prêt·e pour un petit bilan intime sérieux ?",
-            MG: "Manao ahoana! Vonona hanao fanadihadiana momba ny fahasalamana ara-nofo ianao androany ?"
+            MG: "Manao ahoana! Vonona hanao fanadihadiana momba ny fahasalamana ara-nofo ianao androany ?",
           },
           {
             FR: "Allons-y sans tabou : comment va votre vie sexuelle ?",
-            MG: "Andao tsy ho kivy: manao ahoana ny fiainana ara-nofo misy anao ?"
+            MG: "Andao tsy ho kivy: manao ahoana ny fiainana ara-nofo misy anao ?",
           },
           {
             FR: "Bonjour, dis‑moi tout pour garder ta santé sexuelle au top !",
-            MG: "Salama, lazao ahy daholo mba hitazonana ny fahasalamana ara-nofonao ho tsara foana !"
+            MG: "Salama, lazao ahy daholo mba hitazonana ny fahasalamana ara-nofonao ho tsara foana !",
           },
           {
             FR: "Hey, prêt·e à booster ton bien‑être sexy ? Je suis là pour ça !",
-            MG: "Hey, vonona hanome hery ny fahasalamana ara-nofonao ve ianao? Eto aho hanampy izany!"
-          }
-        ];
-
-        const randomIndex = Math.floor(Math.random() * welcomePhrases.length);
-        const { FR, MG } = welcomePhrases[randomIndex];
-
-        const welcomeText = selectedLanguage === "FR" ? FR : MG;
+            MG: "Hey, vonona hanome hery ny fahasalamana ara-nofonao ve ianao? Eto aho hanampy izany!",
+          },
+        ]
+        const randomIndex = Math.floor(Math.random() * welcomePhrases.length)
+        const { FR, MG } = welcomePhrases[randomIndex]
+        const welcomeText = selectedLanguage === "FR" ? FR : MG
         await speakText(welcomeText, "welcome")
         setWelcomeMessageRead(true)
       }
@@ -417,30 +426,29 @@ export default function DiscussionScreen() {
   }
 
   const startRecording = () => {
-    if (recognitionRef.current && !isRecognitionActive && !isAISpeaking) {
+    if (recognitionRef.current && !isRecognitionActiveRef.current && !isAISpeakingRef.current) {
       try {
-        recognitionRef.current.start();
-        setIsRecognitionActive(true);
-        setIsRecording(true);
+        recognitionRef.current.start()
+        setIsRecognitionActive(true)
+        setIsRecording(true)
       } catch (error) {
-        console.error("Erreur enregistrement:", error);
-        addToast(selectedLanguage === "FR" ? "Micro éteint" : "Mikrô maty", "error");
-        setIsRecognitionActive(false);
-        setIsRecording(false);
+        console.error("Erreur enregistrement:", error)
+        addToast(selectedLanguage === "FR" ? "Micro éteint" : "Mikrô maty", "error")
+        setIsRecognitionActive(false)
+        setIsRecording(false)
       }
     }
-  };
+  }
 
   const stopRecording = () => {
-    if (recognitionRef.current && isRecognitionActive) {
+    if (recognitionRef.current && isRecognitionActiveRef.current) {
       recognitionRef.current.stop()
     }
   }
 
-  const fetchConversations = async () => {
+  const fetchConversations = async (token) => {
     if (!isLoggedIn) return
     try {
-      const token = getCookie("auth_token")
       const response = await axios.get(`${config.apiUrl}/conversation/list/`, {
         headers: { Authorization: `Bearer ${token}` },
       })
@@ -452,7 +460,7 @@ export default function DiscussionScreen() {
         selectedLanguage === "FR"
           ? "Erreur lors de la récupération des conversations"
           : "Fahadisoana tamin'ny fakana ny resaka",
-        "error"
+        "error",
       )
       setIsLoading(false)
     }
@@ -462,12 +470,7 @@ export default function DiscussionScreen() {
     try {
       const token = getCookie("auth_token")
       const headers = token ? { Authorization: `Bearer ${token}` } : {}
-      const responseConversation = await axios.post(
-        `${config.apiUrl}/conversation/new/`,
-        {},
-        { headers }
-      )
-
+      const responseConversation = await axios.post(`${config.apiUrl}/conversation/new/`, {}, { headers })
       const id_conversation = responseConversation.data.id_conversation
       setId_conversation(id_conversation)
       setDiscussionCreated(true)
@@ -479,7 +482,7 @@ export default function DiscussionScreen() {
         selectedLanguage === "FR"
           ? "Erreur lors de la création de la discussion"
           : "Fahadisoana tamin'ny famoronana resaka",
-        "error"
+        "error",
       )
     }
   }
@@ -489,7 +492,6 @@ export default function DiscussionScreen() {
     if (questionText.trim()) {
       const languageInstruction = selectedLanguage === "FR" ? "Réponds en français: " : "Valiny amin'ny teny malagasy: "
       const questionWithLang = languageInstruction + questionText
-
       const newResponses = [{ type: "user", text: questionText, id: Date.now(), timestamp: new Date() }]
       setResponses((prevResponses) => [...prevResponses, ...newResponses])
       if (callModeRef.current) {
@@ -498,16 +500,14 @@ export default function DiscussionScreen() {
         setQuestion("")
       }
       setIsWaitingResponse(true)
-
       try {
         const token = getCookie("auth_token")
         const headers = token ? { Authorization: `Bearer ${token}` } : {}
         const responseMessage = await axios.post(
           `${config.apiUrl}/messagechat/new/`,
           { contenu: questionWithLang, conversation: id_conversation },
-          { headers }
+          { headers },
         )
-
         const aiResponseId = Date.now().toString() + "1"
         const aiResponse = {
           type: "ai",
@@ -515,9 +515,7 @@ export default function DiscussionScreen() {
           id: aiResponseId,
           timestamp: new Date(),
         }
-
         setResponses((prevResponses) => [...prevResponses, aiResponse])
-
         if (isCallMode) {
           setTimeout(() => {
             if (!isSpeaking) speakText(responseMessage.data.bot_response, aiResponseId)
@@ -529,10 +527,7 @@ export default function DiscussionScreen() {
           ...prevResponses,
           {
             type: "ai",
-            text:
-              selectedLanguage === "FR"
-                ? "Désolé, une erreur s'est produite."
-                : "Miala tsiny, nisy olana.",
+            text: selectedLanguage === "FR" ? "Désolé, une erreur s'est produite." : "Miala tsiny, nisy olana.",
             id: Date.now().toString() + "error",
             timestamp: new Date(),
           },
@@ -541,7 +536,7 @@ export default function DiscussionScreen() {
           selectedLanguage === "FR"
             ? "Erreur lors de l'envoi de la question"
             : "Fahadisoana tamin'ny fandefasana fanontaniana",
-          "error"
+          "error",
         )
       } finally {
         setIsWaitingResponse(false)
@@ -554,20 +549,17 @@ export default function DiscussionScreen() {
     setId_conversation(conversationId)
     setCurrentTitle(title || `Discussion ${conversationId}`)
     setMenuVisible(false)
-
     try {
       const token = getCookie("auth_token")
       const response = await axios.get(`${config.apiUrl}/conversation/${conversationId}/details/`, {
         headers: { Authorization: `Bearer ${token}` },
       })
-
       const formattedMessages = response.data.messages.map((msg) => ({
-        type: msg.from_user ? "ai" : "user",
+        type: msg.from_user ? "user" : "ai",
         text: msg.contenu,
         id: msg.id || Date.now().toString() + Math.random().toString(36).substring(7),
         timestamp: new Date(msg.created_at),
       }))
-
       setResponses(formattedMessages)
     } catch (error) {
       console.error("Erreur lors de la récupération des messages:", error)
@@ -575,7 +567,7 @@ export default function DiscussionScreen() {
         selectedLanguage === "FR"
           ? "Erreur lors de la récupération des messages"
           : "Fahadisoana tamin'ny fakana ny hafatra",
-        "error"
+        "error",
       )
     }
   }
@@ -594,65 +586,59 @@ export default function DiscussionScreen() {
   const speakText = (text, messageId) => {
     return new Promise((resolve, reject) => {
       if (isSpeaking && speakingMessageId === messageId) {
-        window.speechSynthesis.cancel();
-        setIsSpeaking(false);
-        setSpeakingMessageId(null);
-        setIsAISpeaking(false);
-        resolve();
-        return;
+        window.speechSynthesis.cancel()
+        setIsSpeaking(false)
+        setSpeakingMessageId(null)
+        setIsAISpeaking(false)
+        resolve()
+        return
       }
-
       if (isSpeaking) {
-        window.speechSynthesis.cancel();
+        window.speechSynthesis.cancel()
       }
-
-      setIsSpeaking(true);
-      setSpeakingMessageId(messageId);
-      setIsAISpeaking(true);
-
+      setIsSpeaking(true)
+      setSpeakingMessageId(messageId)
+      setIsAISpeaking(true)
       if ("speechSynthesis" in window) {
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = selectedLanguage === "FR" ? "fr-FR" : "mg-MG";
-        utterance.pitch = 1.0;
-        utterance.rate = 0.9;
-
+        const utterance = new SpeechSynthesisUtterance(text)
+        utterance.lang = selectedLanguage === "FR" ? "fr-FR" : "mg-MG"
+        utterance.pitch = 1.0
+        utterance.rate = 0.9
         utterance.onend = () => {
-          setIsSpeaking(false);
-          setSpeakingMessageId(null);
-          setIsAISpeaking(false);
-          resolve();
+          setIsSpeaking(false)
+          setSpeakingMessageId(null)
+          setIsAISpeaking(false)
+          resolve()
           setTimeout(() => {
             if (callModeRef.current) {
-              forceStartRecording();
+              forceStartRecording()
             }
-          }, 500);
-        };
-
+          }, 500)
+        }
         utterance.onerror = (error) => {
-          setIsSpeaking(false);
-          setSpeakingMessageId(null);
-          setIsAISpeaking(false);
+          setIsSpeaking(false)
+          setSpeakingMessageId(null)
+          setIsAISpeaking(false)
           addToast(
             selectedLanguage === "FR"
               ? "Erreur lors de la lecture du texte"
               : "Fahadisoana tamin'ny famakiana ny lahatsoratra",
-            "error"
-          );
-          reject(error);
-        };
-
-        window.speechSynthesis.speak(utterance);
+            "error",
+          )
+          reject(error)
+        }
+        window.speechSynthesis.speak(utterance)
       } else {
         addToast(
           selectedLanguage === "FR"
             ? "Erreur lors de la lecture du texte"
             : "Fahadisoana tamin'ny famakiana ny lahatsoratra",
-          "error"
-        );
-        reject(new Error("Speech synthesis not supported"));
+          "error",
+        )
+        reject(new Error("Speech synthesis not supported"))
       }
-    });
-  };
+    })
+  }
 
   const forceStartRecording = () => {
     if (recognitionRef.current) {
@@ -660,29 +646,28 @@ export default function DiscussionScreen() {
         setTimeout(() => {
           try {
             if (!isRecognitionActiveRef.current) {
-              recognitionRef.current.start();
-              setIsRecognitionActive(true);
-              setIsRecording(true);
+              recognitionRef.current.start()
+              setIsRecognitionActive(true)
+              setIsRecording(true)
             }
           } catch (error) {
-            console.error("Erreur lors du forçage de l'enregistrement:", error);
-            addToast(selectedLanguage === "FR" ? "Erreur micro" : "Fahadisoana mikrô", "error");
-            setIsRecognitionActive(false);
-            setIsRecording(false);
+            console.error("Erreur lors du forçage de l'enregistrement:", error)
+            addToast(selectedLanguage === "FR" ? "Erreur micro" : "Fahadisoana mikrô", "error")
+            setIsRecognitionActive(false)
+            setIsRecording(false)
           }
-        }, 600);
-      };
-
+        }, 600)
+      }
       if (isRecognitionActiveRef.current) {
-        recognitionRef.current.stop();
-        setIsRecognitionActive(false);
-        setIsRecording(false);
-        restartRecognition();
+        recognitionRef.current.stop()
+        setIsRecognitionActive(false)
+        setIsRecording(false)
+        restartRecognition()
       } else {
-        restartRecognition();
+        restartRecognition()
       }
     }
-  };
+  }
 
   const handleKeyPress = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -699,102 +684,80 @@ export default function DiscussionScreen() {
   }
 
   const handleLogout = () => {
+    setIsLoggedIn(false)
     localStorage.clear()
     document.cookie = "auth_token=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;"
-    navigate("/login")
+    setResponses([])
+    setId_conversation(null)
+    setConversations([])
+    setShowAuthChoice(true)
   }
 
   const handleDonation = () => {
     navigate("/donation")
+    console.log("Navigate to donation")
   }
 
-  // Fermer les dropdowns quand on clique ailleurs
+  const handleLogin = () => {
+    navigate("/login")
+    console.log("Navigate to login")
+  }
+
+  const handleSignup = () => {
+    navigate("/signup")
+    console.log("Navigate to signup")
+  }
+
+  const handleStayDisconnected = async () => {
+    setShowAuthChoice(false)
+    if (!discussionCreated) {
+      handleCreateDiscussion()
+    }
+  }
+
+  const handleMenstrualOption = (option) => {
+    if (option === "redirect") {
+      navigate("/cycle")
+    }
+    console.log("Menstrual option selected:", option)
+  }
+
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (!event.target.closest('.discussion-header-profile')) {
+      if (!event.target.closest(".discussion-header-profile")) {
         setIsProfileDropdownOpen(false)
       }
-      if (!event.target.closest('.discussion-settings-menu')) {
+      if (!event.target.closest(".discussion-settings-menu")) {
         setIsSettingsDropdownOpen(false)
       }
     }
-
-    document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener("mousedown", handleClickOutside)
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener("mousedown", handleClickOutside)
     }
   }, [])
 
   return (
     <div className="discussion-safe-area">
       <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
-      {menuVisible && <div className="discussion-overlay" onClick={toggleMenu}></div>}
-
-      {menuVisible && (
-        <div className="discussion-menu-container">
-          <div className="discussion-menu-header">
-            <h3 className="discussion-menu-title">
-              <MessageCircle size={20} />
-              {isLoggedIn ? t("myDiscussions") : t("newDiscussion")}
-            </h3>
-            <button className="discussion-close-button" onClick={toggleMenu}>
-              <X size={20} />
-            </button>
-          </div>
-
-          <div className="discussion-menu-content">
-            <button
-              className="discussion-new-chat-button"
-              onClick={() => {
-                handleCreateDiscussion()
-                toggleMenu()
-              }}
-            >
-              <div className="discussion-new-chat-icon">
-                <Plus size={16} />
-              </div>
-              <span className="discussion-new-chat-text">{t("newDiscussion")}</span>
-            </button>
-
-            {isLoggedIn && isLoading ? (
-              <div className="discussion-loading-container">
-                <div className="discussion-loading-spinner"></div>
-                <p className="discussion-loading-text">{t("loading")}</p>
-              </div>
-            ) : isLoggedIn ? (
-              <div className="discussion-conversations-list">
-                {conversations.map((item) => (
-                  <button
-                    key={item.id_conversation}
-                    className="discussion-conversation-item"
-                    onClick={() => handleSelectConversation(item.id_conversation, item.titre)}
-                  >
-                    <div className="discussion-conversation-icon">
-                      <MessageCircle size={16} />
-                    </div>
-                    <div className="discussion-conversation-details">
-                      <p className="discussion-conversation-title">{item.titre}</p>
-                      <p className="discussion-conversation-date">{formatDate(item.created_at)}</p>
-                    </div>
-                    <ChevronRight size={12} className="discussion-conversation-arrow" />
-                  </button>
-                ))}
-              </div>
-            ) : null}
-          </div>
-        </div>
-      )}
+      {/* Sidebar for desktop and mobile */}
+      <Sidebar
+        isOpen={menuVisible}
+        onClose={toggleMenu}
+        conversations={conversations}
+        onNewChat={handleCreateDiscussion}
+        onSelectConversation={handleSelectConversation}
+        currentConversationId={id_conversation}
+        onStartCall={toggleCallMode}
+        onMenstrualOption={handleMenstrualOption}
+        language={selectedLanguage}
+      />
 
       <div className="discussion-container">
         <div className="discussion-header">
-          <button className="discussion-menu-button" onClick={toggleMenu}>
-            <Menu size={20} />
-          </button>
-
+           
           <div className="discussion-title-container">
-            <h1 className="discussion-title">
-              {t("title")}
-            </h1>
+            <h1 className="discussion-title">SEXUAL AI</h1>
             {callModeRef.current && (
               <div className="discussion-call-indicator">
                 <div className="discussion-call-dot"></div>
@@ -802,23 +765,10 @@ export default function DiscussionScreen() {
               </div>
             )}
           </div>
-
           <div className="discussion-header-actions">
-            <button
-              className={`discussion-call-button ${callModeRef.current ? "active" : ""}`}
-              onClick={toggleCallMode}
-              title={callModeRef.current ? t("stopCall") : t("startCall")}
-            >
-              {callModeRef.current ? (
-                <PhoneOff size={18} />
-              ) : (
-                <Phone size={18} />
-              )}
-            </button>
-
             <div className="discussion-header-profile">
-              <button 
-                className="discussion-profile-btn" 
+              <button
+                className="discussion-profile-btn"
                 onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
               >
                 <div className="discussion-header-profile-avatar">
@@ -835,12 +785,12 @@ export default function DiscussionScreen() {
                 </div>
                 {isLoggedIn && <div className="discussion-profile-active-dot"></div>}
               </button>
-              
+
               {isProfileDropdownOpen && (
                 <div className="discussion-profile-dropdown">
                   {!isLoggedIn ? (
                     <>
-                      <button onClick={() => navigate("/login")}>
+                      <button onClick={() => setShowAuthChoice(true)}>
                         <LogIn size={16} />
                         {t("login")}
                       </button>
@@ -857,7 +807,7 @@ export default function DiscussionScreen() {
                     <>
                       <button onClick={() => navigate("/profile")}>
                         <User size={16} />
-                        Profil
+                        {t("profile")}
                       </button>
                       <button onClick={() => navigate("/privacy-policy")}>
                         <Shield size={16} />
@@ -876,15 +826,14 @@ export default function DiscussionScreen() {
                 </div>
               )}
             </div>
-
             <div className="discussion-settings-menu">
-              <button 
-                className="discussion-settings-button" 
+              <button
+                className="discussion-settings-button"
                 onClick={() => setIsSettingsDropdownOpen(!isSettingsDropdownOpen)}
               >
                 <Settings size={18} />
               </button>
-              
+
               {isSettingsDropdownOpen && (
                 <div className="discussion-settings-dropdown">
                   <button onClick={toggleThemeHandler}>
@@ -904,7 +853,6 @@ export default function DiscussionScreen() {
             </div>
           </div>
         </div>
-
         {callModeRef.current && (
           <div className="discussion-call-interface">
             <div className="discussion-call-main">
@@ -913,7 +861,7 @@ export default function DiscussionScreen() {
                   <div className="discussion-call-avatar-image">
                     <Bot className="discussion-avatar-icon" size={48} />
                   </div>
-                  
+
                   {isRecording && (
                     <div className="discussion-call-listening-indicator">
                       <div className="discussion-listening-wave">
@@ -923,14 +871,14 @@ export default function DiscussionScreen() {
                             className="discussion-wave-bar"
                             style={{
                               animationDelay: `${i * 0.1}s`,
-                              height: `${8 + audioLevel * 20}px`
+                              height: `${8 + audioLevel * 20}px`,
                             }}
                           />
                         ))}
                       </div>
                     </div>
                   )}
-                  
+
                   {isAISpeaking && (
                     <div className="discussion-call-speaking-indicator">
                       <div className="discussion-speaking-rings">
@@ -941,43 +889,38 @@ export default function DiscussionScreen() {
                     </div>
                   )}
                 </div>
-                
+
                 <div className="discussion-call-info">
                   <h3 className="discussion-call-contact-name">{t("aiAssistant")}</h3>
                   <p className="discussion-call-status-text">
-                    {isAISpeaking ? t("aiSpeaking") : isRecording ? t("listening") : t("online")}
+                    {isAISpeaking ? t("aiSpeaking") : isRecognitionActive ? t("listening") : t("online")}
                   </p>
                 </div>
               </div>
-
               {callQuestion && (
                 <div className="discussion-call-transcript">
                   <span className="discussion-transcript-label">Transcription</span>
-                  <div className="discussion-call-transcript-text">
-                    {callQuestion}
-                  </div>
+                  <div className="discussion-call-transcript-text">{callQuestion}</div>
                 </div>
               )}
             </div>
-
             <div className="discussion-call-controls">
               <button className="discussion-call-control-btn discussion-mute-btn">
                 <Mic size={24} />
-                <span>Muet</span>
+                <span>{t("mute")}</span>
               </button>
-              
+
               <button className="discussion-call-control-btn discussion-end-call-btn" onClick={toggleCallMode}>
                 <PhoneOff size={24} />
               </button>
-              
+
               <button className="discussion-call-control-btn discussion-speaker-btn">
                 <Volume2 size={24} />
-                <span>Haut-parleur</span>
+                <span>{t("speaker")}</span>
               </button>
             </div>
           </div>
         )}
-
         {!callModeRef.current && responses.length === 0 ? (
           <div className="discussion-welcome-background">
             <div className="discussion-welcome-container">
@@ -1000,8 +943,8 @@ export default function DiscussionScreen() {
                   className={`discussion-message ${item.type === "user" ? "discussion-user-message" : "discussion-ai-message"}`}
                 >
                   {item.type === "user" ? (
-                    <div className="discussion-user-message-content">
-                      <div className="discussion-message-bubble user">
+                    <>
+                      <div className="discussion-user-message-content">
                         <p className="discussion-message-text">{item.text}</p>
                       </div>
                       <div className="discussion-message-avatar user">
@@ -1016,13 +959,13 @@ export default function DiscussionScreen() {
                           <User size={16} />
                         )}
                       </div>
-                    </div>
+                    </>
                   ) : (
-                    <div className="discussion-ai-message-content">
+                    <>
                       <div className="discussion-message-avatar ai">
                         <Bot size={16} />
                       </div>
-                      <div className="discussion-message-bubble ai">
+                      <div className="discussion-ai-message-content">
                         <p className="discussion-message-text">{item.text}</p>
                         <div className="discussion-message-actions">
                           <button
@@ -1030,20 +973,15 @@ export default function DiscussionScreen() {
                             onClick={() => speakText(item.text, item.id)}
                             title={speakingMessageId === item.id ? t("stopReading") : t("readMessage")}
                           >
-                            {speakingMessageId === item.id ? (
-                              <Pause size={16} />
-                            ) : (
-                              <Volume2 size={16} />
-                            )}
+                            {speakingMessageId === item.id ? <Pause size={16} /> : <Volume2 size={16} />}
                           </button>
                         </div>
                       </div>
-                    </div>
+                    </>
                   )}
                   <div className="discussion-message-timestamp">{formatMessageTime(item.timestamp)}</div>
                 </div>
               ))}
-
               {isWaitingResponse && (
                 <div className="discussion-loading-response-container">
                   <div className="discussion-message-avatar ai">
@@ -1062,7 +1000,6 @@ export default function DiscussionScreen() {
             </div>
           </div>
         ) : null}
-
         {!callModeRef.current && (
           <div className="discussion-input-container">
             <div className="discussion-input-wrapper">
@@ -1073,16 +1010,22 @@ export default function DiscussionScreen() {
                 onChange={(e) => setQuestion(e.target.value)}
                 onKeyPress={handleKeyPress}
                 style={{
-                  height: 'auto',
-                  minHeight: '24px'
+                  height: "auto",
+                  minHeight: "24px",
                 }}
                 onInput={(e) => {
-                  e.target.style.height = 'auto';
-                  e.target.style.height = Math.min(e.target.scrollHeight, 200) + 'px';
+                  e.target.style.height = "auto"
+                  e.target.style.height = Math.min(e.target.scrollHeight, 200) + "px"
                 }}
               />
-
               <div className="discussion-voice-controls">
+                <button
+                  className={`discussion-call-button ${callModeRef.current ? "active" : ""}`}
+                  onClick={toggleCallMode}
+                  title={callModeRef.current ? t("stopCall") : t("startCall")}
+                >
+                  {callModeRef.current ? <PhoneOff size={20} /> : <Phone size={20} />}
+                </button>
                 <button
                   className={`discussion-mic-button ${isRecording ? "recording" : ""}`}
                   onClick={() => {
@@ -1096,30 +1039,30 @@ export default function DiscussionScreen() {
                   }}
                   title={isRecording ? t("stopRecording") : t("startRecording")}
                 >
-                  {isRecording ? (
-                    <MicOff size={20} />
-                  ) : (
-                    <Mic size={20} />
-                  )}
+                  {isRecording ? <MicOff size={20} /> : <Mic size={20} />}
                 </button>
               </div>
-
               <button
                 className={`discussion-send-button ${!question.trim() || isWaitingResponse ? "disabled" : ""}`}
                 onClick={() => handleAskQuestion()}
                 disabled={!question.trim() || isWaitingResponse}
                 title={t("sendMessage")}
               >
-                {isWaitingResponse ? (
-                  <div className="discussion-send-spinner"></div>
-                ) : (
-                  <Send size={18} />
-                )}
+                {isWaitingResponse ? <div className="discussion-send-spinner"></div> : <Send size={18} />}
               </button>
             </div>
           </div>
         )}
       </div>
+
+      {showAuthChoice && (
+        <AuthChoice
+          onClose={() => setShowAuthChoice(false)}
+          onLogin={handleLogin}
+          onSignup={handleSignup}
+          onStayDisconnected={handleStayDisconnected}
+        />
+      )}
     </div>
   )
 }

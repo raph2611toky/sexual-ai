@@ -33,6 +33,8 @@ const ProtectedDiscussionScreen = () => {
   useEffect(() => {
     const checkAuthentication = async () => {
       const token = getCookie('auth_token');
+      console.log(document.cookie)
+      console.log(token);
       
       if (!token) {
         setIsAuthenticated(false);
