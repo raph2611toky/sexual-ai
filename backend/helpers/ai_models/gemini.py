@@ -40,11 +40,11 @@ def simple_chat(message: str, lang='fr') -> str:
         return reponse_chat
     except Exception as e:
         print(traceback.format_exc())
-        return f"Erreur lors de la communication avec l'IA: {str(e)}"
+        raise Exception(f"Erreur lors de la communication avec l'IA: {str(e)}")
 
 async def websocket_chat(message: str) -> str:
     if not message:
-        return {"message": "", "error": "Message requis"}
+        raise Exception("Message requis pour le chat")
 
     try:
         response = client.chat.completions.create(
@@ -56,7 +56,4 @@ async def websocket_chat(message: str) -> str:
         )
         return response.choices[0].message.content
     except Exception as e:
-        return {
-            "message": message,
-            "error": f"Erreur lors de la communication avec l'IA: {str(e)}"
-        }
+        raise Exception(f"Erreur lors de la communication avec l'IA: {str(e)}")
