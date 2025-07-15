@@ -233,7 +233,7 @@ class UserVerifyOtpView(APIView):
             UserOtp.objects.filter(user=user).delete()
             
             refresh = RefreshToken.for_user(user)
-                        
+
             return Response({"message": "Compte vérifié avec succès", "email":email, "refresh":str(refresh),"access":str(refresh.access_token)}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"erreur": str(e)+str(traceback.format_exc())}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
