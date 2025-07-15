@@ -28,9 +28,7 @@
     radial-gradient(circle at 80% 20%, var(--primary-800) 0%, transparent 50%);
 }
 
-/* ===================================
-   CARTE DE CONNEXION - Tailles normalisées
-   ================================== */
+/* CARTE DE CONNEXION */
 
 .login-content {
   width: 100%;
@@ -124,9 +122,7 @@
   border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
 }
 
-/* ===================================
-   CONTRÔLES D'EN-TÊTE - Tailles normalisées
-   ================================== */
+/* CONTRÔLES D'EN-TÊTE */
 
 .login-header-controls {
   position: absolute;
@@ -167,9 +163,7 @@
   border-color: var(--primary-700);
 }
 
-/* ===================================
-   TITRE ET SOUS-TITRE - Tailles normalisées
-   ================================== */
+/* TITRE ET SOUS-TITRE */
 
 .login-title {
   font-size: 1.75rem; /* Réduit de 2.25rem */
@@ -204,9 +198,7 @@
   }
 }
 
-/* ===================================
-   CONTENEURS D'ENTRÉE - Tailles normalisées
-   ================================== */
+/* CONTENEURS D'ENTRÉE */
 
 .login-input-container {
   display: flex;
@@ -288,9 +280,7 @@
   background: var(--primary-900);
 }
 
-/* ===================================
-   CHECKBOX - Tailles normalisées
-   ================================== */
+/* CHECKBOX */
 
 .login-checkbox-container {
   display: flex;
@@ -318,9 +308,7 @@
   line-height: 1.5;
 }
 
-/* ===================================
-   BOUTON DE CONNEXION - Tailles normalisées
-   ================================== */
+/* BOUTON DE CONNEXION */
 
 .login-button {
   width: 100%;
@@ -376,9 +364,7 @@
   display: none;
 }
 
-/* ===================================
-   SECTION D'INSCRIPTION - Tailles normalisées
-   ================================== */
+/* SECTION D'INSCRIPTION */
 
 .login-signup-container {
   display: flex;
@@ -420,9 +406,7 @@
   background: var(--primary-900);
 }
 
-/* ===================================
-   DESIGN RESPONSIVE AMÉLIORÉ
-   ================================== */
+/* DESIGN RESPONSIVE */
 
 @media (max-width: 768px) {
   .login-container {
@@ -459,6 +443,27 @@
     padding: var(--space-3); /* Réduit de var(--space-4) */
     font-size: 0.95rem; /* Réduit de 1.125rem */
     min-height: 44px;
+  }
+
+  .login-google-button {
+    padding: var(--space-3);
+    font-size: 0.95rem;
+    min-height: 44px;
+    gap: var(--space-2);
+  }
+
+  .login-google-logo {
+    width: 18px;
+    height: 18px;
+  }
+
+  .login-divider {
+    margin: var(--space-5) 0;
+  }
+
+  .login-divider-text {
+    padding: 0 var(--space-3);
+    font-size: 0.8rem;
   }
 
   .login-header-controls {
@@ -508,23 +513,40 @@
     font-size: 0.9rem;
     padding: var(--space-2) var(--space-3);
   }
+
+  .login-google-button {
+    font-size: 0.9rem;
+    padding: var(--space-2) var(--space-3);
+    gap: var(--space-2);
+  }
+
+  .login-google-logo {
+    width: 16px;
+    height: 16px;
+  }
+
+  .login-divider {
+    margin: var(--space-4) 0;
+  }
+
+  .login-divider-text {
+    font-size: 0.75rem;
+    padding: 0 var(--space-2);
+  }
 }
 
-/* ===================================
-   ÉTATS DE FOCUS POUR L'ACCESSIBILITÉ
-   ================================== */
+/* ÉTATS DE FOCUS */
 
 .login-control-btn:focus-visible,
 .login-checkbox:focus-visible,
 .login-button:focus-visible,
+.login-google-button:focus-visible,
 .login-signup-link:focus-visible {
   outline: 2px solid var(--primary-500);
   outline-offset: 2px;
 }
 
-/* ===================================
-   ANIMATION DE CHARGEMENT
-   ================================== */
+/* ANIMATION DE CHARGEMENT */
 
 @keyframes spin {
   to {
@@ -543,9 +565,96 @@
   margin-left: var(--space-2); /* Réduit de var(--space-3) */
 }
 
-/* ===================================
-   AMÉLIORATION DE L'ACCESSIBILITÉ
-   ================================== */
+/* SÉPARATEUR "OU" */
+
+.login-divider {
+  display: flex;
+  align-items: center;
+  margin: var(--space-6) 0;
+  animation: fadeInUp 0.8s ease-out 0.75s both;
+}
+
+.login-divider-line {
+  flex: 1;
+  height: 1px;
+  background: var(--border-primary);
+  opacity: 0.6;
+}
+
+.login-divider-text {
+  padding: 0 var(--space-4);
+  color: var(--text-tertiary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  background: var(--bg-elevated);
+}
+
+/* BOUTON GOOGLE */
+
+.login-google-button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-secondary);
+  border-radius: var(--radius-xl);
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  margin-bottom: var(--space-6);
+  transition: all var(--transition-normal);
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+  min-height: 44px;
+  animation: fadeInUp 0.8s ease-out 0.8s both;
+}
+
+.login-google-button::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, var(--primary-100), transparent);
+  transition: left 0.5s;
+}
+
+.login-google-button:hover::before {
+  left: 100%;
+}
+
+.login-google-button:hover {
+  border-color: var(--primary-300);
+  background: var(--primary-50);
+  color: var(--primary-600);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.login-google-button:active {
+  transform: translateY(0);
+}
+
+.login-google-logo {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+[data-theme="dark"] .login-google-button:hover {
+  background: var(--primary-900);
+  border-color: var(--primary-700);
+  color: var(--primary-300);
+}
+
+/* AMÉLIORATION DE L'ACCESSIBILITÉ */
 
 @media (prefers-reduced-motion: reduce) {
   .login-content,
@@ -554,11 +663,14 @@
   .login-input-container,
   .login-checkbox-container,
   .login-button,
+  .login-google-button,
+  .login-divider,
   .login-signup-container {
     animation: none;
   }
 
-  .login-button::before {
+  .login-button::before,
+  .login-google-button::before {
     display: none;
   }
 
@@ -568,9 +680,7 @@
   }
 }
 
-/* ===================================
-   ÉTATS D'ERREUR
-   ================================== */
+/* ÉTATS D'ERREUR */
 
 .login-input-container.error {
   border-color: var(--error);
@@ -591,9 +701,7 @@
   padding: 0 var(--space-2);
 }
 
-/* ===================================
-   OPTIMISATIONS POUR TRÈS PETITS ÉCRANS
-   ================================== */
+/* OPTIMISATIONS POUR TRÈS PETITS ÉCRANS */
 
 @media (max-width: 360px) {
   .login-content {
@@ -625,6 +733,17 @@
     min-height: 40px;
   }
 
+  .login-google-button {
+    font-size: 0.85rem;
+    padding: var(--space-2);
+    min-height: 40px;
+  }
+
+  .login-google-logo {
+    width: 14px;
+    height: 14px;
+  }
+
   .login-control-btn {
     min-width: 28px;
     height: 28px;
@@ -632,9 +751,7 @@
   }
 }
 
-/* ===================================
-   OPTIMISATIONS POUR ÉCRANS LARGES
-   ================================== */
+/* OPTIMISATIONS POUR ÉCRANS LARGES */
 
 @media (min-width: 1200px) {
   .login-content {

@@ -59,6 +59,7 @@ const Login = () => {
       fillFields: "Veuillez remplir tous les champs.",
       loginError: "Erreur de connexion. Veuillez vérifier vos identifiants.",
       loginSuccess: "Connexion réussie ! Redirection en cours...",
+      continueWithGoogle:"Se connecter avec Google"
     },
     mg: {
       welcome: "Tongasoa! 👋",
@@ -72,6 +73,7 @@ const Login = () => {
       fillFields: "Fenoy ny saha rehetra azafady.",
       loginError: "Tsy afaka niditra. Hamarino ny antontan-kevitrao.",
       loginSuccess: "Niditra soa aman-tsara ! Mandehana...",
+      continueWithGoogle: "Hiditra avy amin'ny Google"
     },
   }
 
@@ -85,6 +87,25 @@ const Login = () => {
     setTimeout(() => {
       navigate("/signup")
     }, 400)
+  }
+
+  const handleGoogleAuth = () => {
+    const fetchGoogleAuthUrl = async () => {
+      try {
+        const response = await axios.get(`${config.apiUrl}/auth/google/redirect/`)
+        console.log(response.data)
+        if (response.data.success && response.data.redirect_url) {
+          window.location.href = response.data.redirect_url
+        } else {
+          error("Erreur lors de la récupération de l'URL d'authentification Google")
+        }
+      } catch (err) {
+        console.error("Erreur Google Auth:", err)
+        error("Impossible de se connecter avec Google. Veuillez réessayer.")
+      }
+    }
+    
+    fetchGoogleAuthUrl()
   }
 
   const handleLogin = async () => {
@@ -203,6 +224,25 @@ const Login = () => {
           disabled={isLoading}
         >
           {isLoading ? "..." : t("connect")}
+        </button>
+
+        <div className="login-divider">
+          <span className="login-divider-line"></span>
+          <span className="login-divider-text">{t("or")}</span>
+          <span className="login-divider-line"></span>
+        </div>
+
+        <button
+          className="login-google-button"
+          onClick={handleGoogleAuth}
+          type="button"
+        >
+          <img 
+            src="/src/assets/google.png" 
+            alt="Google" 
+            className="login-google-logo"
+          />
+          <span>{t("continueWithGoogle")}</span>
         </button>
 
         <div className="login-signup-container">

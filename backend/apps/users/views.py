@@ -44,14 +44,17 @@ class ProfileView(APIView):
         operation_description="Récupère le profil de l'utilisateur authentifié."
     )
     def get(self, request: Request):
-        serializer = UserSerializer(request.user, context={'request': request})
-        user = serializer.data
-        if not user['is_active']:
-            return Response(
-                {'error': 'Accès refusé: votre compte doit être actif. Veuillez vous connecter pour continuer.'},
-                status=403
-            )
-        return Response(user, status=200)
+        try:
+            serializer = UserSerializer(request.user, context={'request': request})
+            user = serializer.data
+            if not user['is_active']:
+                return Response(
+                    {'error': 'Accès refusé: votre compte doit être actif. Veuillez vous connecter pour continuer.'},
+                    status=403
+                )
+            return Response(user, status=200)
+        except Exception as e:
+            return Response({"error": str(e)+str(traceback.format_exc())}, status=500)
 
 class ProfileAnonymousView(APIView):
     permission_classes = [AllowAny]
