@@ -53,7 +53,7 @@ const Login = () => {
       email: "Adresse Email",
       password: "Mot de passe",
       rememberMe: "Se souvenir de moi",
-      login: "Connexion",
+      connect: "Connexion",
       noAccount: "Je n'ai pas de compte",
       signUp: "S'inscrire",
       fillFields: "Veuillez remplir tous les champs.",
@@ -75,7 +75,10 @@ const Login = () => {
     },
   }
 
-  const t = (key) => translations[language][key] || key
+  const t = (key) => {
+  const currentLang = translations[language] ? language : "fr";
+  return translations[currentLang][key] || key;
+};
 
   const handleSignup = () => {
     document.body.classList.add("auth-flip-exit")
@@ -199,7 +202,7 @@ const Login = () => {
           onClick={handleLogin}
           disabled={isLoading}
         >
-          {isLoading ? "..." : t("login")}
+          {isLoading ? "..." : t("connect")}
         </button>
 
         <div className="login-signup-container">
