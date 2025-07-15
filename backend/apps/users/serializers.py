@@ -27,7 +27,9 @@ class UserSerializer(serializers.ModelSerializer):
         return f'{settings.BASE_URL}{obj.profile.url}' if obj.profile else None
     
     def get_birth_date(self,obj):
-        return obj.birth_date.strftime('%d-%m-%Y')
+        if obj.birth_date is not None:
+            return obj.birth_date.strftime('%d-%m-%Y')
+        return None
     
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField(write_only=True)

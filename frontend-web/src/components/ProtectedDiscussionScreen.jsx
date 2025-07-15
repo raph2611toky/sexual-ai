@@ -10,7 +10,6 @@ const ProtectedDiscussionScreen = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [showAuthChoice, setShowAuthChoice] = useState(false);
 
-  // Utility to get cookie by name
   const getCookie = (name) => {
     const value = `; ${document.cookie}`;
     const parts = value.split(`; ${name}=`);
@@ -18,7 +17,6 @@ const ProtectedDiscussionScreen = () => {
     return null;
   };
 
-  // Vérifier la validité du token
   const verifyToken = async (token) => {
     try {
       const response = await axios.get(`${config.apiUrl}/profile/`, {
@@ -46,21 +44,18 @@ const ProtectedDiscussionScreen = () => {
         return;
       }
 
-      // Vérifier la validité du token
       const isValidToken = await verifyToken(token);
       
       if (isValidToken) {
         setIsAuthenticated(true);
         setShowAuthChoice(false);
       } else {
-        // Token invalide, supprimer le cookie et afficher le choix d'auth
         document.cookie = 'auth_token=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;';
         localStorage.removeItem('userData');
         setIsAuthenticated(false);
         setShowAuthChoice(true);
       }
       
-      // Attendre au minimum 3 secondes
       const elapsedTime = Date.now() - startTime;
       const remainingTime = Math.max(0, 3500 - elapsedTime);
       setTimeout(() => setIsLoading(false), remainingTime);
