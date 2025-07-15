@@ -13,7 +13,7 @@ IP_ADDR, PORT = "127.0.0.1",8000 #get_server_settings()
 
 SECRET_KEY = 'r4ph43l!s3cr3t_.sp(v70*_=3r58j^bpe7gitr7j((!hev&b17h=8ssdm8#$^cv6d'
 
-DEBUG = False
+DEBUG = True
 
 # handler404 = 'config.views.custom_404'
 
