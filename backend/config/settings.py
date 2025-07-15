@@ -13,9 +13,9 @@ IP_ADDR, PORT = "127.0.0.1",8000 #get_server_settings()
 
 SECRET_KEY = 'r4ph43l!s3cr3t_.sp(v70*_=3r58j^bpe7gitr7j((!hev&b17h=8ssdm8#$^cv6d'
 
-DEBUG = True
+DEBUG = False
 
-# handler404 = 'config.views.custom_404'
+handler404 = 'config.views.custom_404'
 
 ALLOWED_HOSTS = [IP_ADDR, '127.0.0.1', 'localhost', 'sa-backend.learnix.school']
 
@@ -221,5 +221,4 @@ EMAIL_USE_SSL = True
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 
-if not DEBUG:
-    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
