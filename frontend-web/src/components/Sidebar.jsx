@@ -1,10 +1,11 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { X, Plus, MessageCircle, Search, Mic, Calendar, MoreHorizontal, Trash2, Edit3, Phone, Info } from "lucide-react"
+import { X, Plus, MessageCircle, Search, Mic, Calendar, MoreHorizontal, Trash2, Edit3, Phone, Info, Sun, Moon } from "lucide-react"
 import axios from "axios"
 import { useNavigate } from "react-router-dom"
 import config from "../config"
+import MenstrualTrackingPortal from "./MenstrualTrackingPortal"
 import "./Sidebar.css"
 
 const Sidebar = ({
@@ -18,6 +19,8 @@ const Sidebar = ({
   onMenstrualOption,
   language,
   onConversationsUpdate,
+  theme,
+  onThemeToggle,
 }) => {
   const navigate = useNavigate()
   const [searchQuery, setSearchQuery] = useState("")
@@ -28,6 +31,7 @@ const Sidebar = ({
   const [selectedConversation, setSelectedConversation] = useState(null)
   const [newTitle, setNewTitle] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [showMenstrualPortal, setShowMenstrualPortal] = useState(false)
   const dropdownRef = useRef(null)
 
   useEffect(() => {
@@ -96,6 +100,12 @@ const Sidebar = ({
 
   const handleMoreInfo = () => {
     navigate('/home')
+  }
+
+  const handleMenstrualOption = (option) => {
+    if (option === "redirect") {
+      setShowMenstrualPortal(true)
+    }
   }
 
   const handleDropdownToggle = (conversationId, event) => {
@@ -225,7 +235,10 @@ const Sidebar = ({
       authRequired: "Authentification requise",
       renameError: "Erreur lors du renommage de la discussion",
       deleteError: "Erreur lors de la suppression de la discussion",
-      moreInfo: "Plus d'Information"
+      moreInfo: "Plus d'Information",
+      themeToggle: "Thème",
+      lightMode: "Mode clair",
+      darkMode: "Mode sombre"
     },
     MG: {
       newDiscussion: "Resaka vaovao",
@@ -249,7 +262,10 @@ const Sidebar = ({
       authRequired: "Mila miditra",
       renameError: "Nisy olana tamin'ny fanovana anarana",
       deleteError: "Nisy olana tamin'ny famafana",
-      moreInfo: 'Fahalalana fanampiny'
+      moreInfo: 'Fahalalana fanampiny',
+      themeToggle: "Loko",
+      lightMode: "Mazava",
+      darkMode: "Maizina"
     },
   }
 
@@ -306,13 +322,23 @@ const Sidebar = ({
             </div>
           </div>
 
-          <div className="option-item">
+          <div className="option-item" onClick={onThemeToggle}>
             <div className="option-label">
+              {theme === 'dark' ? <Sun className="icon-sm" /> : <Moon className="icon-sm" />}
+              <span>{t("themeToggle")}</span>
+            </div>
+            <span className="status-text">
+              {theme === 'dark' ? t("darkMode") : t("lightMode")}
+            </span>
+          </div>
+
+          <div className="option-item" onClick={() => handleMenstrualOption("redirect")}>
+            <div className="option-label" >
               <Calendar className="icon-sm" />
               <span>{t("menstrualTracking")}</span>
             </div>
             <div className="dropdown-container">
-              <button className="menstrual-dropdown-btn" onClick={() => onMenstrualOption("redirect")}>
+              <button className="menstrual-dropdown-btn" onClick={() => handleMenstrualOption("redirect")}>
                 {t("options")}
               </button>
             </div>
@@ -456,6 +482,12 @@ const Sidebar = ({
           </div>
         </div>
       )}
+
+      <MenstrualTrackingPortal 
+        isOpen={showMenstrualPortal}
+        onClose={() => setShowMenstrualPortal(false)}
+        language={language}
+      />
     </>
   )
 }

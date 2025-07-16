@@ -1,0 +1,314 @@
+/* Variables pour le portail menstruel */
+:root {
+  --menstrual-primary: #ec4899;
+  --menstrual-primary-light: #f9a8d4;
+  --menstrual-primary-dark: #be185d;
+  --menstrual-secondary: #fdf2f8;
+  --menstrual-accent: #f472b6;
+  --menstrual-gradient: linear-gradient(135deg, #ec4899 0%, #f472b6 50%, #fbbf24 100%);
+  --menstrual-shadow: 0 20px 25px -5px rgba(236, 72, 153, 0.1), 0 10px 10px -5px rgba(236, 72, 153, 0.04);
+}
+
+[data-theme="dark"] {
+  --menstrual-secondary: #831843;
+}
+
+/* Overlay */
+.menstrual-portal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 20px;
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Container principal */
+.menstrual-portal-container {
+  background: var(--bg-primary);
+  border-radius: 20px;
+  box-shadow: var(--menstrual-shadow);
+  max-width: 480px;
+  width: 100%;
+  max-height: 80vh;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  position: relative;
+  animation: slideUp 0.4s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Bouton de fermeture */
+.menstrual-portal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: var(--bg-secondary);
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+.menstrual-portal-close:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  transform: scale(1.05);
+}
+
+/* Header */
+.menstrual-portal-header {
+  text-align: center;
+  padding: 24px 20px 16px;
+  background: var(--menstrual-gradient);
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+
+.menstrual-portal-header::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0%, 100% {
+    transform: translateX(-100%) translateY(-100%);
+  }
+  50% {
+    transform: translateX(0%) translateY(0%);
+  }
+}
+
+.menstrual-portal-icon {
+  width: 48px;
+  height: 48px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 12px;
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.menstrual-portal-title {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0 0 4px 0;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.menstrual-portal-subtitle {
+  font-size: 14px;
+  margin: 0;
+  opacity: 0.9;
+  font-weight: 500;
+}
+
+/* Contenu */
+.menstrual-portal-content {
+  padding: 20px;
+}
+
+.menstrual-portal-message {
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.menstrual-portal-message p {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* Fonctionnalités */
+.menstrual-portal-features {
+  margin-bottom: 16px;
+}
+
+.menstrual-portal-features ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.menstrual-portal-features li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  transition: all 0.2s ease;
+}
+
+.menstrual-portal-features li svg {
+  color: var(--menstrual-primary);
+  flex-shrink: 0;
+}
+
+.menstrual-portal-features li span {
+  font-size: 14px;
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+
+/* Status */
+.menstrual-portal-status {
+  text-align: center;
+  padding: 12px;
+  background: var(--menstrual-secondary);
+  border-radius: 12px;
+  border: 2px solid rgba(236, 72, 153, 0.1);
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--menstrual-primary);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  box-shadow: 0 4px 12px rgba(236, 72, 153, 0.3);
+}
+
+.status-message {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 0;
+  font-style: italic;
+}
+
+/* Footer */
+.menstrual-portal-footer {
+  padding: 12px 20px 16px;
+  text-align: center;
+}
+
+.menstrual-portal-btn {
+  background: var(--menstrual-gradient);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 10px 28px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(236, 72, 153, 0.3);
+  min-width: 80px;
+}
+
+.menstrual-portal-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(236, 72, 153, 0.4);
+}
+
+.menstrual-portal-btn:active {
+  transform: translateY(0);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .menstrual-portal-overlay {
+    padding: 12px;
+  }
+  
+  .menstrual-portal-container {
+    max-width: 100%;
+    border-radius: 16px;
+  }
+  
+  .menstrual-portal-header {
+    padding: 20px 16px 12px;
+  }
+  
+  .menstrual-portal-title {
+    font-size: 20px;
+  }
+  
+  .menstrual-portal-content {
+    padding: 16px;
+  }
+  
+  .menstrual-portal-footer {
+    padding: 10px 16px 14px;
+  }
+  
+  .menstrual-portal-btn {
+    width: 100%;
+  }
+}
+
+/* Animation pour les éléments de la liste */
+.menstrual-portal-features li {
+  animation: slideInLeft 0.5s ease-out;
+  animation-fill-mode: both;
+}
+
+.menstrual-portal-features li:nth-child(1) { animation-delay: 0.1s; }
+.menstrual-portal-features li:nth-child(2) { animation-delay: 0.2s; }
+.menstrual-portal-features li:nth-child(3) { animation-delay: 0.3s; }
+.menstrual-portal-features li:nth-child(4) { animation-delay: 0.4s; }
+.menstrual-portal-features li:nth-child(5) { animation-delay: 0.5s; }
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Mode sombre */
+[data-theme="dark"] .menstrual-portal-status {
+  background: rgba(131, 24, 67, 0.2);
+  border-color: rgba(236, 72, 153, 0.2);
+}
