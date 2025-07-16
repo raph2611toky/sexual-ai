@@ -72,6 +72,8 @@ const Signup = () => {
       unexpectedError: "Une erreur inattendue est survenue.",
       signupError: "Erreur lors de l'inscription.",
       and: "et",
+      or: "OU",
+      continueWithGoogle: "S'inscrire avec Google"
     },
     mg: {
       and: "ary ny",
@@ -95,6 +97,8 @@ const Signup = () => {
       signupSuccess: "Fisoratana anarana nahomby ! Hamarino ny mailakao ho an'ny kaody OTP.",
       unexpectedError: "Nisy olana tsy nampoizina.",
       signupError: "Nisy olana tamin'ny fisoratana anarana.",
+      or: "NA",
+      continueWithGoogle: "Hisoratra anarana amin'ny Google"
     },
   }
 
@@ -105,6 +109,23 @@ const Signup = () => {
     setTimeout(() => {
       navigate("/login")
     }, 400)
+  }
+
+  const handleGoogleAuth = () => {
+    const fetchGoogleAuthUrl = async () => {
+      try {
+        const response = await axios.get(`${config.apiUrl}/auth/google/redirect/`)
+        if (response.data.success && response.data.redirect_url) {
+          window.location.href = response.data.redirect_url
+        } else {
+          error("Erreur lors de la récupération de l'URL d'authentification Google")
+        }
+      } catch (err) {
+        error("Impossible de se connecter avec Google. Veuillez réessayer.")
+      }
+    }
+    
+    fetchGoogleAuthUrl()
   }
 
   const handleSignup = async () => {
@@ -142,7 +163,6 @@ const Signup = () => {
         error(t("unexpectedError"))
       }
     } catch (err) {
-      console.error(err)
       error(t("signupError"))
     } finally {
       setIsLoading(false)
@@ -305,6 +325,25 @@ const Signup = () => {
           disabled={isLoading}
         >
           {isLoading ? "..." : t("signup")}
+        </button>
+
+        <div className="signup-divider">
+          <span className="signup-divider-line"></span>
+          <span className="signup-divider-text">{t("or")}</span>
+          <span className="signup-divider-line"></span>
+        </div>
+
+        <button
+          className="signup-google-button"
+          onClick={handleGoogleAuth}
+          type="button"
+        >
+          <img 
+            src="/src/assets/google.png" 
+            alt="Google" 
+            className="signup-google-logo"
+          />
+          <span>{t("continueWithGoogle")}</span>
         </button>
 
         <div className="signup-login-container">

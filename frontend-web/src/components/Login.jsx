@@ -7,6 +7,7 @@ import config from "../config"
 import { useToast } from "../hooks/useToast"
 import ToastContainer from "./ToastContainer"
 import "./Login.css"
+import googleLogo from "../assets/google.png";
 
 const Login = () => {
   const navigate = useNavigate()
@@ -237,11 +238,7 @@ const Login = () => {
           onClick={handleGoogleAuth}
           type="button"
         >
-          <img 
-            src="/src/assets/google.png" 
-            alt="Google" 
-            className="login-google-logo"
-          />
+          <img src={googleLogo} alt="Google" className="login-google-logo" />
           <span>{t("continueWithGoogle")}</span>
         </button>
 
