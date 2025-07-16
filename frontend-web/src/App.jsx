@@ -28,6 +28,8 @@ const PrivateRoute = ({ children }) => {
   return token ? children : <Navigate to="/login" replace />
 }
 
+document.addEventListener('contextmenu', (e) => e.preventDefault());
+
 function App() {
   return (
     <Router>

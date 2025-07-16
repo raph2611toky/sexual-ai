@@ -29,6 +29,8 @@ const ProtectedDiscussionScreen = () => {
     }
   };
 
+  document.addEventListener('contextmenu', (e) => e.preventDefault());
+
   useEffect(() => {
     const checkAuthentication = async () => {
       const startTime = Date.now();

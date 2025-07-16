@@ -78,6 +78,8 @@ export default function DiscussionScreen() {
   const isRecognitionActiveRef = useRef(isRecognitionActive)
   const currentTranscriptRef = useRef("")
 
+  document.addEventListener('contextmenu', (e) => e.preventDefault());
+
   useEffect(() => {
     callModeRef.current = isCallMode
   }, [isCallMode])
@@ -189,7 +191,6 @@ export default function DiscussionScreen() {
       if (callModeRef.current) {
         silenceTimer = setTimeout(() => {
           if (currentTranscriptRef.current.trim() !== "" && !isAISpeakingRef.current) {
-            console.log("Silence de 3s détecté → envoi :", currentTranscriptRef.current)
             handleAskQuestion(currentTranscriptRef.current)
             setTranscript("")
             currentTranscriptRef.current = ""
@@ -206,7 +207,6 @@ export default function DiscussionScreen() {
       if (event.error === "no-speech" && callModeRef.current) {
         silenceTimer = setTimeout(() => {
           if (currentTranscriptRef.current.trim() !== "" && !isAISpeakingRef.current) {
-            console.log("Silence de 3s détecté (no-speech) → envoi :", currentTranscriptRef.current)
             handleAskQuestion(currentTranscriptRef.current)
             setTranscript("")
             currentTranscriptRef.current = ""
@@ -217,7 +217,6 @@ export default function DiscussionScreen() {
     }
 
     recognition.onend = () => {
-      console.log("SpeechRecognition ended…")
       setIsRecognitionActive(false)
       if (callModeRef.current && isRecording && !isAISpeakingRef.current) {
         setTimeout(() => {
@@ -230,7 +229,6 @@ export default function DiscussionScreen() {
             } catch (error) {
             }
           } else {
-            console.log("Reconnaissance déjà active, pas de redémarrage nécessaire.")
           }
         }, 900)
       }
@@ -384,10 +382,8 @@ export default function DiscussionScreen() {
 
   useEffect(() => {
     if (isCallMode) {
-      console.log("Start call mode…")
       startCallMode()
     } else {
-      console.log("Stop call mode…")
       stopCallMode()
     }
   }, [isCallMode])
@@ -397,7 +393,6 @@ export default function DiscussionScreen() {
   }
 
   const startCallMode = async () => {
-    console.log("Start call mode...")
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)()
@@ -479,13 +474,11 @@ export default function DiscussionScreen() {
   }
 
   const startRecording = () => {
-    console.log("Attempting to start recording...")
     if (recognitionRef.current && !isRecognitionActiveRef.current && !isAISpeakingRef.current) {
       try {
         recognitionRef.current.start()
         setIsRecognitionActive(true)
         setIsRecording(true)
-        console.log("Recording started.")
       } catch (error) {
         addToast(selectedLanguage === "FR" ? "Micro éteint" : "Mikrô maty", "error")
         setIsRecognitionActive(false)
@@ -495,10 +488,8 @@ export default function DiscussionScreen() {
   }
 
   const stopRecording = () => {
-    console.log("Attempting to stop recording...")
     if (recognitionRef.current && isRecognitionActiveRef.current) {
       recognitionRef.current.stop()
-      console.log("Recording stopped.")
     }
   }
 
@@ -552,7 +543,7 @@ export default function DiscussionScreen() {
         const headers = token ? { Authorization: `Bearer ${token}` } : {}
         const responseMessage = await axios.post(
           `${config.apiUrl}/messagechat/new/`,
-          { contenu: questionWithLang, conversation: id_conversation },
+          { contenu: questionText, conversation: id_conversation, lang: selectedLanguage },
           { headers }
         )
         const aiResponseId = Date.now().toString() + "1"
@@ -740,17 +731,14 @@ export default function DiscussionScreen() {
 
   const handleDonation = () => {
     navigate("/donation")
-    console.log("Navigate to donation")
   }
 
   const handleLogin = () => {
     navigate("/login")
-    console.log("Navigate to login")
   }
 
   const handleSignup = () => {
     navigate("/signup")
-    console.log("Navigate to signup")
   }
 
   const handleStayDisconnected = async () => {
@@ -764,7 +752,6 @@ export default function DiscussionScreen() {
     if (option === "redirect") {
       navigate("/cycle")
     }
-    console.log("Menstrual option selected:", option)
   }
 
   const handleLike = (id) => {
