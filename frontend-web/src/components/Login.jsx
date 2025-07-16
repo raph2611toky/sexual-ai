@@ -60,7 +60,8 @@ const Login = () => {
       fillFields: "Veuillez remplir tous les champs.",
       loginError: "Erreur de connexion. Veuillez vérifier vos identifiants.",
       loginSuccess: "Connexion réussie ! Redirection en cours...",
-      continueWithGoogle:"Se connecter avec Google"
+      continueWithGoogle:"Se connecter avec Google",
+      or:"ou",
     },
     mg: {
       welcome: "Tongasoa! 👋",
@@ -74,7 +75,8 @@ const Login = () => {
       fillFields: "Fenoy ny saha rehetra azafady.",
       loginError: "Tsy afaka niditra. Hamarino ny antontan-kevitrao.",
       loginSuccess: "Niditra soa aman-tsara ! Mandehana...",
-      continueWithGoogle: "Hiditra avy amin'ny Google"
+      continueWithGoogle: "Hiditra avy amin'ny Google",
+      or:"sa"
     },
   }
 

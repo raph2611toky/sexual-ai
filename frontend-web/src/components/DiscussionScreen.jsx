@@ -65,6 +65,7 @@ export default function DiscussionScreen() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [showAuthChoice, setShowAuthChoice] = useState(false)
   const [transcript, setTranscript] = useState("")
+  const [localConversations, setLocalConversations] = useState([])
 
   const chatContainerRef = useRef()
   const mediaRecorderRef = useRef()
@@ -507,6 +508,11 @@ export default function DiscussionScreen() {
     }
   }
 
+  const handleConversationsUpdate = (updatedConversations) => {
+    setConversations(updatedConversations)
+    setLocalConversations(updatedConversations)
+  }
+
   const handleCreateDiscussion = async () => {
     try {
       const token = getCookie("auth_token")
@@ -798,13 +804,14 @@ export default function DiscussionScreen() {
       <Sidebar
         isOpen={menuVisible}
         onClose={toggleMenu}
-        conversations={conversations}
+        conversations={localConversations.length > 0 ? localConversations : conversations}
         onNewChat={handleCreateDiscussion}
         onSelectConversation={handleSelectConversation}
         currentConversationId={id_conversation}
         onStartCall={toggleCallMode}
         onMenstrualOption={handleMenstrualOption}
         language={selectedLanguage}
+        onConversationsUpdate={handleConversationsUpdate}
       />
 
       <div className="discussion-container">
