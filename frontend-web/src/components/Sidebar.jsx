@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { X, Plus, MessageCircle, Search, Mic, Calendar, MoreHorizontal, Trash2, Edit3, Phone, Info, Sun, Moon } from "lucide-react"
+import { X, Plus, MessageCircle, Search, Mic, Calendar, MoreHorizontal, Trash2, Edit3, Phone, Info, Sun, Moon, HandCoinsIcon } from "lucide-react"
 import axios from "axios"
 import { useNavigate } from "react-router-dom"
 import config from "../config"
@@ -100,6 +100,10 @@ const Sidebar = ({
 
   const handleMoreInfo = () => {
     navigate('/home')
+  }
+
+  const handleMakeDonation = () => {
+    navigate('/donation')
   }
 
   const handleMenstrualOption = (option) => {
@@ -238,7 +242,8 @@ const Sidebar = ({
       moreInfo: "Plus d'Information",
       themeToggle: "Thème",
       lightMode: "Mode clair",
-      darkMode: "Mode sombre"
+      darkMode: "Mode sombre",
+      makeDonation: "Faire un don"
     },
     MG: {
       newDiscussion: "Resaka vaovao",
@@ -265,7 +270,8 @@ const Sidebar = ({
       moreInfo: 'Fahalalana fanampiny',
       themeToggle: "Loko",
       lightMode: "Mazava",
-      darkMode: "Maizina"
+      darkMode: "Maizina",
+      makeDonation: "Hanolotra fanampiana"
     },
   }
 
@@ -320,6 +326,15 @@ const Sidebar = ({
               <Info className="icon-sm"  />
               <span>{t("moreInfo")}</span>
             </div>
+          </div>
+
+          <div className="option-item" onClick={handleMakeDonation}>
+            <div className="option-label">
+              <HandCoinsIcon className="icon-sm" />
+              <span>{t("makeDonation")}</span>
+            </div>
+            <span className="status-text">
+            </span>
           </div>
 
           <div className="option-item" onClick={() => handleMenstrualOption("redirect")}>
