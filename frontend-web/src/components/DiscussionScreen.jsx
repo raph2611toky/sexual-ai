@@ -201,12 +201,7 @@ export default function DiscussionScreen() {
 
     recognition.onerror = (event) => {
       console.error("Speech recognition error:", event.error)
-      addToast(
-        selectedLanguage === "FR"
-          ? "Erreur de reconnaissance vocale : " + event.error
-          : "Fahadisoana amin'ny fahafantarana feo: " + event.error,
-        "error"
-      )
+      
       setIsRecognitionActive(false)
       if (event.error === "no-speech" && callModeRef.current) {
         silenceTimer = setTimeout(() => {
@@ -233,8 +228,6 @@ export default function DiscussionScreen() {
               setIsRecording(true)
               isRecognitionActiveRef.current = true
             } catch (error) {
-              console.error("Erreur lors du redémarrage de la reconnaissance:", error)
-              addToast(selectedLanguage === "FR" ? "Erreur micro" : "Fahadisoana mikrô", "error")
             }
           } else {
             console.log("Reconnaissance déjà active, pas de redémarrage nécessaire.")
@@ -257,12 +250,6 @@ export default function DiscussionScreen() {
       })
     } catch (error) {
       console.error("Erreur lors de la récupération du profil:", error)
-      addToast(
-        selectedLanguage === "FR"
-          ? "Erreur lors de la récupération du profil"
-          : "Fahadisoana tamin'ny fakana ny mombamomba",
-        "error"
-      )
       setProfile({ name: "Utilisateur", profile_url: null })
     }
   }
@@ -464,7 +451,6 @@ export default function DiscussionScreen() {
       }
     } catch (error) {
       console.error("Erreur accès microphone:", error)
-      addToast(t("micOff"), "error")
       setIsCallMode(false)
     }
   }
@@ -501,7 +487,6 @@ export default function DiscussionScreen() {
         setIsRecording(true)
         console.log("Recording started.")
       } catch (error) {
-        console.error("Erreur enregistrement:", error)
         addToast(selectedLanguage === "FR" ? "Micro éteint" : "Mikrô maty", "error")
         setIsRecognitionActive(false)
         setIsRecording(false)
@@ -527,12 +512,6 @@ export default function DiscussionScreen() {
       setIsLoading(false)
     } catch (error) {
       console.error("Erreur lors de la récupération des conversations:", error)
-      addToast(
-        selectedLanguage === "FR"
-          ? "Erreur lors de la récupération des conversations"
-          : "Fahadisoana tamin'ny fakana ny resaka",
-        "error"
-      )
       setIsLoading(false)
     }
   }
@@ -548,13 +527,6 @@ export default function DiscussionScreen() {
       setCurrentTitle("")
       setResponses([])
     } catch (error) {
-      console.error("Erreur lors de la création de la discussion:", error)
-      addToast(
-        selectedLanguage === "FR"
-          ? "Erreur lors de la création de la discussion"
-          : "Fahadisoana tamin'ny famoronana resaka",
-        "error"
-      )
     }
   }
 
@@ -611,12 +583,6 @@ export default function DiscussionScreen() {
             disliked: false,
           },
         ])
-        addToast(
-          selectedLanguage === "FR"
-            ? "Erreur lors de l'envoi de la question"
-            : "Fahadisoana tamin'ny fandefasana fanontaniana",
-          "error"
-        )
       } finally {
         setIsWaitingResponse(false)
       }
@@ -643,13 +609,6 @@ export default function DiscussionScreen() {
       }))
       setResponses(formattedMessages)
     } catch (error) {
-      console.error("Erreur lors de la récupération des messages:", error)
-      addToast(
-        selectedLanguage === "FR"
-          ? "Erreur lors de la récupération des messages"
-          : "Fahadisoana tamin'ny fakana ny hafatra",
-        "error"
-      )
     }
   }
 
@@ -711,12 +670,6 @@ export default function DiscussionScreen() {
           setIsSpeaking(false)
           setSpeakingMessageId(null)
           setIsAISpeaking(false)
-          addToast(
-            selectedLanguage === "FR"
-              ? "Erreur lors de la lecture du texte"
-              : "Fahadisoana tamin'ny famakiana ny lahatsoratra",
-            "error"
-          )
           reject(error)
           setTimeout(() => {
             if (callModeRef.current) {
@@ -729,12 +682,6 @@ export default function DiscussionScreen() {
         }
         window.speechSynthesis.speak(utterance)
       } else {
-        addToast(
-          selectedLanguage === "FR"
-            ? "Erreur lors de la lecture du texte"
-            : "Fahadisoana tamin'ny famakiana ny lahatsoratra",
-          "error"
-        )
         reject(new Error("Speech synthesis not supported"))
       }
     })
@@ -751,7 +698,6 @@ export default function DiscussionScreen() {
               setIsRecording(true)
             }
           } catch (error) {
-            addToast(selectedLanguage === "FR" ? "Erreur micro" : "Fahadisoana mikrô", "error")
             setIsRecognitionActive(false)
             setIsRecording(false)
           }
