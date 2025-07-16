@@ -322,16 +322,6 @@ const Sidebar = ({
             </div>
           </div>
 
-          <div className="option-item" onClick={onThemeToggle}>
-            <div className="option-label">
-              {theme === 'dark' ? <Sun className="icon-sm" /> : <Moon className="icon-sm" />}
-              <span>{t("themeToggle")}</span>
-            </div>
-            <span className="status-text">
-              {theme === 'dark' ? t("darkMode") : t("lightMode")}
-            </span>
-          </div>
-
           <div className="option-item" onClick={() => handleMenstrualOption("redirect")}>
             <div className="option-label" >
               <Calendar className="icon-sm" />
