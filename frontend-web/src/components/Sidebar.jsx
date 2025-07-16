@@ -29,15 +29,15 @@ const Sidebar = ({
   const dropdownRef = useRef(null)
 
   useEffect(() => {
-    const sidebarElement = document.querySelector('.sidebar')
+    const sidebarElement = document.querySelector(".sidebar")
     if (activeDropdown) {
-      sidebarElement?.classList.add('dropdown-active')
+      sidebarElement?.classList.add("dropdown-active")
     } else {
-      sidebarElement?.classList.remove('dropdown-active')
+      sidebarElement?.classList.remove("dropdown-active")
     }
 
     return () => {
-      sidebarElement?.classList.remove('dropdown-active')
+      sidebarElement?.classList.remove("dropdown-active")
     }
   }, [activeDropdown])
 
@@ -59,11 +59,11 @@ const Sidebar = ({
     }
 
     if (activeDropdown) {
-      document.addEventListener('mousedown', handleClickOutside)
+      document.addEventListener("mousedown", handleClickOutside)
     }
-    
+
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener("mousedown", handleClickOutside)
     }
   }, [activeDropdown])
 
@@ -72,6 +72,24 @@ const Sidebar = ({
     const parts = value.split(`; ${name}=`)
     if (parts.length === 2) return parts.pop().split(";").shift()
     return null
+  }
+
+  // Fonction pour récupérer la liste des conversations mise à jour
+  const fetchUpdatedConversations = async () => {
+    try {
+      const token = getCookie("auth_token")
+      if (!token) return
+
+      const response = await axios.get(`${config.apiUrl}/conversation/list/`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+
+      if (onConversationsUpdate) {
+        onConversationsUpdate(response.data || [])
+      }
+    } catch (error) {
+      console.error("Erreur lors de la récupération des conversations:", error)
+    }
   }
 
   const handleDropdownToggle = (conversationId, event) => {
@@ -102,7 +120,6 @@ const Sidebar = ({
     setIsLoading(true)
     try {
       const token = getCookie("auth_token")
-      console.log("token: ", token)
       if (!token) {
         return
       }
@@ -111,24 +128,18 @@ const Sidebar = ({
         `${config.apiUrl}/conversation/${selectedConversation.id_conversation}/modifier/titre/`,
         { titre: newTitle.trim() },
         {
-          headers: { Authorization: `Bearer ${token}` }
+          headers: { Authorization: `Bearer ${token}` },
         },
       )
 
-      const updatedConversations = conversations.map(conv => 
-        conv.id_conversation === selectedConversation.id_con 
-          ? { ...conv, titre: newTitle.trim() }
-          : conv
-      )
-      
-      if (onConversationsUpdate) {
-        onConversationsUpdate(updatedConversations)
-      }
+      // Récupérer la liste mise à jour depuis le serveur
+      await fetchUpdatedConversations()
 
       setShowRenameModal(false)
       setSelectedConversation(null)
       setNewTitle("")
     } catch (error) {
+      console.error("Erreur lors du renommage:", error)
     } finally {
       setIsLoading(false)
     }
@@ -140,27 +151,18 @@ const Sidebar = ({
     setIsLoading(true)
     try {
       const token = getCookie("auth_token")
-      console.log("token: ",token)
       if (!token) {
         return
       }
 
-      await axios.delete(
-        `${config.apiUrl}/conversation/${selectedConversation.id_conversation}/supprimer/`,
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        },
-        {},
-      )
+      await axios.delete(`${config.apiUrl}/conversation/${selectedConversation.id_conversation}/supprimer/`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
 
-      const updatedConversations = conversations.filter(conv => 
-        conv.id_conversation !== selectedConversation.id_conversation
-      )
-      
-      if (onConversationsUpdate) {
-        onConversationsUpdate(updatedConversations)
-      }
+      // Récupérer la liste mise à jour depuis le serveur
+      await fetchUpdatedConversations()
 
+      // Si la conversation supprimée était la conversation active, créer une nouvelle discussion
       if (currentConversationId === selectedConversation.id_conversation) {
         onNewChat()
       }
@@ -168,6 +170,7 @@ const Sidebar = ({
       setShowDeleteModal(false)
       setSelectedConversation(null)
     } catch (error) {
+      console.error("Erreur lors de la suppression:", error)
     } finally {
       setIsLoading(false)
     }
@@ -178,18 +181,18 @@ const Sidebar = ({
     setShowDeleteModal(false)
     setSelectedConversation(null)
     setNewTitle("")
-    document.body.classList.remove('modal-open')
+    document.body.classList.remove("modal-open")
   }
 
   useEffect(() => {
     if (showRenameModal || showDeleteModal) {
-      document.body.classList.add('modal-open')
+      document.body.classList.add("modal-open")
     } else {
-      document.body.classList.remove('modal-open')
+      document.body.classList.remove("modal-open")
     }
 
     return () => {
-      document.body.classList.remove('modal-open')
+      document.body.classList.remove("modal-open")
     }
   }, [showRenameModal, showDeleteModal])
 
@@ -283,7 +286,7 @@ const Sidebar = ({
         <div className="sidebar-options-section">
           <div className="option-item">
             <div className="option-label">
-              <Phone className="icon-sm" onClick={onStartCall}/>
+              <Phone className="icon-sm" onClick={onStartCall} />
               <span>{t("callMode")}</span>
             </div>
           </div>
@@ -326,12 +329,12 @@ const Sidebar = ({
                 </div>
 
                 <div className="conversation-actions">
-                  <div 
-                    className="dropdown-menu" 
+                  <div
+                    className="dropdown-menu"
                     data-dropdown-id={conversation.id_conversation}
                     ref={activeDropdown === conversation.id_conversation ? dropdownRef : null}
                   >
-                    <button 
+                    <button
                       className="dropdown-trigger"
                       onClick={(e) => handleDropdownToggle(conversation.id_conversation, e)}
                     >
@@ -345,10 +348,7 @@ const Sidebar = ({
                             <Edit3 className="icon-sm" />
                             {t("rename")}
                           </button>
-                          <button
-                            onClick={(e) => handleDeleteConversation(conversation, e)}
-                            className="delete-action"
-                          >
+                          <button onClick={(e) => handleDeleteConversation(conversation, e)} className="delete-action">
                             <Trash2 className="icon-sm" />
                             {t("delete")}
                           </button>
@@ -364,11 +364,14 @@ const Sidebar = ({
       </div>
 
       {showRenameModal && (
-        <div className="modal-overlay" onClick={(e) => {
-          if (e.target === e.currentTarget) {
-            closeModals()
-          }
-        }}>
+        <div
+          className="modal-overlay"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              closeModals()
+            }
+          }}
+        >
           <div className="modal-container">
             <div className="modal-header">
               <h3 className="modal-title">{t("renameTitle")}</h3>
@@ -386,25 +389,21 @@ const Sidebar = ({
                 className="modal-input"
                 autoFocus
                 onKeyPress={(e) => {
-                  if (e.key === 'Enter') {
+                  if (e.key === "Enter") {
                     handleRenameSubmit()
                   }
-                  if (e.key === 'Escape') {
+                  if (e.key === "Escape") {
                     closeModals()
                   }
                 }}
               />
             </div>
             <div className="modal-actions">
-              <button 
-                className="modal-btn modal-btn-secondary" 
-                onClick={closeModals}
-                disabled={isLoading}
-              >
+              <button className="modal-btn modal-btn-secondary" onClick={closeModals} disabled={isLoading}>
                 {t("cancel")}
               </button>
-              <button 
-                className="modal-btn modal-btn-primary" 
+              <button
+                className="modal-btn modal-btn-primary"
                 onClick={handleRenameSubmit}
                 disabled={isLoading || !newTitle.trim()}
               >
@@ -416,12 +415,14 @@ const Sidebar = ({
       )}
 
       {showDeleteModal && (
-        <div className="modal-overlay" onClick={(e) => {
-          if (e.target === e.currentTarget) {
-            closeModals()
-  Responder
-}
-        }}>
+        <div
+          className="modal-overlay"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              closeModals()
+            }
+          }}
+        >
           <div className="modal-container">
             <div className="modal-header">
               <h3 className="modal-title">{t("deleteTitle")}</h3>
@@ -438,18 +439,10 @@ const Sidebar = ({
               )}
             </div>
             <div className="modal-actions">
-              <button 
-                className="modal-btn modal-btn-secondary" 
-                onClick={closeModals}
-                disabled={isLoading}
-              >
+              <button className="modal-btn modal-btn-secondary" onClick={closeModals} disabled={isLoading}>
                 {t("cancel")}
               </button>
-              <button 
-                className="modal-btn modal-btn-danger" 
-                onClick={handleDeleteConfirm}
-                disabled={isLoading}
-              >
+              <button className="modal-btn modal-btn-danger" onClick={handleDeleteConfirm} disabled={isLoading}>
                 {isLoading ? "..." : t("confirm")}
               </button>
             </div>
