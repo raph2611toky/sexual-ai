@@ -220,6 +220,10 @@
   padding: 12px 0;
 }
 
+.option-item:hover {
+  cursor: pointer;
+}
+
 .option-label {
   display: flex;
   align-items: center;

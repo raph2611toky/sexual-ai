@@ -1,8 +1,9 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { X, Plus, MessageCircle, Search, Mic, Calendar, MoreHorizontal, Trash2, Edit3, Phone } from "lucide-react"
+import { X, Plus, MessageCircle, Search, Mic, Calendar, MoreHorizontal, Trash2, Edit3, Phone, Info } from "lucide-react"
 import axios from "axios"
+import { useNavigate } from "react-router-dom"
 import config from "../config"
 import "./Sidebar.css"
 
@@ -18,6 +19,7 @@ const Sidebar = ({
   language,
   onConversationsUpdate,
 }) => {
+  const navigate = useNavigate()
   const [searchQuery, setSearchQuery] = useState("")
   const [filteredConversations, setFilteredConversations] = useState(conversations)
   const [activeDropdown, setActiveDropdown] = useState(null)
@@ -90,6 +92,10 @@ const Sidebar = ({
     } catch (error) {
       console.error("Erreur lors de la récupération des conversations:", error)
     }
+  }
+
+  const handleMoreInfo = () => {
+    navigate('/home')
   }
 
   const handleDropdownToggle = (conversationId, event) => {
@@ -219,6 +225,7 @@ const Sidebar = ({
       authRequired: "Authentification requise",
       renameError: "Erreur lors du renommage de la discussion",
       deleteError: "Erreur lors de la suppression de la discussion",
+      moreInfo: "Plus d'Information"
     },
     MG: {
       newDiscussion: "Resaka vaovao",
@@ -242,6 +249,7 @@ const Sidebar = ({
       authRequired: "Mila miditra",
       renameError: "Nisy olana tamin'ny fanovana anarana",
       deleteError: "Nisy olana tamin'ny famafana",
+      moreInfo: 'Fahalalana fanampiny'
     },
   }
 
@@ -292,11 +300,10 @@ const Sidebar = ({
           </div>
 
           <div className="option-item">
-            <div className="option-label">
-              <Mic className="icon-sm" />
-              <span>{t("voiceMode")}</span>
+            <div className="option-label" onClick={handleMoreInfo}>
+              <Info className="icon-sm"  />
+              <span>{t("moreInfo")}</span>
             </div>
-            <span className="status-text">{t("available")}</span>
           </div>
 
           <div className="option-item">
