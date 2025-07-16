@@ -20,8 +20,8 @@ message_request_schema = openapi.Schema(
         ),
         'lang': openapi.Schema(
             type=openapi.TYPE_STRING,
-            enum=['fr', 'en'],
-            description="Langue du message (optionnel, 'fr' pour français ou 'en' pour anglais)"
+            enum=['FR', 'MG'],
+            description="Langue du message (optionnel, 'fr' pour français ou 'MG' pour le malagasy)"
         ),
     }
 )

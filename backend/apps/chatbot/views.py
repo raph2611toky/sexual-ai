@@ -168,42 +168,34 @@ class MessageChatNewView(APIView):
     def post(self, request):
         try:
             data = request.data
-            print(data)
             contenu = data.get('contenu')
-            print(data)
             conversation_id = data.get('conversation',None)
 
             if conversation_id is not None and str(conversation_id).strip()!='':
                 try:
-                    conversation_last = Conversation.objects.filter(user=request.user).last()
-                    if conversation_last.messages.all().count() > 0:
-                        conversation = Conversation.objects.create(user=request.user)
-                    else:
-                        conversation = conversation_last
+                    conversation = Conversation.objects.filter(user=request.user, id_conversation=conversation_id).first()
+                    messageChat_response = simple_chat(contenu, lang=request.data.get("lang","FR"))
+                    if not Conversation.objects.filter(user=request.user, id_conversation=conversation_id).exists():
+                        conversation_last = Conversation.objects.filter(user=request.user).last()
+                        if conversation_last.messages.count() > 0:
+                            return Response(
+                                {"error": "Conversation introuvable ou non autorisée."},
+                                status=status.HTTP_404_NOT_FOUND
+                            )
+                        else:
+                            conversation = conversation_last
+                    MessageChat.objects.create(conversation=conversation, contenu=contenu, from_user=True)
+                    MessageChat.objects.create(conversation=conversation, contenu=messageChat_response, from_user=False)
+                    return Response({"bot_response": messageChat_response}, status=status.HTTP_201_CREATED)
                 except Conversation.DoesNotExist:
                     return Response(
                         {"error": "Conversation introuvable ou non autorisée."},
                         status=status.HTTP_404_NOT_FOUND
                     )
-            else:
-                conversation, created = Conversation.objects.create(
-                    user=request.user,
-                    titre= 'Nouvelle discussion'
+            return Response(
+                    {"error": "Conversation introuvable ou non autorisée."},
+                    status=status.HTTP_404_NOT_FOUND
                 )
-
-            messageChat_response = simple_chat(contenu, lang=request.data.get("lang","fr"))
-            
-            message_data = {
-                "conversation": conversation.id_conversation, 
-                "contenu": contenu,
-                "from_user": True
-            }
-            serializer = MessageChatSerializer(data=message_data)
-            if serializer.is_valid():
-                serializer.save()
-                MessageChat.objects.create(conversation=conversation, contenu=messageChat_response, from_user=False)
-                return Response({"bot_response": messageChat_response}, status=status.HTTP_201_CREATED)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             LOGGER.error(traceback.format_exc())
             return Response({'error': str(e)}, status=400)
