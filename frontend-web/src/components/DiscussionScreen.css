@@ -63,8 +63,9 @@
 /* Layout */
 .discussion-safe-area {
   display: flex;
-  height: 100vh;
+  height: 100dvh; /* Use dynamic viewport height for mobile */
   background: var(--bg-secondary);
+  overflow: hidden; /* Prevent scrolling on the main container */
 }
 
 .discussion-container {
@@ -72,6 +73,8 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
+  height: 100%;
+  overflow: hidden;
 }
 
 /* Header */
@@ -105,6 +108,10 @@
   padding: 8px;
   border-radius: var(--radius-lg);
   transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 12px;
 }
 
 .discussion-menu-button:hover {
@@ -112,10 +119,10 @@
   color: var(--text-primary);
 }
 
+/* Hide menu button on desktop when sidebar is always visible */
 @media (min-width: 1024px) {
   .discussion-menu-button {
-    /* This button will now act as the desktop sidebar toggle */
-    display: block; /* Always show on desktop */
+    display: none; /* Hide on desktop */
   }
 }
 
@@ -124,6 +131,7 @@
   flex-direction: column;
   align-items: flex-start;
   flex-grow: 1; /* Allow title to take available space */
+  min-width: 0; /* Allow text to shrink */
 }
 
 .discussion-title {
@@ -135,6 +143,9 @@
   background-clip: text;
   margin: 0;
   line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .discussion-call-indicator {
@@ -491,9 +502,11 @@
 .discussion-chat-background {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 16px;
   position: relative;
   background: var(--bg-primary);
+  height: 0; /* Force flex item to respect container height */
 }
 
 .discussion-welcome-background {
@@ -503,6 +516,7 @@
   justify-content: center;
   padding: 16px;
   background-color: var(--bg-primary);
+  overflow: hidden;
 }
 
 .discussion-welcome-container {
@@ -900,6 +914,7 @@
 .discussion-input-container {
   padding: 16px;
   background: var(--bg-primary);
+  flex-shrink: 0;
 }
 
 .discussion-input-wrapper {
@@ -1040,7 +1055,18 @@
 }
 
 /* Responsive */
+@media (max-width: 1023px) {
+  .discussion-menu-button {
+    display: flex; /* Show on tablet and mobile */
+  }
+}
+
 @media (max-width: 768px) {
+  .discussion-safe-area {
+    height: 100dvh; /* Dynamic viewport height for mobile */
+    height: 100vh; /* Fallback for older browsers */
+  }
+
   .discussion-header {
     padding: 8px 12px;
     height: 56px;
@@ -1069,6 +1095,87 @@
 
   .discussion-welcome-text {
     font-size: 14px;
+  }
+
+  .discussion-user-message {
+    padding-left: 10%;
+  }
+
+  .discussion-user-message .discussion-message-avatar {
+    margin-left: 20%;
+  }
+}
+
+@media (max-width: 480px) {
+  .discussion-header {
+    padding: 6px 8px;
+    height: 52px;
+  }
+
+  .discussion-title {
+    font-size: 16px;
+  }
+
+  .discussion-chat-background {
+    padding: 8px;
+  }
+
+  .discussion-input-container {
+    padding: 8px;
+  }
+
+  .discussion-user-message-content,
+  .discussion-ai-message-content {
+    max-width: 90%;
+    padding: 10px 12px;
+  }
+
+  .discussion-message-text {
+    font-size: 15px;
+  }
+
+  .discussion-user-message {
+    padding-left: 5%;
+  }
+
+  .discussion-user-message .discussion-message-avatar {
+    margin-left: 10%;
+  }
+
+  .discussion-welcome-icon {
+    width: 60px;
+    height: 60px;
+  }
+
+  .discussion-welcome-title {
+    font-size: 20px;
+  }
+
+  .discussion-welcome-text {
+    font-size: 13px;
+  }
+
+  .discussion-call-avatar-container {
+    width: 100px;
+    height: 100px;
+  }
+
+  .discussion-call-avatar-image {
+    width: 80px;
+    height: 80px;
+  }
+
+  .discussion-call-contact-name {
+    font-size: 20px;
+  }
+
+  .discussion-call-controls {
+    gap: 16px;
+  }
+
+  .discussion-call-control-btn {
+    width: 56px;
+    height: 56px;
   }
 }
 

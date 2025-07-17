@@ -76,6 +76,12 @@
   --space-20: 5rem;
   --space-24: 6rem;
 
+  --heigth-21: 21rem;
+  --heigth-23: 23rem;
+  --heigth-24: 24rem;
+  --heigth-25: 25rem;
+  --heigth-25-demi: 25.5rem;
+
   /* Rayons de bordure */
   --radius-sm: 0.125rem;
   --radius-md: 0.375rem;

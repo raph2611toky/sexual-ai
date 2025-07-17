@@ -72,6 +72,7 @@ export default function DiscussionScreen() {
   const [localConversations, setLocalConversations] = useState([])
   const [showScrollButton, setShowScrollButton] = useState(false)
   const [copiedMessageId, setCopiedMessageId] = useState(null)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   const chatContainerRef = useRef()
   const mediaRecorderRef = useRef()
@@ -394,6 +395,7 @@ export default function DiscussionScreen() {
   }
 
   const toggleMenu = () => {
+    setIsMobileMenuOpen((prev) => !prev)
     setMenuVisible((prev) => !prev)
     if (!menuVisible && isLoggedIn) {
       fetchConversations()
@@ -850,7 +852,7 @@ export default function DiscussionScreen() {
     <div className="discussion-safe-area">
       <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
       <Sidebar
-        isOpen={menuVisible}
+        isOpen={isMobileMenuOpen}
         onClose={toggleMenu}
         conversations={localConversations.length > 0 ? localConversations : conversations}
         onNewChat={handleCreateDiscussion}
@@ -864,6 +866,13 @@ export default function DiscussionScreen() {
 
       <div className="discussion-container">
         <div className="discussion-header">
+          <button 
+            className="discussion-menu-button"
+            onClick={toggleMenu}
+            aria-label="Toggle menu"
+          >
+            <Menu size={20} />
+          </button>
           <div className="discussion-title-container">
             <h1 className="discussion-title">SEXUAL AI</h1>
             {callModeRef.current && (
