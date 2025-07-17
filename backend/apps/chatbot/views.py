@@ -9,7 +9,7 @@ from apps.chatbot.models import Conversation, MessageChat
 from apps.chatbot.serializers import ConversationSerializer, MessageChatSerializer
 from apps.users.authentication import AnonymousOrAuthenticated
 
-from helpers.ai_models.gemini import simple_chat
+from helpers.ai_models.gemini import simple_chat, conversation_chat
 from helpers.helper import LOGGER
 from helpers.swagger.chatbot import bot_response_schema, message_request_schema, error_schema, conversation_request_schema
 import random
@@ -174,7 +174,6 @@ class MessageChatNewView(APIView):
             if conversation_id is not None and str(conversation_id).strip()!='':
                 try:
                     conversation = Conversation.objects.filter(user=request.user, id_conversation=conversation_id).first()
-                    messageChat_response = simple_chat(contenu, lang=request.data.get("lang","FR"))
                     if not Conversation.objects.filter(user=request.user, id_conversation=conversation_id).exists():
                         conversation_last = Conversation.objects.filter(user=request.user).last()
                         if conversation_last.messages.count() > 0:
@@ -184,6 +183,7 @@ class MessageChatNewView(APIView):
                             )
                         else:
                             conversation = conversation_last
+                    messageChat_response = conversation_chat(conversation_id=conversation.id_conversation, message=contenu, lang=request.data.get("lang","FR"))
                     MessageChat.objects.create(conversation=conversation, contenu=contenu, from_user=True)
                     MessageChat.objects.create(conversation=conversation, contenu=messageChat_response, from_user=False)
                     return Response({"bot_response": messageChat_response}, status=status.HTTP_201_CREATED)
