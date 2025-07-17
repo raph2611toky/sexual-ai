@@ -124,7 +124,7 @@ const Donation = () => {
   }
 
   const handleBackToApp = () => {
-    navigate("/home")
+    navigate("/")
   }
 
   return (
