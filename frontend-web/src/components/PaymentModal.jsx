@@ -2,6 +2,9 @@
 
 import { useState } from "react"
 import "./PaymentModal.css"
+import VisaIcon from "../assets/visa.png"
+import PaypalIcon from "../assets/paypal.png"
+import MastercardIcon from "../assets/mastercard.png"
 
 const PaymentModal = ({ plan, language = "FR", theme = "light", onClose, planDetails }) => {
   const [paymentMethod, setPaymentMethod] = useState("card")
@@ -101,7 +104,7 @@ const PaymentModal = ({ plan, language = "FR", theme = "light", onClose, planDet
   const calculatePrice = () => {
     const basePrice = parseFloat(planDetails.price)
     if (plan === 'donation') {
-      return basePrice.toFixed(2)
+      return basePrice
     }
     return billingCycle === "yearly" ? (basePrice * 12 * 0.8).toFixed(2) : basePrice.toFixed(2)
   }
@@ -156,7 +159,7 @@ const PaymentModal = ({ plan, language = "FR", theme = "light", onClose, planDet
                   {planDetails.name}
                 </div>
                 <div className="payment-plan-price">
-                  ${calculatePrice()}
+                  Ariary {calculatePrice()}
                   {plan !== 'donation' && (
                     <span>/{billingCycle === 'monthly' ? t.monthly.toLowerCase() : (language === 'FR' ? 'an' : 'taona')}</span>
                   )}
@@ -180,7 +183,7 @@ const PaymentModal = ({ plan, language = "FR", theme = "light", onClose, planDet
                     <span className="payment-radio-custom"></span>
                     <div className="payment-billing-info">
                       <div className="payment-billing-name">{t.monthly}</div>
-                      <div className="payment-billing-price">${planDetails.price}/mois</div>
+                      <div className="payment-billing-price">Ariary {planDetails.price}/mois</div>
                     </div>
                   </label>
                   
@@ -199,7 +202,7 @@ const PaymentModal = ({ plan, language = "FR", theme = "light", onClose, planDet
                         <span className="payment-save-badge">-20%</span>
                       </div>
                       <div className="payment-billing-price">
-                        ${(parseFloat(planDetails.price) * 12 * 0.8).toFixed(2)}/{language === 'FR' ? 'an' : 'taona'}
+                        Ariary {(parseFloat(planDetails.price) * 12 * 0.8).toFixed(2)}/{language === 'FR' ? 'an' : 'taona'}
                       </div>
                     </div>
                   </label>
@@ -299,9 +302,9 @@ const PaymentModal = ({ plan, language = "FR", theme = "light", onClose, planDet
                       required 
                     />
                     <div className="payment-card-icons">
-                      <img src="visa.png" alt="Visa" />
-                      <img src="mastercard.png" alt="Mastercard" />
-                      <img src="paypal.png" alt="PayPal" />
+                      <img src={VisaIcon} alt="Visa" />
+                      <img src={MastercardIcon} alt="Mastercard" />
+                      <img src={PaypalIcon} alt="PayPal" />
                     </div>
                   </div>
                   
@@ -370,17 +373,17 @@ const PaymentModal = ({ plan, language = "FR", theme = "light", onClose, planDet
               <div className="payment-order-summary">
                 <div className="payment-summary-row">
                   <span>{plan === 'donation' ? 'Don' : `Plan ${planDetails.name}`}</span>
-                  <span>${planDetails.price}</span>
+                  <span>Ariary {planDetails.price}</span>
                 </div>
                 {plan !== 'donation' && billingCycle === 'yearly' && (
                   <div className="payment-summary-row discount">
                     <span>Réduction annuelle (-20%)</span>
-                    <span>-${(parseFloat(planDetails.price) * 12 * 0.2).toFixed(2)}</span>
+                    <span>-Ariary {(parseFloat(planDetails.price) * 12 * 0.2).toFixed(2)}</span>
                   </div>
                 )}
                 <div className="payment-summary-total">
                   <span>{t.total}</span>
-                  <span>${calculatePrice()}</span>
+                  <span>Ariary {calculatePrice()}</span>
                 </div>
               </div>
 
@@ -409,7 +412,7 @@ const PaymentModal = ({ plan, language = "FR", theme = "light", onClose, planDet
                         </>
                       )}
                     </svg>
-                    {t.payNow} ${calculatePrice()}
+                    {t.payNow} Ariary {calculatePrice()}
                   </>
                 )}
               </button>

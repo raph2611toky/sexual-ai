@@ -46,12 +46,12 @@ const Donation = () => {
       securePayment: "Paiement 100% sécurisé",
       taxDeductible: "Don déductible des impôts",
       amounts: {
-        5: { label: "5 000 Ariary", impact: "Aide à maintenir nos serveurs" },
-        10: { label: "10 000 Ariary", impact: "Améliore nos algorithmes IA" },
-        25: { label: "25 000 Ariary", impact: "Développe de nouvelles fonctionnalités" },
-        50: { label: "50 000 Ariary", impact: "Soutient notre équipe de recherche" },
-        100: { label: "100 000 Ariary", impact: "Finance un mois de développement" },
-        250: { label: "250 000 Ariary", impact: "Permet d'ajouter de nouvelles langues" }
+        5000: { label: "5 000 Ariary", impact: "Aide à maintenir nos serveurs" },
+        10000: { label: "10 000 Ariary", impact: "Améliore nos algorithmes IA" },
+        25000: { label: "25 000 Ariary", impact: "Développe de nouvelles fonctionnalités" },
+        50000: { label: "50 000 Ariary", impact: "Soutient notre équipe de recherche" },
+        100000: { label: "100 000 Ariary", impact: "Finance un mois de développement" },
+        250000: { label: "250 000 Ariary", impact: "Permet d'ajouter de nouvelles langues" }
       }
     },
     MG: {
@@ -73,12 +73,12 @@ const Donation = () => {
       securePayment: "Fandoavam-bola azo antoka 100%",
       taxDeductible: "Fanomezana azo esorina amin'ny hetra",
       amounts: {
-        5: { label: "5 000 Ariary", impact: "Manampy mitazona ny server-nay" },
-        10: { label: "10 000 Ariary", impact: "Manatsara ny algorithm IA" },
-        25: { label: "25 000 Ariary", impact: "Mamorona zavatra vaovao" },
-        50: { label: "50 000 Ariary", impact: "Manohana ny ekipa fikarohana" },
-        100: { label: "100 000 Ariary", impact: "Mamatsika volana iray fivoarana" },
-        250: { label: "250 000 Ariary", impact: "Ahafahana manampy fiteny vaovao" }
+        5000: { label: "5 000 Ariary", impact: "Manampy mitazona ny server-nay" },
+        10000: { label: "10 000 Ariary", impact: "Manatsara ny algorithm IA" },
+        25000: { label: "25 000 Ariary", impact: "Mamorona zavatra vaovao" },
+        50000: { label: "50 000 Ariary", impact: "Manohana ny ekipa fikarohana" },
+        100000: { label: "100 000 Ariary", impact: "Mamatsika volana iray fivoarana" },
+        250000: { label: "250 000 Ariary", impact: "Ahafahana manampy fiteny vaovao" }
       }
     }
   }
@@ -249,15 +249,15 @@ const Donation = () => {
               {getFinalAmount() > 0 && (
                 <div className="donation-impact-display">
                   <div className="donation-impact-amount">
-                    {getFinalAmount()} 000 Ariary {donationType === 'monthly' ? `/${t.monthly.toLowerCase()}` : ''}
+                    {getFinalAmount()} Ariary {donationType === 'monthly' ? `/${t.monthly.toLowerCase()}` : ''}
                   </div>
                   <div className="donation-impact-text">
-                    {getFinalAmount() >= 250 ? t.amounts[250].impact :
-                     getFinalAmount() >= 100 ? t.amounts[100].impact :
-                     getFinalAmount() >= 50 ? t.amounts[50].impact :
-                     getFinalAmount() >= 25 ? t.amounts[25].impact :
-                     getFinalAmount() >= 10 ? t.amounts[10].impact :
-                     t.amounts[5].impact}
+                    {getFinalAmount() >= 250000 ? t.amounts[250000].impact :
+                     getFinalAmount() >= 100000 ? t.amounts[100000].impact :
+                     getFinalAmount() >= 50000 ? t.amounts[50000].impact :
+                     getFinalAmount() >= 25000 ? t.amounts[25000].impact :
+                     getFinalAmount() >= 10000 ? t.amounts[10000].impact :
+                     t.amounts[5000].impact}
                   </div>
                 </div>
               )}
