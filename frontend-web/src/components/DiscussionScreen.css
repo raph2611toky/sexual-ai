@@ -221,11 +221,10 @@
 
 .discussion-profile-active-dot {
   position: absolute;
-  bottom: 0;
-  right: 0;
+  top: 0;
+  left: 0;
   width: 8px;
   height: 8px;
-  background: #10b981; /* Green for online */
   border-radius: 50%;
   border: 2px solid var(--bg-primary);
 }
@@ -503,6 +502,7 @@
   align-items: center;
   justify-content: center;
   padding: 16px;
+  background-color: var(--bg-primary);
 }
 
 .discussion-welcome-container {
