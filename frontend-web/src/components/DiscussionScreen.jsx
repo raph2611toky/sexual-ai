@@ -20,11 +20,15 @@ import {
   MicOff,
   Send,
   Volume2,
+  VolumeX,
   Pause,
   Bot,
   ThumbsUp,
   ThumbsDown,
   RefreshCw,
+  Copy,
+  Check,
+  ChevronDown,
 } from "lucide-react"
 import axios from "axios"
 import config from "../config"
@@ -66,6 +70,8 @@ export default function DiscussionScreen() {
   const [showAuthChoice, setShowAuthChoice] = useState(false)
   const [transcript, setTranscript] = useState("")
   const [localConversations, setLocalConversations] = useState([])
+  const [showScrollButton, setShowScrollButton] = useState(false)
+  const [copiedMessageId, setCopiedMessageId] = useState(null)
 
   const chatContainerRef = useRef()
   const mediaRecorderRef = useRef()
@@ -255,9 +261,31 @@ export default function DiscussionScreen() {
 
   useEffect(() => {
     if (chatContainerRef.current && responses.length > 0) {
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeightproduk
+      scrollToBottom()
     }
   }, [responses])
+
+  const scrollToBottom = () => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight
+    }
+  }
+
+  const handleScroll = () => {
+    if (chatContainerRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = chatContainerRef.current
+      const isNearBottom = scrollHeight - scrollTop - clientHeight < 100
+      setShowScrollButton(!isNearBottom)
+    }
+  }
+
+  useEffect(() => {
+    const chatContainer = chatContainerRef.current
+    if (chatContainer) {
+      chatContainer.addEventListener('scroll', handleScroll)
+      return () => chatContainer.removeEventListener('scroll', handleScroll)
+    }
+  }, [])
 
   useEffect(() => {
     if (isCallMode) {
@@ -567,6 +595,10 @@ export default function DiscussionScreen() {
             if (!isSpeaking) speakText(responseMessage.data.bot_response, aiResponseId)
           }, 1000)
         }
+        // Auto-scroll to bottom after AI response
+        setTimeout(() => {
+          scrollToBottom()
+        }, 100)
       } catch (error) {
         console.error("Erreur lors de l'envoi de la question:", error)
         setResponses((prevResponses) => [
@@ -605,6 +637,10 @@ export default function DiscussionScreen() {
         disliked: false,
       }))
       setResponses(formattedMessages)
+      // Auto-scroll to bottom when opening a conversation
+      setTimeout(() => {
+        scrollToBottom()
+      }, 100)
     } catch (error) {
     }
   }
@@ -708,6 +744,18 @@ export default function DiscussionScreen() {
       } else {
         restartRecognition()
       }
+    }
+  }
+
+  const handleCopyMessage = async (text, messageId) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopiedMessageId(messageId)
+      
+      setTimeout(() => {
+        setCopiedMessageId(null)
+      }, 2000)
+    } catch (error) {
     }
   }
 
@@ -1001,7 +1049,7 @@ export default function DiscussionScreen() {
             </div>
           </div>
         ) : !callModeRef.current ? (
-          <div className="discussion-chat-background">
+          <div className="discussion-chat-background" ref={chatContainerRef}>
             <div className="discussion-responses-list" ref={chatContainerRef}>
               {responses.map((item) => (
                 <div
@@ -1013,9 +1061,6 @@ export default function DiscussionScreen() {
                       <div className="discussion-user-message-content">
                         <p className="discussion-message-text">{item.text}</p>
                       </div>
-                      <div className="discussion-message-avatar user">
-                        {/* Avatar utilisateur ici si nécessaire */}
-                      </div>
                     </>
                   ) : (
                     <>
@@ -1025,6 +1070,13 @@ export default function DiscussionScreen() {
                       <div className="discussion-ai-message-content">
                         <p className="discussion-message-text">{item.text}</p>
                         <div className="discussion-message-actions">
+                          <button
+                            className={`discussion-copy-button ${copiedMessageId === item.id ? "copied" : ""}`}
+                            onClick={() => handleCopyMessage(item.text, item.id)}
+                            title={copiedMessageId === item.id ? "Copié !" : "Copier"}
+                          >
+                            {copiedMessageId === item.id ? <Check size={16} /> : <Copy size={16} />}
+                          </button>
                           <button
                             className={`discussion-audio-button ${speakingMessageId === item.id ? "active" : ""}`}
                             onClick={() => speakText(item.text, item.id)}
@@ -1076,6 +1128,16 @@ export default function DiscussionScreen() {
                 </div>
               )}
             </div>
+            
+            {showScrollButton && (
+              <button
+                className="discussion-scroll-to-bottom"
+                onClick={scrollToBottom}
+                title="Aller en bas"
+              >
+                <ChevronDown size={24} />
+              </button>
+            )}
           </div>
         ) : null}
         {!callModeRef.current && (

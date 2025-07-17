@@ -47,8 +47,8 @@ def conversation_chat(conversation_id: int, message: str, lang='fr') -> str:
         response = client.chat.completions.create(
             model="gemini-2.0-flash",
             messages=messages,
-            temperature=0.7,
-            max_tokens=512
+            # temperature=0.7,
+            # max_tokens=512
         )
         return response.choices[0].message.content
     except Exception as e:

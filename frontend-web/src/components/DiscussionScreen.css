@@ -54,10 +54,10 @@
   --text-primary: #f9fafb;
   --text-secondary: #d1d5db;
   --text-muted: #9ca3af;
-  --bg-primary: #111827;
-  --bg-secondary: #1f2937;
-  --bg-tertiary: #374151;
-  --border-color: #374151;
+  --bg-primary: #0f0f0f;
+  --bg-secondary: #1a1a1a;
+  --bg-tertiary: #2a2a2a;
+  --border-color: #333333;
 }
 
 /* Layout */
@@ -83,7 +83,6 @@
   justify-content: space-between;
   height: 60px;
   flex-shrink: 0;
-  border-bottom: 1px solid var(--border-color); /* Add border for header */
 }
 
 .header-left {
@@ -494,6 +493,8 @@
   flex: 1;
   overflow-y: auto;
   padding: 16px;
+  position: relative;
+  background: var(--bg-primary);
 }
 
 .discussion-welcome-background {
@@ -608,8 +609,9 @@
 }
 
 .discussion-user-message {
-  flex-direction: row-reverse;
+  flex-direction: row;
   justify-content: flex-end;
+  padding-left: 20%;
 }
 
 .discussion-ai-message {
@@ -639,24 +641,30 @@
 }
 
 .discussion-user-message-content {
-  flex: 1;
-  max-width: 50%;
+  max-width: 70%;
+  min-width: fit-content;
+  width: auto;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   align-items: flex-start;    
   text-align: left;      
   color: var(--text-primary); 
-  background: #fbd9c0;     
+  background: rgba(156, 163, 175, 0.15);     
   padding: 12px 16px;  
   border-radius: var(--radius-lg);
-        
+  border: 1px solid rgba(156, 163, 175, 0.2);
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  
 }
 
 [data-theme="dark"] .discussion-user-message-content {
-  color: #1f2937;
-  font-weight: 600;
-  background: #f4a261; 
+  color: var(--text-primary);
+  font-weight: 500;
+  background: rgba(156, 163, 175, 0.15);
+  border: 1px solid rgba(156, 163, 175, 0.2);
 }
 
 .discussion-ai-message-content {
@@ -665,8 +673,7 @@
   display: flex;
   flex-direction: column;
   text-align: left; /* Text inside AI message aligned left */
-  /* border: 1px solid #000; */
-  /* background: var(--bg-primary);  */
+  background: var(--bg-primary);
   padding: 12px 16px;
   border-radius: var(--radius-lg);
   color: var(--text-primary); /* Black text in light mode */
@@ -674,13 +681,12 @@
 
 [data-theme="dark"] .discussion-ai-message-content {
   color: var(--text-primary); /* White text in dark mode */
-  background: var(--bg-secondary); /* Darker background for AI message in dark mode */
-  border-color: #000; /* Explicitly black border in dark mode */
+  background: #1a1a1a; /* Darker background for AI message in dark mode */
 }
 
 .discussion-message-text {
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: 16px;
+  line-height: 1.7;
   margin: 0;
 }
 
@@ -688,7 +694,7 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  margin-top: 8px;
+  margin-top: 12px;
   justify-content: flex-start;
 }
 
@@ -714,11 +720,12 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-top: 8px;
+  margin-top: 12px;
   justify-content: flex-start;
 }
 
 .discussion-audio-button,
+.discussion-copy-button,
 .discussion-like-button,
 .discussion-dislike-button,
 .discussion-regenerate-button {
@@ -735,6 +742,7 @@
 }
 
 .discussion-audio-button:hover,
+.discussion-copy-button:hover,
 .discussion-like-button:hover,
 .discussion-dislike-button:hover,
 .discussion-regenerate-button:hover {
@@ -752,6 +760,11 @@
   border-color: #dc3545;
 }
 
+.discussion-copy-button.copied {
+  color: #28a745;
+  border-color: #28a745;
+}
+
 .discussion-message-timestamp {
   font-size: 11px;
   color: var(--text-muted);
@@ -766,6 +779,35 @@
   text-align: left;
 }
 
+/* Scroll to bottom button */
+.discussion-scroll-to-bottom {
+  position: absolute;
+  bottom: 80px;
+  right: 20px;
+  background: var(--primary-gradient);
+  border: none;
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: white;
+  box-shadow: var(--shadow-md);
+  transition: var(--transition);
+  z-index: 5;
+}
+
+.discussion-scroll-to-bottom:hover {
+  transform: scale(1.05);
+}
+
+.discussion-scroll-to-bottom.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
 /* Typing indicator */
 .discussion-loading-response-container {
   display: flex;
@@ -775,61 +817,96 @@
 
 .discussion-typing-indicator {
   display: flex;
-  gap: 4px;
+  gap: 8px;
   align-items: center;
-  padding: 4px 0;
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
   padding: 12px 16px;
+  background: var(--bg-primary);
+  border-radius: var(--radius-lg);
 }
 
 .discussion-typing-dots {
   display: flex;
-  gap: 4px;
+  gap: 3px;
+  align-items: center;
 }
 
 .discussion-typing-dot {
-  width: 6px;
-  height: 6px;
-  background: var(--text-muted);
+  width: 8px;
+  height: 8px;
+  background: var(--primary-500);
   border-radius: 50%;
-  animation: typing 1.4s infinite ease-in-out;
+  animation: wave-typing 1.4s infinite ease-in-out;
 }
 
 .discussion-typing-dot:nth-child(1) {
-  animation-delay: -0.32s;
+  animation-delay: 0s;
 }
 
 .discussion-typing-dot:nth-child(2) {
-  animation-delay: -0.16s;
+  animation-delay: 0.2s;
 }
 
-@keyframes typing {
+.discussion-typing-dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes wave-typing {
   0%,
-  80%,
+  60%,
   100% {
-    transform: scale(0.8);
-    opacity: 0.5;
+    transform: translateY(0px) scale(1);
+    opacity: 0.7;
   }
-  40% {
-    transform: scale(1);
+  30% {
+    transform: translateY(-8px) scale(1.1);
     opacity: 1;
   }
+}
+
+.discussion-typing-text {
+  display: none;
+}
+
+/* Sound toggle button */
+.discussion-sound-toggle {
+  position: fixed;
+  bottom: 100px;
+  right: 20px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: var(--transition);
+  z-index: 5;
+}
+
+.discussion-sound-toggle:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.discussion-sound-toggle.muted {
+  color: #ef4444;
+  border-color: #ef4444;
 }
 
 /* Input */
 .discussion-input-container {
   padding: 16px;
   background: var(--bg-primary);
-  border-top: 1px solid var(--border-color);
 }
 
 .discussion-input-wrapper {
   max-width: 800px;
   margin: 0 auto;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   gap: 8px;
   background: var(--bg-primary);
   border: 2px solid var(--border-color);
@@ -855,6 +932,7 @@
   min-height: 20px;
   max-height: 120px;
   font-family: inherit;
+  padding: 6px 5px;
 }
 
 .discussion-input::placeholder {
