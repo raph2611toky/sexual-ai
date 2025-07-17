@@ -224,7 +224,6 @@
 
 .donation-amount-btn.selected {
   border-color: var(--primary-500, #ff7f50);
-  background: var(--primary-50, rgba(255, 127, 80, 0.1));
   box-shadow: var(--shadow, rgba(0, 0, 0, 0.1)) 0 8px 24px;
 }
 

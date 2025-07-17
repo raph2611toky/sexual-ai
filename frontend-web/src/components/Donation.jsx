@@ -46,12 +46,12 @@ const Donation = () => {
       securePayment: "Paiement 100% sécurisé",
       taxDeductible: "Don déductible des impôts",
       amounts: {
-        5: { label: "5€", impact: "Aide à maintenir nos serveurs" },
-        10: { label: "10€", impact: "Améliore nos algorithmes IA" },
-        25: { label: "25€", impact: "Développe de nouvelles fonctionnalités" },
-        50: { label: "50€", impact: "Soutient notre équipe de recherche" },
-        100: { label: "100€", impact: "Finance un mois de développement" },
-        250: { label: "250€", impact: "Permet d'ajouter de nouvelles langues" }
+        5: { label: "5 000 Ariary", impact: "Aide à maintenir nos serveurs" },
+        10: { label: "10 000 Ariary", impact: "Améliore nos algorithmes IA" },
+        25: { label: "25 000 Ariary", impact: "Développe de nouvelles fonctionnalités" },
+        50: { label: "50 000 Ariary", impact: "Soutient notre équipe de recherche" },
+        100: { label: "100 000 Ariary", impact: "Finance un mois de développement" },
+        250: { label: "250 000 Ariary", impact: "Permet d'ajouter de nouvelles langues" }
       }
     },
     MG: {
@@ -73,12 +73,12 @@ const Donation = () => {
       securePayment: "Fandoavam-bola azo antoka 100%",
       taxDeductible: "Fanomezana azo esorina amin'ny hetra",
       amounts: {
-        5: { label: "5€", impact: "Manampy mitazona ny server-nay" },
-        10: { label: "10€", impact: "Manatsara ny algorithm IA" },
-        25: { label: "25€", impact: "Mamorona zavatra vaovao" },
-        50: { label: "50€", impact: "Manohana ny ekipa fikarohana" },
-        100: { label: "100€", impact: "Mamatsika volana iray fivoarana" },
-        250: { label: "250€", impact: "Ahafahana manampy fiteny vaovao" }
+        5: { label: "5 000 Ariary", impact: "Manampy mitazona ny server-nay" },
+        10: { label: "10 000 Ariary", impact: "Manatsara ny algorithm IA" },
+        25: { label: "25 000 Ariary", impact: "Mamorona zavatra vaovao" },
+        50: { label: "50 000 Ariary", impact: "Manohana ny ekipa fikarohana" },
+        100: { label: "100 000 Ariary", impact: "Mamatsika volana iray fivoarana" },
+        250: { label: "250 000 Ariary", impact: "Ahafahana manampy fiteny vaovao" }
       }
     }
   }
@@ -206,7 +206,6 @@ const Donation = () => {
               <div className="donation-custom-amount">
                 <label className="donation-custom-label">{t.customAmount}</label>
                 <div className="donation-custom-input-wrapper">
-                  <span className="donation-currency">€</span>
                   <input
                     type="number"
                     className="donation-custom-input"
@@ -250,7 +249,7 @@ const Donation = () => {
               {getFinalAmount() > 0 && (
                 <div className="donation-impact-display">
                   <div className="donation-impact-amount">
-                    {getFinalAmount()}€ {donationType === 'monthly' ? `/${t.monthly.toLowerCase()}` : ''}
+                    {getFinalAmount()} 000 Ariary {donationType === 'monthly' ? `/${t.monthly.toLowerCase()}` : ''}
                   </div>
                   <div className="donation-impact-text">
                     {getFinalAmount() >= 250 ? t.amounts[250].impact :
@@ -272,7 +271,7 @@ const Donation = () => {
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
                 </svg>
-                {t.donateAmount} {getFinalAmount() > 0 ? `${getFinalAmount()}€` : ''}
+                {t.donateAmount} {getFinalAmount() > 0 ? `${getFinalAmount()} 000 Ariary` : ''}
               </button>
             </div>
           </div>
