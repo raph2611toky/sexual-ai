@@ -37,7 +37,7 @@ class ConversationSerializer(serializers.ModelSerializer):
                     if len(m)>2:
                         break
                     m.append(message.contenu)
-                texte_a_envoye = f"Resumer ceci et donne moi en une phrase courte pour un titre ce que ca resume,  et retourner directement le titre sans bold ni apostrophe, directement un titre brute :  {'\n\n'.join(m)}"
+                texte_a_envoye = "Resumer ceci et donne moi en une phrase courte pour un titre ce que ca resume,  et retourner directement le titre sans bold ni apostrophe, directement un titre brute :  {}".format('\n\n'.join(m))
                 nouveau_titre = simple_chat(texte_a_envoye)
                 obj.titre = nouveau_titre[:90]
                 obj.save()
