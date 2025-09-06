@@ -1,14 +1,23 @@
-from googletrans import Translator
+# from googletrans import Translator
 
-def traduire_texte(texte, source_lang='fr', cible_lang='mg'):
+# def traduire_texte(texte, source_lang='fr', cible_lang='mg'):
+#     try:
+#         traducteur = Translator()
+#         resultat = traducteur.translate(texte, src=source_lang, dest=cible_lang)
+#         print("✅ Traduction réussie")
+#         return resultat.text
+#     except Exception as e:
+#         return f"Erreur lors de la traduction : {e}"
+
+# print(traduire_texte("miarahaba tompoko, tsy mandeha intsony ny fadimbolanako", source_lang='mg', cible_lang='fr'))
+
+from deep_translator import GoogleTranslator
+
+def traduire_texte(texte, source_lang="fr", cible_lang="mg"):
     try:
-        traducteur = Translator()
-        resultat = traducteur.translate(texte, src=source_lang, dest=cible_lang)
-        print(resultat)
-        print("✅ Traduction reussie")
-        return resultat.text
+        return GoogleTranslator(source=source_lang, target=cible_lang).translate(texte)
     except Exception as e:
-        return f"Erreur lors de la traduction : {e}"
+        return f"Erreur lors de la traduction: {e}"
 
-
-# print(traduire_texte("Bonjour, peut tu m'aider s'il te plait?? Chaque mois, j'ai des règles très douloureuse avec une odeur bizzare"))
+# Exemple :
+print(traduire_texte("Bonjour monsieur, ma menstruation ne fonctionne plus"))

@@ -41,7 +41,9 @@ def conversation_chat(conversation_id: int, message: str, lang='fr') -> str:
     if not message:
         return "Message requis"
     if lang.upper() == 'MG':
-        message = traduire_texte(message, source_lang='MG', cible_lang='FR')
+        print(message)
+        message = traduire_texte(message, source_lang='mg', cible_lang='fr')
+        print(message)
     try:
         messages = prepare_messages(conversation_id, message, lang)
         response = client.chat.completions.create(
@@ -59,7 +61,7 @@ def simple_chat(message: str, lang='FR') -> str:
     if not message:
         return "Message requis"
     if lang.upper() == 'MG':
-        message = traduire_texte(message, source_lang='MG', cible_lang='FR')
+        message = traduire_texte(message, source_lang='mg', cible_lang='fr')
     try:
         chat_content = CHAT_CONTENT.get(lang.upper(), CHAT_CONTENT["FR"])
         response = client.chat.completions.create(
