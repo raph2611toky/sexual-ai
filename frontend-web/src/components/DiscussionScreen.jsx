@@ -20,7 +20,6 @@ import {
   MicOff,
   Send,
   Volume2,
-  VolumeX,
   Pause,
   Bot,
   ThumbsUp,
@@ -31,6 +30,7 @@ import {
   ChevronDown,
 } from "lucide-react"
 import axios from "axios"
+import ReactMarkdown from "react-markdown"
 import config from "../config"
 import ToastContainer from "./ToastContainer"
 import AuthChoice from "./AuthChoice"
@@ -86,7 +86,7 @@ export default function DiscussionScreen() {
   const isRecognitionActiveRef = useRef(isRecognitionActive)
   const currentTranscriptRef = useRef("")
 
-  document.addEventListener('contextmenu', (e) => e.preventDefault());
+  document.addEventListener("contextmenu", (e) => e.preventDefault())
 
   useEffect(() => {
     callModeRef.current = isCallMode
@@ -160,10 +160,8 @@ export default function DiscussionScreen() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
     if (!SpeechRecognition) {
       addToast(
-        selectedLanguage === "FR"
-          ? "Reconnaissance vocale non prise en charge."
-          : "Fahafantarana feo tsy tohana.",
-        "warning"
+        selectedLanguage === "FR" ? "Reconnaissance vocale non prise en charge." : "Fahafantarana feo tsy tohana.",
+        "warning",
       )
       return
     }
@@ -210,7 +208,7 @@ export default function DiscussionScreen() {
 
     recognition.onerror = (event) => {
       console.error("Speech recognition error:", event.error)
-      
+
       setIsRecognitionActive(false)
       if (event.error === "no-speech" && callModeRef.current) {
         silenceTimer = setTimeout(() => {
@@ -234,8 +232,7 @@ export default function DiscussionScreen() {
               setIsRecognitionActive(true)
               setIsRecording(true)
               isRecognitionActiveRef.current = true
-            } catch (error) {
-            }
+            } catch (error) {}
           } else {
           }
         }, 900)
@@ -283,8 +280,8 @@ export default function DiscussionScreen() {
   useEffect(() => {
     const chatContainer = chatContainerRef.current
     if (chatContainer) {
-      chatContainer.addEventListener('scroll', handleScroll)
-      return () => chatContainer.removeEventListener('scroll', handleScroll)
+      chatContainer.addEventListener("scroll", handleScroll)
+      return () => chatContainer.removeEventListener("scroll", handleScroll)
     }
   }, [])
 
@@ -383,8 +380,8 @@ export default function DiscussionScreen() {
       mute: "Moana",
       speaker: "Fanamafisam-peo",
       darkMode: "Maizina",
-      lightMode: "Mazava"
-    }
+      lightMode: "Mazava",
+    },
   }
   const t = (key) => translations[selectedLanguage][key] || key
 
@@ -553,8 +550,7 @@ export default function DiscussionScreen() {
       setDiscussionCreated(true)
       setCurrentTitle("")
       setResponses([])
-    } catch (error) {
-    }
+    } catch (error) {}
   }
 
   const handleAskQuestion = async (textToSend = null) => {
@@ -580,7 +576,7 @@ export default function DiscussionScreen() {
         const responseMessage = await axios.post(
           `${config.apiUrl}/messagechat/new/`,
           { contenu: questionText, conversation: id_conversation, lang: selectedLanguage },
-          { headers }
+          { headers },
         )
         const aiResponseId = Date.now().toString() + "1"
         const aiResponse = {
@@ -643,8 +639,7 @@ export default function DiscussionScreen() {
       setTimeout(() => {
         scrollToBottom()
       }, 100)
-    } catch (error) {
-    }
+    } catch (error) {}
   }
 
   const formatDate = (dateString) => {
@@ -753,12 +748,11 @@ export default function DiscussionScreen() {
     try {
       await navigator.clipboard.writeText(text)
       setCopiedMessageId(messageId)
-      
+
       setTimeout(() => {
         setCopiedMessageId(null)
       }, 2000)
-    } catch (error) {
-    }
+    } catch (error) {}
   }
 
   const handleKeyPress = (e) => {
@@ -812,17 +806,13 @@ export default function DiscussionScreen() {
 
   const handleLike = (id) => {
     setResponses((prevResponses) =>
-      prevResponses.map((msg) =>
-        msg.id === id ? { ...msg, liked: !msg.liked, disliked: false } : msg
-      )
+      prevResponses.map((msg) => (msg.id === id ? { ...msg, liked: !msg.liked, disliked: false } : msg)),
     )
   }
 
   const handleDislike = (id) => {
     setResponses((prevResponses) =>
-      prevResponses.map((msg) =>
-        msg.id === id ? { ...msg, disliked: !msg.disliked, liked: false } : msg
-      )
+      prevResponses.map((msg) => (msg.id === id ? { ...msg, disliked: !msg.disliked, liked: false } : msg)),
     )
   }
 
@@ -866,11 +856,7 @@ export default function DiscussionScreen() {
 
       <div className="discussion-container">
         <div className="discussion-header">
-          <button 
-            className="discussion-menu-button"
-            onClick={toggleMenu}
-            aria-label="Toggle menu"
-          >
+          <button className="discussion-menu-button" onClick={toggleMenu} aria-label="Toggle menu">
             <Menu size={20} />
           </button>
           <div className="discussion-title-container">
@@ -1077,7 +1063,9 @@ export default function DiscussionScreen() {
                         <Bot size={16} />
                       </div>
                       <div className="discussion-ai-message-content">
-                        <p className="discussion-message-text">{item.text}</p>
+                        <div className="discussion-message-text markdown-content">
+                          <ReactMarkdown>{item.text}</ReactMarkdown>
+                        </div>
                         <div className="discussion-message-actions">
                           <button
                             className={`discussion-copy-button ${copiedMessageId === item.id ? "copied" : ""}`}
@@ -1137,13 +1125,9 @@ export default function DiscussionScreen() {
                 </div>
               )}
             </div>
-            
+
             {showScrollButton && (
-              <button
-                className="discussion-scroll-to-bottom"
-                onClick={scrollToBottom}
-                title="Aller en bas"
-              >
+              <button className="discussion-scroll-to-bottom" onClick={scrollToBottom} title="Aller en bas">
                 <ChevronDown size={24} />
               </button>
             )}
