@@ -11,7 +11,7 @@ const Donation = () => {
   const navigate = useNavigate()
   const [showPayment, setShowPayment] = useState(false)
   const [language, setLanguage] = useState("FR")
-  const [theme, setTheme] = useState("light")
+  const [theme, setTheme] = useState("light")                                                       
   const [donationType, setDonationType] = useState("monthly")
   const [donorInfo, setDonorInfo] = useState({
     name: "",
@@ -65,8 +65,8 @@ const Donation = () => {
       yourName: "Ny anaranareo (tsy tsy maintsy)",
       yourMessage: "Ny hafatranareo (tsy tsy maintsy)",
       messagePlaceholder: "Avelao hafatra famprisehana...",
-      donate: "Manome",
-      donateAmount: "Manome",
+      donate: "Hanome",
+      donateAmount: "Hanome",
       impact: "Ny fiantraikanareo",
       thankYou: "Misaotra tompoko!",
       backToApp: "Hiverina amin'ny fampiharana",

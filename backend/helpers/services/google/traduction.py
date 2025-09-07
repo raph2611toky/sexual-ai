@@ -19,5 +19,3 @@ def traduire_texte(texte, source_lang="fr", cible_lang="mg"):
     except Exception as e:
         return f"Erreur lors de la traduction: {e}"
 
-# Exemple :
-print(traduire_texte("Bonjour monsieur, ma menstruation ne fonctionne plus"))
