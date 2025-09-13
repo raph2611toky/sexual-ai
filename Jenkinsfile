@@ -19,7 +19,7 @@ pipeline {
                 [key: 'git_branch', value: '$ref'],
                 [key: 'git_commit', value: '$after']
             ],
-            token: 'ZOeMV4oZGa5MYutFwy8rGKbN3rVU57SSQmcYXuFbcwoQlB8dmaT9KcK9wi3nXV1WHsKKfWRPtNXT3G8J3lmXfvCaTjcXtp4YZVzSzQVsB2wozUmnbxS6cj42m6iI6XiKP40RjV9A75ymz5v9rA5ULjs9ZJMP0aawmTAzBoomFXnqPrOzRDVP4hjlDYFd8RODYzTwCqidYR67vBMeNipIBq4w1Kvzt8f55Ln5NzAeTjESV9fqlw5eGoQqlCKPzwkfucqLxFuhFOQ0SpifTQiWsabYdtYcOZtnyxtWn6oLtgUMMick6iYyC0tM9trYLls9WFsZQlaxYim17g2fqqJjZHpB6MkH3u23YVnmjpnW3HkVoTS9orlDKtZoFXVnlL1BAzayFnlun65hdgVh',
+            token: 'HyejkWeUlMjmfLbiF9sLk1VhIeT3fAOz29KNiD6aNzLz7dGCxH11lFi8YB4qQMbcAI3BLL3CH0JLVNa4VNVRpDjxERCOR5noZ2l9HFSxTtIJWkP500TNiTm5otkdnkYFmU3Tt9Vis0RfZl3fU4kXtsAho3IKDmPCoAeQHcdYHEQFHVtXVuejLR0kOYq46OucLxDsXoMCEpvdGeRqrbToxWCOxd4S3D4PhJVReTIVl9mp2ds9Df6fDcCP3xAK5uUOqPfdvTA9iM7VhNxoX3JSlSseyVrNQnkw38sDbaivmvYW0pNslMU0nm4m2KEzk5Wc7HMlxmYcoZTt92P4goctqDGd4ICxjotydhMVvUnWBH6gDTND5kwSewrk2p6qVyRedEtg7CUzoaPZ6oud',
             printContributedVariables: true,
             printPostContent: true
         )
@@ -106,6 +106,7 @@ pipeline {
                         docker run -d --name ${BACKEND_DOCKER_NAME} \
                             --env-file .env.build \
                             --network ${APP_NETWORK} \
+                            --add-host=host.docker.internal:host-gateway \
                             -v \$WORKSPACE/backend/media:/app/media \
                             -p 127.0.0.1:${BACKEND_PORT}:8569 \
                             ${BACKEND_DOCKER_IMAGE}:${DOCKER_TAG} \
