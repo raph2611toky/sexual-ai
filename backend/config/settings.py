@@ -17,7 +17,7 @@ DEBUG = False
 
 handler404 = 'config.views.custom_404'
 
-ALLOWED_HOSTS = [IP_ADDR, '127.0.0.1', 'localhost', 'sa-backend.learnix.school']
+ALLOWED_HOSTS = [IP_ADDR, '127.0.0.1', 'localhost', 'bsa.learnix.school']
 
 LOCAL_APPS = [
     'apps.users.apps.UsersConfig',
