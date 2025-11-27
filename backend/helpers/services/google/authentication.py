@@ -12,7 +12,6 @@ load_dotenv()
 
 SCOPES = ['openid', 'https://www.googleapis.com/auth/userinfo.email', 'https://www.googleapis.com/auth/userinfo.profile']
 REDIRECT_URI = "https://sexualai.learnix.school/auth/google/callback"
-print(REDIRECT_URI)
 
 def get_google_auth_url():
     try:
