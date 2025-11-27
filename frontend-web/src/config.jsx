@@ -1,5 +1,5 @@
 const config = {
-    apiUrl: "http://127.0.0.1:8000/api"
+    apiUrl: "https://sexual-ai-backend.onrender.com/api"
     // apiUrl: "https://sa-backend.learnix.school/api"
  };
  
