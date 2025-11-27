@@ -11,7 +11,7 @@ import traceback
 load_dotenv()
 
 SCOPES = ['openid', 'https://www.googleapis.com/auth/userinfo.email', 'https://www.googleapis.com/auth/userinfo.profile']
-REDIRECT_URI = "https://sexualai.learnix.school/auth/google/callback"
+REDIRECT_URI = "https://sexual-ai-backend.onrender.com/auth/google/callback"
 
 def get_google_auth_url():
     try:
