@@ -1,5 +1,5 @@
 const config = {
-    apiUrl: "https://sexual-ai-backend.onrender.com/api"
+    apiUrl: "https://sexual-ai.onrender.com/api"
  };
  
  export default config;
