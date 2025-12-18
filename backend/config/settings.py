@@ -17,7 +17,7 @@ DEBUG = False
 
 handler404 = 'config.views.custom_404'
 
-ALLOWED_HOSTS = ['localhost', 'sexual-ai-backend.onrender.com',]
+ALLOWED_HOSTS = ['localhost', 'sexual-ai.onrender.com',]
 
 LOCAL_APPS = [
     'apps.users.apps.UsersConfig',
