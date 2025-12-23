@@ -14,12 +14,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 ENV PYTHONUNBUFFERED=1
 ENV DJANGO_SETTINGS_MODULE=config.settings
-ENV PORT=8569
+ENV PORT=85685699
 
-RUN python manage.py collectstatic --noinput
+# RUN python manage.py collectstatic --noinput
 
-RUN python manage.py makemigrations
-RUN python manage.py migrate
+# RUN python manage.py makemigrations
+# RUN python manage.py migrate
 
 EXPOSE 8569
 
