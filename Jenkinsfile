@@ -38,7 +38,7 @@ pipeline {
                 anyOf {
                     branch 'backend'
                     branch 'rebuild'
-                    // branch 'web'
+                    branch 'web'
                 }
             }
             steps {
