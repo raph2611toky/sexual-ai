@@ -69,6 +69,18 @@ class RegisterView(APIView):
         except Exception:
             False
 
+    @swagger_auto_schema(
+        tags=["Users"],
+        operation_description=(
+            "Inscription utilisateur + génération d'un OTP (6 chiffres) envoyé par email. "
+            "Le compte est créé avec is_active=False jusqu'à vérification OTP."
+        ),
+        request_body=register_request_schema,
+        responses={
+            201: openapi.Response(description="Compte créé, OTP envoyé", schema=register_201_response_schema),
+            400: openapi.Response(description="Requête invalide / email existant", schema=register_400_response_schema),
+        },
+    )
     def post(self, request):
         try:
             user_data = request.data

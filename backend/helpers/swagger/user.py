@@ -41,11 +41,23 @@ register_request_schema = openapi.Schema(
     }
 )
 
-register_response_schema = openapi.Schema(
+register_201_response_schema = openapi.Schema(
     type=openapi.TYPE_OBJECT,
     properties={
-        'email': openapi.Schema(type=openapi.TYPE_STRING, format='email', description="Email de l'utilisateur créé")
-    }
+        "email": openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_EMAIL, example="jean.dupont@example.com"),
+        "message": openapi.Schema(type=openapi.TYPE_STRING, example="Une code Otp de verification a été envoyé à jean.dupont@example.com"),
+    },
+)
+
+register_400_response_schema = openapi.Schema(
+    type=openapi.TYPE_OBJECT,
+    properties={
+        "erreur": openapi.Schema(
+            type=openapi.TYPE_STRING,
+            description="Message d'erreur retourné par la vue (attributs requis, email existant, erreur de sérialisation, etc.).",
+            example="Tous les attributs sont requis",
+        )
+    },
 )
 
 logout_response_schema = openapi.Schema(
