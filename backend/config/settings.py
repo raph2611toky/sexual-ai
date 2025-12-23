@@ -17,7 +17,7 @@ DEBUG = False
 
 handler404 = 'config.views.custom_404'
 
-ALLOWED_HOSTS = ['localhost', 'sexual-ai.onrender.com','34.35.4.140']
+ALLOWED_HOSTS = ['localhost', 'backend.sexualai.mooo.com']
 
 LOCAL_APPS = [
     'apps.users.apps.UsersConfig',
@@ -207,7 +207,7 @@ CORS_ALLOW_HEADERS = [
 
 CORS_ORIGIN_WHITELIST =[
     "http://*:3000",
-    "*"
+    "https://sexualai.netlify.app",
 ] 
 
 CORS_ALLOW_ALL_ORIGINS = True

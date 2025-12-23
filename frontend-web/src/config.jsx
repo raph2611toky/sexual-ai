@@ -1,5 +1,5 @@
 const config = {
-    apiUrl: "http://34.35.4.140:8569/api"
+    apiUrl: "https://backend.sexualai.mooo.com/api"
     // apiUrl: "https://sexual-ai.onrender.com/api"
 };
 
