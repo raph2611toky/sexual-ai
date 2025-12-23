@@ -13,6 +13,7 @@ LOGGER = logging.getLogger(__name__)
 
 def _send_email_sync(list_email_to_send, template_name, data):
     try:
+        print("[INFO] Envoi email...")
         data["current_year"] = datetime.now().year
         subject = data.get("subject", "Objet d'envoi d'email")
         data["logo_url"] = os.getenv("LOGO_SEXUALAI_URL")
@@ -32,7 +33,8 @@ def _send_email_sync(list_email_to_send, template_name, data):
             fail_silently=False,
         )
 
-        LOGGER.info("[INFO] Email envoyé avec succès")
+        print("[INFO] Email envoyé avec succès....✅")
+        LOGGER.info("[INFO] Email envoyé avec succès....✅")
 
     except Exception as e:
         LOGGER.error("Erreur envoi email", exc_info=True)
@@ -48,3 +50,4 @@ def envoyer_email(list_email_to_send: list, template_name: str, data: dict):
         daemon=True,  # important
     )
     thread.start()
+
