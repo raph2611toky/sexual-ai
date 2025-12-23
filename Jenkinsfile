@@ -108,7 +108,7 @@ pipeline {
                             --network ${APP_NETWORK} \
                             --add-host=host.docker.internal:host-gateway \
                             -v \$WORKSPACE/backend/media:/app/media \
-                            -p 127.0.0.1:${BACKEND_PORT}:8569 \
+                            -p 0.0.0.0:${BACKEND_PORT}:8569 \
                             ${BACKEND_DOCKER_IMAGE}:${DOCKER_TAG} \
                             /bin/bash -c '
                                 ls
