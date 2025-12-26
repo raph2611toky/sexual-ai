@@ -85,6 +85,8 @@ export default function DiscussionScreen() {
   const isAISpeakingRef = useRef(isAISpeaking)
   const isRecognitionActiveRef = useRef(isRecognitionActive)
   const currentTranscriptRef = useRef("")
+  const silenceTimerRef = useRef(null)
+  const lastAutoSentRef = useRef('')
 
   document.addEventListener("contextmenu", (e) => e.preventDefault())
 
@@ -156,6 +158,13 @@ export default function DiscussionScreen() {
     }
   }, [question])
 
+  const clearSilenceTimer = () => {
+    if (silenceTimerRef.current) {
+      clearTimeout(silenceTimerRef.current)
+      silenceTimerRef.current = null
+    }
+  }
+
   const initializeSpeechRecognition = () => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
     if (!SpeechRecognition) {
@@ -176,35 +185,38 @@ export default function DiscussionScreen() {
     recognition.onresult = (event) => {
       if (isAISpeakingRef.current) return
 
-      clearTimeout(silenceTimer)
+      clearSilenceTimer()
 
       const textFragment = Array.from(event.results)
-        .map((r) => r[0].transcript)
-        .join("")
+        .map(r => r[0].transcript)
+        .join(' ')
+        .replace(/\s+/g, ' ')
+        .trim()
 
-      setTranscript((prev) => {
-        const updated = prev + textFragment
-        currentTranscriptRef.current = textFragment
-        return textFragment
-      })
+      currentTranscriptRef.current = textFragment
 
-      if (callModeRef.current) {
-        setCallQuestion(currentTranscriptRef.current)
-      } else {
-        setQuestion(currentTranscriptRef.current)
-      }
+      if (callModeRef.current) setCallQuestion(textFragment)
+      else setQuestion(textFragment)
 
-      if (callModeRef.current) {
-        silenceTimer = setTimeout(() => {
-          if (currentTranscriptRef.current.trim() !== "" && !isAISpeakingRef.current) {
-            handleAskQuestion(currentTranscriptRef.current)
-            setTranscript("")
-            currentTranscriptRef.current = ""
-            setCallQuestion("")
-          }
-        }, 3000)
-      }
+      if (!callModeRef.current) return
+      if (!textFragment) return
+
+      silenceTimerRef.current = setTimeout(() => {
+        const stable = (currentTranscriptRef.current || '').trim()
+        if (!stable) return
+        if (isAISpeakingRef.current) return
+
+        if (stable === lastAutoSentRef.current) return
+        lastAutoSentRef.current = stable
+
+        handleAskQuestion(stable)
+
+        setTranscript('')
+        currentTranscriptRef.current = ''
+        setCallQuestion('')
+      }, 1200)
     }
+
 
     recognition.onerror = (event) => {
       console.error("Speech recognition error:", event.error)
@@ -655,65 +667,65 @@ export default function DiscussionScreen() {
 
   const speakText = (text, messageId) => {
     return new Promise((resolve, reject) => {
-      if (isSpeaking && speakingMessageId === messageId) {
-        window.speechSynthesis.cancel()
-        setIsSpeaking(false)
-        setSpeakingMessageId(null)
-        setIsAISpeaking(false)
-        resolve()
-        setTimeout(() => {
-          if (callModeRef.current) {
-            setTranscript("")
-            currentTranscriptRef.current = ""
-            setCallQuestion("")
-            forceStartRecording()
-          }
-        }, 500)
+      if (!('speechSynthesis' in window)) {
+        reject(new Error("Speech synthesis not supported"))
         return
       }
-      if (isSpeaking) {
+
+      clearSilenceTimer()
+
+      if (recognitionRef.current && isRecognitionActiveRef.current) {
+        try { recognitionRef.current.stop() } catch (e) {}
+        isRecognitionActiveRef.current = false
+        setIsRecognitionActive(false)
+        setIsRecording(false)
+      }
+
+      if (window.speechSynthesis.speaking) {
         window.speechSynthesis.cancel()
       }
+
       setIsSpeaking(true)
       setSpeakingMessageId(messageId)
       setIsAISpeaking(true)
-      if ("speechSynthesis" in window) {
-        const utterance = new SpeechSynthesisUtterance(text)
-        utterance.lang = selectedLanguage === "FR" ? "fr-FR" : "mg-MG"
-        utterance.pitch = 1.0
-        utterance.rate = 0.9
-        utterance.onend = () => {
-          setIsSpeaking(false)
-          setSpeakingMessageId(null)
-          setIsAISpeaking(false)
-          resolve()
+
+      const utterance = new SpeechSynthesisUtterance(text)
+      utterance.lang = selectedLanguage === 'FR' ? 'fr-FR' : 'mg-MG'
+      utterance.pitch = 1.0
+      utterance.rate = 0.95
+
+      utterance.onend = () => {
+        setIsSpeaking(false)
+        setSpeakingMessageId(null)
+        setIsAISpeaking(false)
+
+        if (callModeRef.current) {
           setTimeout(() => {
-            if (callModeRef.current) {
-              setTranscript("")
-              currentTranscriptRef.current = ""
-              setCallQuestion("")
-              forceStartRecording()
+            if (recognitionRef.current && !isAISpeakingRef.current && !isRecognitionActiveRef.current) {
+              try {
+                recognitionRef.current.start()
+                isRecognitionActiveRef.current = true
+                setIsRecognitionActive(true)
+                setIsRecording(true)
+              } catch (e) {
+                setIsRecognitionActive(false)
+                setIsRecording(false)
+              }
             }
-          }, 500)
+          }, 600)
         }
-        utterance.onerror = (error) => {
-          setIsSpeaking(false)
-          setSpeakingMessageId(null)
-          setIsAISpeaking(false)
-          reject(error)
-          setTimeout(() => {
-            if (callModeRef.current) {
-              setTranscript("")
-              currentTranscriptRef.current = ""
-              setCallQuestion("")
-              forceStartRecording()
-            }
-          }, 500)
-        }
-        window.speechSynthesis.speak(utterance)
-      } else {
-        reject(new Error("Speech synthesis not supported"))
+
+        resolve()
       }
+
+      utterance.onerror = (err) => {
+        setIsSpeaking(false)
+        setSpeakingMessageId(null)
+        setIsAISpeaking(false)
+        reject(err)
+      }
+
+      window.speechSynthesis.speak(utterance)
     })
   }
 

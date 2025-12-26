@@ -73,7 +73,7 @@ const ProtectedDiscussionScreen = () => {
 
   const brandText = 'Sexual AI.'
   const subBrandText = 'Votre IA axé sur la santé sexuelle'
-  const typingDurationMs = 1400
+  const typingDurationMs = 700
 
   if (isLoading) {
     
@@ -88,9 +88,9 @@ const ProtectedDiscussionScreen = () => {
                 <span className="loader-typing-text">{brandText}</span>
               </div>
 
-              <div className="loader-typing loader-typing--sub loader-typing--delayed" style={{ '--chars': subBrandText.length }} aria-label={subBrandText}>
+              {/* <div className="loader-typing loader-typing--sub loader-typing--delayed" style={{ '--chars': subBrandText.length }} aria-label={subBrandText}>
                 <span className="loader-typing-text">{subBrandText}</span>
-              </div>
+              </div> */}
             </div>
           </div>
 
