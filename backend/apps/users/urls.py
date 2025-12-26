@@ -14,7 +14,7 @@ urlpatterns = [
     
     path('profile/',ProfileView.as_view(),name="profile"),#GET
     path('profile/anonymous/',ProfileAnonymousView.as_view(),name="profile-anonymous"),#GET
-    path('profile/update/',ProfileUpdateView.as_view(),name="profile-update"),#GET
+    path('profile/update/',ProfileUpdateView.as_view(),name="profile-update"),#PUT
     path('logout/',LogoutView.as_view(),name='logout'),#PUT
     path('user/verify-otp/',UserVerifyOtpView.as_view(),name='user-verification-otp'),#POST
     path('user/resend-otp/',ResendOTPVerificationView.as_view(),name='user-resend-otp'),#POST

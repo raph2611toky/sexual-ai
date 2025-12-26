@@ -1,4 +1,4 @@
-/* Container pour les toasts */
+/* Container pour les toasts (inchangé) */
 .toast-container {
   position: fixed;
   top: var(--space-6);
@@ -10,123 +10,120 @@
   pointer-events: none;
 }
 
-/* Toast principal */
+/* Toast principal (design amélioré, même comportement) */
 .toast {
-  display: flex;
+  --toast-accent: var(--success);
+
+  display: grid;
+  grid-template-columns: 28px 1fr 28px;
   align-items: center;
-  gap: var(--space-3);
-  background: var(--bg-elevated);
+  column-gap: var(--space-3);
+
+  background: color-mix(in srgb, var(--bg-elevated) 92%, transparent);
   border-radius: var(--radius-xl);
   padding: var(--space-4) var(--space-5);
-  box-shadow: var(--shadow-2xl);
-  border: 1px solid var(--border-primary);
+
+  border: 1px solid color-mix(in srgb, var(--border-primary) 70%, transparent);
+  box-shadow: var(--shadow-xl);
+
   min-width: 320px;
   max-width: 480px;
   pointer-events: auto;
   position: relative;
   overflow: hidden;
-  backdrop-filter: blur(20px);
+  backdrop-filter: blur(14px);
+
   transform: translateX(100%);
   opacity: 0;
-  transition: all var(--transition-normal) cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform var(--transition-normal) cubic-bezier(0.4, 0, 0.2, 1),
+              opacity var(--transition-normal) cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Animations d'entrée et de sortie */
-.toast-enter {
-  transform: translateX(0);
-  opacity: 1;
+/* Accent bar à gauche */
+.toast::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--toast-accent);
+  opacity: 0.9;
 }
 
-.toast-exit {
-  transform: translateX(100%);
-  opacity: 0;
-}
+/* Entrée / sortie (inchangé) */
+.toast-enter { transform: translateX(0); opacity: 1; }
+.toast-exit { transform: translateX(100%); opacity: 0; }
 
-/* Barre de progression */
+/* Barre de progression (même idée, plus fine) */
 .toast::before {
   content: '';
   position: absolute;
   bottom: 0;
   left: 0;
-  height: 3px;
-  background: currentColor;
-  border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+  height: 2px;
+  background: var(--toast-accent);
   animation: progress 3s linear;
-  opacity: 0.3;
+  opacity: 0.35;
 }
 
 @keyframes progress {
-  from {
-    width: 100%;
-  }
-  to {
-    width: 0%;
-  }
+  from { width: 100%; }
+  to { width: 0%; }
 }
 
-/* Types de toast */
-.toast-success {
-  color: var(--success);
-  border-color: rgba(16, 185, 129, 0.2);
-  background: rgba(16, 185, 129, 0.05);
-}
+/* Types */
+.toast-success { --toast-accent: var(--success); }
+.toast-error   { --toast-accent: var(--error); }
+.toast-warning { --toast-accent: var(--warning); }
+.toast-info    { --toast-accent: var(--info); }
 
-[data-theme="dark"] .toast-success {
-  background: rgba(16, 185, 129, 0.1);
-  border-color: rgba(16, 185, 129, 0.3);
-}
-
-.toast-error {
-  color: var(--error);
-  border-color: rgba(239, 68, 68, 0.2);
-  background: rgba(239, 68, 68, 0.05);
-}
-
-[data-theme="dark"] .toast-error {
-  background: rgba(239, 68, 68, 0.1);
-  border-color: rgba(239, 68, 68, 0.3);
-}
-
-.toast-warning {
-  color: var(--warning);
-  border-color: rgba(245, 158, 11, 0.2);
-  background: rgba(245, 158, 11, 0.05);
-}
-
-[data-theme="dark"] .toast-warning {
-  background: rgba(245, 158, 11, 0.1);
-  border-color: rgba(245, 158, 11, 0.3);
-}
-
+/* Teintes légères par type */
+.toast-success,
+.toast-error,
+.toast-warning,
 .toast-info {
-  color: var(--info);
-  border-color: rgba(59, 130, 246, 0.2);
-  background: rgba(59, 130, 246, 0.05);
+  border-color: color-mix(in srgb, var(--toast-accent) 18%, var(--border-primary));
+  background: color-mix(in srgb, var(--toast-accent) 6%, var(--bg-elevated));
 }
 
+/* Dark theme */
+[data-theme="dark"] .toast-success,
+[data-theme="dark"] .toast-error,
+[data-theme="dark"] .toast-warning,
 [data-theme="dark"] .toast-info {
-  background: rgba(59, 130, 246, 0.1);
-  border-color: rgba(59, 130, 246, 0.3);
+  background: color-mix(in srgb, var(--toast-accent) 10%, var(--bg-elevated));
+  border-color: color-mix(in srgb, var(--toast-accent) 26%, var(--border-primary));
 }
 
-/* Icône du toast */
+/* Icône (SVG) */
 .toast-icon {
-  width: 24px;
-  height: 24px;
-  border-radius: var(--radius-full);
-  background: currentColor;
-  color: var(--text-inverse);
-  display: flex;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-lg);
+
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.875rem;
-  font-weight: 700;
-  flex-shrink: 0;
+
+  color: var(--toast-accent);
+  background: color-mix(in srgb, var(--toast-accent) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--toast-accent) 20%, transparent);
 }
 
-/* Contenu du toast */
+.toast-icon svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Contenu */
 .toast-content {
-  flex: 1;
   min-width: 0;
 }
 
@@ -134,34 +131,41 @@
   color: var(--text-primary);
   font-size: 0.875rem;
   font-weight: 500;
-  line-height: 1.4;
+  line-height: 1.35;
   margin: 0;
 }
 
-/* Bouton de fermeture */
+/* Close button (pro, sans emoji) */
 .toast-close {
-  background: none;
-  border: none;
-  color: var(--text-tertiary);
-  cursor: pointer;
-  padding: var(--space-1);
-  border-radius: var(--radius-md);
-  transition: all var(--transition-fast);
-  font-size: 0.75rem;
-  width: 20px;
-  height: 20px;
-  display: flex;
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
+
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-lg);
+  color: var(--text-tertiary);
+  cursor: pointer;
+
+  transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
 }
 
 .toast-close:hover {
   background: var(--bg-secondary);
+  border-color: color-mix(in srgb, var(--border-primary) 70%, transparent);
   color: var(--text-secondary);
 }
 
-/* Responsive */
+.toast-close svg {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+  stroke-width: 2;
+}
+
+/* Responsive (inchangé) */
 @media (max-width: 480px) {
   .toast-container {
     top: var(--space-4);
@@ -175,12 +179,14 @@
   }
 }
 
-/* Accessibilité */
+/* Accessibilité: réduit les animations si demandé */
 @media (prefers-reduced-motion: reduce) {
   .toast {
     transition: none;
+    transform: translateX(0);
+    opacity: 1;
   }
-  
+
   .toast::before {
     animation: none;
   }

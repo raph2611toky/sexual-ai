@@ -20,6 +20,7 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'name', 'email','birth_date', 'profile_url', 'sexe','is_active']
+        read_only_fields = ['id', 'email', 'is_active']
     
     def get_profile_url(self, obj):
         if obj.picture is not None:

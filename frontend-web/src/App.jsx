@@ -11,6 +11,7 @@ import Donation from "./components/Donation"
 import OTPVerification from "./components/OTPVerification"
 import GoogleCallback from "./components/GoogleCallback"
 import NotFound from "./components/NotFound"
+import Profile from "./components/Profile"
 
 import "./App.css"
 
@@ -51,6 +52,14 @@ function App() {
             element={
               <PrivateRoute>
                 <CycleManagementScreen />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <PrivateRoute>
+                <Profile />
               </PrivateRoute>
             }
           />
