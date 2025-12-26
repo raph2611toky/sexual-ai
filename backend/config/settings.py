@@ -90,11 +90,6 @@ DATABASES = {
         'PORT': os.getenv('DATABASE_PORT'),
         'OPTIONS':{
         	'charset': 'utf8mb4',
-            "COLLATION": "utf8mb4_unicode_ci",
-        },
-        "TEST": {
-            "CHARSET": "utf8mb4",
-            "COLLATION": "utf8mb4_0900_ai_ci",
         }
         # 'ENGINE': 'django.db.backends.postgresql',
         # 'NAME': os.getenv("SUPABASE_DB_NAME"),
