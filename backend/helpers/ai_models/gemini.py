@@ -4,6 +4,7 @@ import os
 import traceback
 
 from apps.chatbot.models import MessageChat
+from backend.helpers.helper import LOGGER
 from helpers.services.google.traduction import traduire_texte
 
 load_dotenv()
@@ -26,8 +27,7 @@ def prepare_messages(conversation_id: int, user_message: str, lang='FR'):
         "content": CHAT_CONTENT[lang]
     }
 
-    msgs = MessageChat.objects.filter(conversation_id=conversation_id) \
-                              .order_by('-created_at')[:20]
+    msgs = MessageChat.objects.filter(conversation_id=conversation_id).order_by('-created_at')[:20]
     history = []
     for m in reversed(msgs):
         role = "user" if m.from_user else "assistant"
@@ -46,6 +46,11 @@ def conversation_chat(conversation_id: int, message: str, lang='fr') -> str:
         print(message)
     try:
         messages = prepare_messages(conversation_id, message, lang)
+        LOGGER.info("=="*20)
+        LOGGER.info(f"Messages préparés pour la conversation {conversation_id} : {messages}", end="\n\n")
+        LOGGER.info(f"{'--'*20}".join(messages))
+        
+        LOGGER.info("=="*20)
         response = client.chat.completions.create(
             model="gemini-2.0-flash",
             messages=messages,

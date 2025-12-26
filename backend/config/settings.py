@@ -89,7 +89,12 @@ DATABASES = {
         'HOST': os.getenv("DOCKER_HOST"),
         'PORT': os.getenv('DATABASE_PORT'),
         'OPTIONS':{
-        	'charset': 'utf8mb4'
+        	'charset': 'utf8mb4',
+            "COLLATION": "utf8mb4_unicode_ci",
+        },
+        "TEST": {
+            "CHARSET": "utf8mb4",
+            "COLLATION": "utf8mb4_0900_ai_ci",
         }
         # 'ENGINE': 'django.db.backends.postgresql',
         # 'NAME': os.getenv("SUPABASE_DB_NAME"),
@@ -148,7 +153,7 @@ MEDIA_URL = '/media/'
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-BASE_URL = f"https://sa-backend.learnix.school"
+BASE_URL = f"https://backend.sexualai.mooo.com"
 
 AUTH_USER_MODEL = 'users.User'
 AUTHENTICATION_BACKENDS = ['apps.users.backends.EmailBackend']
