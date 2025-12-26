@@ -36,6 +36,7 @@ load_dotenv()
 class LoginView(APIView):
     permission_classes = [AllowAny]
     serializer_class = LoginSerializer
+    authentication_classes = []
 
     @swagger_auto_schema(
         tags=['Users'],
@@ -56,6 +57,7 @@ class LoginView(APIView):
 
 class RegisterView(APIView):
     permission_classes = [AllowAny]
+    authentication_classes = []
 
     def check_if_user_exist(self, email):
         return User.objects.filter(email=email).exists()
@@ -130,6 +132,7 @@ class RegisterView(APIView):
 
 class GoogleCallbackUserView(APIView):
     permission_classes = [AllowAny]
+    authentication_classes = []
 
     @swagger_auto_schema(
         operation_description="Callback pour l'authentification Google",
