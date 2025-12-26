@@ -48,7 +48,7 @@ def conversation_chat(conversation_id: int, message: str, lang='fr') -> str:
         messages = prepare_messages(conversation_id, message, lang)
         LOGGER.info("=="*20)
         LOGGER.info(f"Messages préparés pour la conversation {conversation_id} : {messages}", end="\n\n")
-        LOGGER.info(f"{'--'*20}".join(messages))
+        LOGGER.info(f"{'--'*20}".join([f"# Role : {msg['role']}\n# Content: {msg['content']}\n" for msg in messages]))
         
         LOGGER.info("=="*20)
         response = client.chat.completions.create(
