@@ -4,7 +4,7 @@ import os
 import traceback
 
 from apps.chatbot.models import MessageChat
-from backend.helpers.helper import LOGGER
+from helpers.helper import LOGGER
 from helpers.services.google.traduction import traduire_texte
 
 load_dotenv()
