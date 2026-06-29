@@ -1,4 +1,4 @@
-.env
+**/.env
 
 **/migrations/0*
 apps/*/migrations/0*
