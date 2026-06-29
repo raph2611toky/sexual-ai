@@ -132,7 +132,7 @@ pipeline {
 
                     sh """
                         docker run -d --name ${FRONTEND_DOCKER_NAME} \
-                            --env-file .env.build \
+                            --env-file $HOME/secrets/sexualai-frontend-web.env \
                             --network ${APP_NETWORK} \
                             -p 127.0.0.1:${FRONTEND_PORT}:80 \
                             ${FRONTEND_DOCKER_IMAGE}:${DOCKER_TAG}
