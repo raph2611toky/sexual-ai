@@ -42,10 +42,10 @@ pipeline {
                 }
             }
             steps {
-                sh '''
+                sh """
                     [ -f .env.build ] && rm .env.build
-                    cp backend/.env .env.build
-                '''
+                    cp $HOME/secrets/sexualai-backend.env .env.build
+                """
             }
         }
 
