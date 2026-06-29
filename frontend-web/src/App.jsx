@@ -7,6 +7,7 @@ import ProtectedDiscussionScreen from "./components/ProtectedDiscussionScreen"
 import CycleManagementScreen from "./components/CycleManagementScreen"
 import PrivacyPolicy from "./components/PrivacyPolicy"
 import TermsOfServices from "./components/TermsOfService"
+import DataDeletion from "./DataDeletion"
 import Donation from "./components/Donation"
 import OTPVerification from "./components/OTPVerification"
 import GoogleCallback from "./components/GoogleCallback"
@@ -42,6 +43,7 @@ function App() {
           <Route path="/auth/google/callback" element={<GoogleCallback />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/data-deletion" element={<DataDeletion />} />
           <Route path="/verify-otp" element={<OTPVerification />} />
           <Route path="/terms-of-services" element={<TermsOfServices />} />
           <Route path="/donation" element={
