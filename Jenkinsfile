@@ -61,14 +61,14 @@ pipeline {
             }
         }
 
-        // stage('Build web Docker Image') {
-        //     when {
-        //         branch 'web'
-        //     }
-        //     steps {
-        //         sh "docker build --build-arg BRANCH_NAME=${env.BRANCH_NAME} -t ${FRONTEND_DOCKER_IMAGE}:${DOCKER_TAG} -f frontend-web/Dockerfile ."
-        //     }
-        // }
+        stage('Build web Docker Image') {
+            when {
+                branch 'web'
+            }
+            steps {
+                sh "docker build --build-arg BRANCH_NAME=${env.BRANCH_NAME} -t ${FRONTEND_DOCKER_IMAGE}:${DOCKER_TAG} -f frontend-web/Dockerfile ."
+            }
+        }
 
         stage('Deploy Backend') {
             when {
@@ -121,26 +121,26 @@ pipeline {
             }
         }
 
-        // stage('Deploy Frontend web') {
-        //     when {
-        //         branch 'web'
-        //     }
-        //     steps {
-        //         script {
-        //             sh "docker network create ${APP_NETWORK} || true"
-        //             sh "docker stop ${FRONTEND_DOCKER_NAME} || true && docker rm ${FRONTEND_DOCKER_NAME} || true"
+        stage('Deploy Frontend web') {
+            when {
+                branch 'web'
+            }
+            steps {
+                script {
+                    sh "docker network create ${APP_NETWORK} || true"
+                    sh "docker stop ${FRONTEND_DOCKER_NAME} || true && docker rm ${FRONTEND_DOCKER_NAME} || true"
 
-        //             sh """
-        //                 docker run -d --name ${FRONTEND_DOCKER_NAME} \
-        //                     --env-file .env.build \
-        //                     --network ${APP_NETWORK} \
-        //                     -p 127.0.0.1:${FRONTEND_PORT}:80 \
-        //                     ${FRONTEND_DOCKER_IMAGE}:${DOCKER_TAG}
-        //             """
-        //             sh "sleep 10 && curl -f http://127.0.0.1:${FRONTEND_PORT}/ || echo '⚠️ Le frontend ne répond pas encore...'"
-        //         }
-        //     }
-        // }
+                    sh """
+                        docker run -d --name ${FRONTEND_DOCKER_NAME} \
+                            --env-file .env.build \
+                            --network ${APP_NETWORK} \
+                            -p 127.0.0.1:${FRONTEND_PORT}:80 \
+                            ${FRONTEND_DOCKER_IMAGE}:${DOCKER_TAG}
+                    """
+                    sh "sleep 10 && curl -f http://127.0.0.1:${FRONTEND_PORT}/ || echo '⚠️ Le frontend ne répond pas encore...'"
+                }
+            }
+        }
     }
 
     post {
